@@ -1,0 +1,17 @@
+.project-item {
+    display: flex;
+    border: unset;
+    border-radius: 0;
+    background-color: var(--color-gray2);
+    padding: var(--dui-spacing-medium);
+    width: 100%;
+    text-align: left;
+
+    &:hover, &.active {
+        background-color: var(--color-gray3);
+    }
+
+    .description {
+        display: flex;
+    }
+}

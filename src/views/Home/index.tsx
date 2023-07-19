@@ -1,10 +1,9 @@
 import { useMemo, useState, useCallback } from 'react';
+import { AiOutlineSearch } from 'react-icons/ai';
 import { gql, useQuery } from '@apollo/client';
 import {
     TextInput,
     ListView,
-    TextOutput,
-    DateOutput,
 } from '@the-deep/deep-ui';
 
 import Navbar from '#components/Navbar';
@@ -14,6 +13,7 @@ import {
     ProjectsQueryVariables,
 } from '#generated/types';
 
+import ProjectItem from './ProjectItem';
 import styles from './index.module.css';
 
 const PROJECTS = gql`
@@ -47,31 +47,12 @@ query Projects (
 type ProjectType = NonNullable<NonNullable<NonNullable<ProjectsQuery['private']>['projects']>['items']>[number];
 const projectKeySelector = (d: ProjectType) => d.id;
 
-interface ProjectListRenderProps {
-    projectItem: ProjectType;
-}
-
-function ProjectListItemRender(props: ProjectListRenderProps) {
-    const {
-        projectItem,
-    } = props;
-
-    return (
-        <div className={styles.projectItem}>
-            <TextOutput
-                value={projectItem.title}
-                description={<DateOutput value={projectItem.createdAt} />}
-                block
-                spacing="compact"
-            />
-        </div>
-    );
-}
-
 // eslint-disable-next-line import/prefer-default-export
 export function Component() {
     const [searchText, setSearchText] = useState<string | undefined>();
     const debouncedSearchText = useDebouncedValue(searchText);
+
+    const [activeProject, setActiveProject] = useState<string | undefined>();
 
     const variables = useMemo(() => ({
         search: debouncedSearchText,
@@ -95,7 +76,11 @@ export function Component() {
 
     const projectListRendererParams = useCallback((_: string, datum: ProjectType) => ({
         projectItem: datum,
-    }), []);
+        onProjectItemClick: setActiveProject,
+        activeProject,
+    }), [
+        activeProject,
+    ]);
 
     return (
         <div className={styles.page}>
@@ -104,6 +89,7 @@ export function Component() {
                 <div className={styles.leftPane}>
                     <TextInput
                         name={undefined}
+                        icons={<AiOutlineSearch />}
                         placeholder="Search projects"
                         onChange={setSearchText}
                         value={searchText}
@@ -112,8 +98,9 @@ export function Component() {
                         className={styles.projects}
                         data={projects}
                         keySelector={projectKeySelector}
-                        renderer={ProjectListItemRender}
+                        renderer={ProjectItem}
                         rendererParams={projectListRendererParams}
+                        borderBetweenItem
                         filtered={(searchText?.length ?? 0) > 0}
                         filteredEmptyMessage="No projects matched your keyword."
                         errored={false}
@@ -129,4 +116,4 @@ export function Component() {
     );
 }
 
-Component.displayName = 'App';
+Component.displayName = 'Home';

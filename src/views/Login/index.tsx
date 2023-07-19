@@ -96,6 +96,7 @@ export function Component() {
                         'Logged in successfully!',
                         { variant: 'success' },
                     );
+                    window.location.reload();
                 } else {
                     alert.show(
                         'Failed to log in!',
