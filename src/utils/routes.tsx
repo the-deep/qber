@@ -36,22 +36,49 @@ type ImmutableRouteKey = 'lazy' | 'caseSensitive' | 'path' | 'id' | 'index' | 'c
 
 type OmitInputRouteObjectKeys = 'Component' | 'element' | 'lazy';
 export type MyInputIndexRouteObject<T, K extends object> = {
-    title: string;
-    componentProps: T & JSX.IntrinsicAttributes;
-    component: () => Promise<{
-        Component: (props: T) => React.ReactElement<any, any> | null;
-    } & Omit<IndexRouteObject, ImmutableRouteKey | OmitInputRouteObjectKeys>>;
+    wrapperComponent?: (props: {
+        children: React.ReactElement,
+        context: K,
+    }) => React.ReactElement;
+    component: {
+        eagerLoad?: false,
+        render: () => Promise<{
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            Component: (props: T) => React.ReactElement<any, any> | null;
+        } & Omit<IndexRouteObject, ImmutableRouteKey | OmitInputRouteObjectKeys>>
+        props: T & JSX.IntrinsicAttributes;
+    } | {
+        eagerLoad: true;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        render: (prop: T) => React.ReactElement<any, any> | null
+        props: T & JSX.IntrinsicAttributes;
+    };
     parent?: MyOutputRouteObject<K>;
-} & Omit<IndexRouteObject, OmitInputRouteObjectKeys> & K;
+    context: K;
+} & Omit<IndexRouteObject, OmitInputRouteObjectKeys>;
 
 export type MyInputNonIndexRouteObject<T, K extends object> = {
-    title: string;
-    componentProps: T & JSX.IntrinsicAttributes;
-    component: () => Promise<{
-        Component: (props: T) => React.ReactElement<any, any> | null;
-    } & Omit<IndexRouteObject, ImmutableRouteKey | OmitInputRouteObjectKeys>>;
+    wrapperComponent?: (props: {
+        children: React.ReactElement,
+        context: K,
+    }) => React.ReactElement;
+    component: {
+        eagerLoad?: false,
+        render: () => Promise<{
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            Component: (props: T) => React.ReactElement<any, any> | null;
+        } & Omit<IndexRouteObject, ImmutableRouteKey | OmitInputRouteObjectKeys>>
+        props: T & JSX.IntrinsicAttributes;
+    } | {
+        eagerLoad: true;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        render: (prop: T) => React.ReactElement<any, any> | null
+        props: T & JSX.IntrinsicAttributes;
+    };
+
     parent?: MyOutputRouteObject<K>;
-} & Omit<NonIndexRouteObject, OmitInputRouteObjectKeys> & K;
+    context: K;
+} & Omit<NonIndexRouteObject, OmitInputRouteObjectKeys>;
 
 export type MyInputRouteObject<T, K extends object> = (
     MyInputIndexRouteObject<T, K> | MyInputNonIndexRouteObject<T, K>
@@ -86,26 +113,46 @@ export function wrapRoute<K extends object, T>(
 ): MyOutputRouteObject<K> {
     if (myRouteOptions.index) {
         const {
-            componentProps,
+            wrapperComponent: Wrapper,
             component,
             parent,
+            context,
             ...remainingRouteOptions
         } = myRouteOptions;
-        const lazy = async () => {
-            const {
-                Component,
-                ...otherProps
-            } = await component();
-            return {
-                ...otherProps,
-                // eslint-disable-next-line react/jsx-props-no-spreading
-                element: <Component {...componentProps} />,
+
+        let dynamicProps;
+        if (component.eagerLoad) {
+            const Component = component.render;
+            // eslint-disable-next-line react/jsx-props-no-spreading
+            const element = <Component {...component.props} />;
+            // NOTE: Wrapper will only be mounted after waiting for the Component
+            dynamicProps = {
+                element: Wrapper
+                    ? <Wrapper context={context}>{element}</Wrapper>
+                    : element,
             };
-        };
+        } else {
+            dynamicProps = {
+                lazy: async () => {
+                    const {
+                        Component,
+                        ...otherProps
+                    } = await component.render();
+                    // eslint-disable-next-line react/jsx-props-no-spreading
+                    const element = <Component {...component.props} />;
+                    // NOTE: Wrapper will only be mounted after waiting for the Component
+                    return {
+                        ...otherProps,
+                        element: Wrapper
+                            ? <Wrapper context={context}>{element}</Wrapper>
+                            : element,
+                    };
+                },
+            };
+        }
         return {
             ...remainingRouteOptions,
-            lazy,
-
+            ...dynamicProps,
             parent,
             absolutePath: parent?.absolutePath ?? '/',
             id: randomString(),
@@ -113,22 +160,43 @@ export function wrapRoute<K extends object, T>(
     }
 
     const {
-        componentProps,
+        wrapperComponent: Wrapper,
         component,
         parent,
+        context,
         ...remainingRouteOptions
     } = myRouteOptions;
-    const lazy = async () => {
-        const {
-            Component,
-            ...otherProps
-        } = await component();
-        return {
-            ...otherProps,
-            // eslint-disable-next-line react/jsx-props-no-spreading
-            element: <Component {...componentProps} />,
+    let dynamicProps;
+    if (component.eagerLoad) {
+        const Component = component.render;
+        // eslint-disable-next-line react/jsx-props-no-spreading
+        const element = <Component {...component.props} />;
+        // NOTE: Wrapper will only be mounted after waiting for the Component
+        dynamicProps = {
+            element: Wrapper
+                ? <Wrapper context={context}>{element}</Wrapper>
+                : element,
         };
-    };
+    } else {
+        dynamicProps = {
+            lazy: async () => {
+                const {
+                    Component,
+                    ...otherProps
+                } = await component.render();
+
+                // eslint-disable-next-line react/jsx-props-no-spreading
+                const element = <Component {...component.props} />;
+                // NOTE: Wrapper will only be mounted after waiting for the Component
+                return {
+                    ...otherProps,
+                    element: Wrapper
+                        ? <Wrapper context={context}>{element}</Wrapper>
+                        : element,
+                };
+            },
+        };
+    }
 
     const absolutePath = parent
         ? joinUrlPart([parent.absolutePath ?? '/', remainingRouteOptions.path ?? '/'])
@@ -136,7 +204,7 @@ export function wrapRoute<K extends object, T>(
 
     return {
         ...remainingRouteOptions,
-        lazy,
+        ...dynamicProps,
 
         parent,
         absolutePath,
@@ -150,9 +218,7 @@ export function unwrapRoute<K extends object>(
     const mapping = listToMap(
         wrappedRoutes.filter((item) => !item.index),
         (item) => item.id,
-        (item) => ({
-            ...item,
-        }),
+        (item) => item,
     );
 
     wrappedRoutes.forEach((route) => {

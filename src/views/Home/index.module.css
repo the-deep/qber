@@ -1,3 +1,40 @@
-.home {
+.page {
     display: flex;
+    flex-direction: column;
+    background-color: var(--background-color-gray);
+    height: 100vh;
+
+    .page-content {
+        display: flex;
+        flex-grow: 1;
+        padding: var(--dui-spacing-extra-large);
+        gap: var(--dui-spacing-medium);
+
+        .left-pane {
+            --width-left-pane: 30rem;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            padding: var(--dui-spacing-medium);
+            background-color: var(--color-gray1);
+            width: var(--width-left-pane);
+            gap: var(--dui-spacing-small);
+
+            .projects {
+                display: flex;
+                flex-direction: column;
+
+                .project-item {
+                    display: flex;
+                    background-color: var(--color-gray2);
+                    padding: var(--dui-spacing-small);
+                }
+            }
+        }
+        .content {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+    }
 }

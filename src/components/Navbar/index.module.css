@@ -1,0 +1,42 @@
+.navbar {
+    --height-navbar: 4rem;
+    display: flex;
+    background-color: var(--dui-color-white);
+    padding: var(--dui-spacing-medium) var(--dui-spacing-super-large);
+    padding-bottom: 0;
+    height: var(--height-navbar);
+
+    .logo-container {
+        display: flex;
+        flex-shrink: 0;
+
+        .logo {
+            width: 4rem;
+        }
+    }
+
+    .right {
+        display: flex;
+        align-items: flex-end;
+        flex-grow: 1;
+        justify-content: flex-end;
+
+        .nav-links {
+            display: flex;
+            gap: var(--dui-spacing-medium);
+
+            .nav-item {
+                display: flex;
+                position: relative;
+                align-items: center;
+                outline: none;
+                border-bottom: var(--dui-width-separator-medium) solid transparent;
+                padding: var(--dui-spacing-small) var(--dui-spacing-medium);
+                text-transform: uppercase;
+                text-decoration: none;
+                color: var(--dui-color-text);
+                font-weight: var(--dui-font-weight-bold);
+            }
+        }
+    }
+}

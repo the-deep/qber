@@ -1,6 +1,8 @@
 :root {
     --background-color: #FFFFFF;
     --background-color-gray: #F0F0F0;
+    --color-gray1: #FBFBFB;
+    --color-gray2: #F5F5F5;
 
     --color-brand: #5A3070;
 
@@ -49,4 +51,8 @@ body {
     margin: 0;
     padding: 0;
     scrollbar-gutter: stable;
+}
+
+body {
+    height: 100vh;
 }

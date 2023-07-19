@@ -3,18 +3,24 @@ import {
     unwrapRoute,
 } from '#utils/routes';
 import type {
-    MyInputRouteObject,
     MyInputIndexRouteObject,
     MyInputNonIndexRouteObject,
     MyOutputIndexRouteObject,
     MyOutputNonIndexRouteObject,
-    MyOutputRouteObject,
 } from '#utils/routes';
+
+import { Component as RootLayout } from '#views/Root';
+import { Component as ResetPasswordRedirect } from '#redirects/ResetPasswordRedirect';
+
+import Auth from './Auth';
 
 import PageError from './PageError';
 
 // NOTE: setting default ExtendedProps
-type ExtendedProps = { name?: string };
+type ExtendedProps = {
+    title: string,
+    visibility: 'is-authenticated' | 'is-not-authenticated' | 'anything',
+};
 interface MyWrapRoute {
     <T>(
         myRouteOptions: MyInputIndexRouteObject<T, ExtendedProps>
@@ -22,75 +28,114 @@ interface MyWrapRoute {
     <T>(
         myRouteOptions: MyInputNonIndexRouteObject<T, ExtendedProps>
     ): MyOutputNonIndexRouteObject<ExtendedProps>
-    <T>(
-        myRouteOptions: MyInputRouteObject<T, ExtendedProps>,
-    ): MyOutputRouteObject<ExtendedProps>
 }
 const myWrapRoute: MyWrapRoute = wrapRoute;
 
 const root = myWrapRoute({
-    title: '',
     path: '/',
-    component: () => import('#views/Root'),
-    componentProps: {},
+    component: {
+        eagerLoad: true,
+        render: RootLayout,
+        props: {},
+    },
+    wrapperComponent: Auth,
+    context: {
+        title: '',
+        visibility: 'anything',
+    },
     errorElement: <PageError />,
 });
 
 const home = myWrapRoute({
-    title: 'Home',
     index: true,
-    component: () => import('#views/Home'),
-    componentProps: {},
+    component: {
+        render: () => import('#views/Home'),
+        props: {},
+    },
+    parent: root,
+    wrapperComponent: Auth,
+    context: {
+        title: 'Home',
+        visibility: 'is-authenticated',
+    },
+    errorElement: <PageError />,
 });
 
 const login = myWrapRoute({
-    title: 'Login',
     path: 'login',
-    component: () => import('#views/Login'),
-    componentProps: {},
+    component: {
+        render: () => import('#views/Login'),
+        props: {},
+    },
     parent: root,
+    wrapperComponent: Auth,
+    context: {
+        title: 'Login',
+        visibility: 'is-not-authenticated',
+    },
 });
 
 const register = myWrapRoute({
-    title: 'Register',
-    path: '/register',
-    component: () => import('#views/Register'),
-    componentProps: {},
+    path: 'register',
+    component: {
+        render: () => import('#views/Register'),
+        props: {},
+    },
     parent: root,
+    wrapperComponent: Auth,
+    context: {
+        title: 'Register',
+        visibility: 'is-not-authenticated',
+    },
 });
 
 const resetPassword = myWrapRoute({
-    title: 'Reset Password',
-    path: '/reset-password',
-    component: () => import('#views/ResetPassword'),
-    componentProps: {},
-    parent: root,
+    path: 'reset-password',
+    component: {
+        render: () => import('#views/ResetPassword'),
+        props: {},
+    },
+    context: {
+        title: 'Reset Password',
+        visibility: 'anything',
+    },
 });
 
 // FIXME: eager load this page
 const resetPasswordRedirect = myWrapRoute({
-    title: 'Reset Password',
     path: '/permalink/password-reset/:uuid/:token',
-    component: () => import('#redirects/ResetPasswordRedirect'),
-    componentProps: {},
+    component: {
+        eagerLoad: true,
+        render: ResetPasswordRedirect,
+        props: {},
+    },
     parent: root,
+    context: {
+        title: 'Reset Password',
+        visibility: 'anything',
+    },
 });
 
 const fourHundredFour = myWrapRoute({
-    title: '404',
     path: '*',
-    component: () => import('#components/FullPageErrorMessage'),
-    componentProps: {
-        errorTitle: '404',
-        errorMessage: 'The page you\'re looking for doesn\'t exist',
+    component: {
+        render: () => import('#components/FullPageErrorMessage'),
+        props: {
+            errorTitle: '404',
+            errorMessage: 'The page you\'re looking for doesn\'t exist',
+        },
+    },
+    context: {
+        title: '404',
+        visibility: 'anything',
     },
     parent: root,
 });
 
 export const wrappedRoutes = {
     root,
-    login,
     home,
+    login,
     register,
     resetPassword,
     resetPasswordRedirect,

@@ -8,7 +8,9 @@
         "#views/*": ["./src/views/*"],
         "#utils/*": ["./src/utils/*"],
         "#redirects/*": ["./src/redirects/*"],
+        "#contexts/*": ["./src/contexts/*"],
         "#components/*": ["./src/components/*"],
+        "#hooks/*": ["./src/hooks/*"],
         "#configs/*": ["./src/configs/*"],
         "#generated/*": ["./generated/*"]
     }
