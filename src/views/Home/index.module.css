@@ -7,6 +7,7 @@
     .page-content {
         display: flex;
         flex-grow: 1;
+        overflow-y: auto;
         gap: var(--dui-spacing-medium);
 
         .left-pane {
@@ -16,18 +17,31 @@
             flex-shrink: 0;
             background-color: var(--color-gray1);
             padding: var(--dui-spacing-extra-large);
+            padding-left: var(--dui-spacing-super-large);
             width: var(--width-left-pane);
+            overflow-y: auto;
             gap: var(--dui-spacing-medium);
 
             .projects {
                 display: flex;
                 flex-direction: column;
             }
+            .show-more-button {
+                align-self: flex-end;
+                color: var(--color-brand);
+                font-size: var(--dui-font-size-extra-small);
+            }
         }
-        .content {
+        .content-wrapper {
             display: flex;
             flex-direction: column;
             flex-grow: 1;
+            padding: var(--dui-spacing-large);
+
+            .content {
+                display: flex;
+                flex-direction: column;
+            }
         }
     }
 }
