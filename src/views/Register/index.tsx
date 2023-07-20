@@ -29,8 +29,6 @@ import {
 
 import styles from './index.module.css';
 
-// FIXME: import is weird will full names
-
 const REGISTER = gql`
     mutation Register($input: RegisterInput!) {
         public {

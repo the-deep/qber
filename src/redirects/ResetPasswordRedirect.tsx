@@ -5,8 +5,6 @@ import {
     useParams,
 } from 'react-router-dom';
 
-// import { wrappedRoutes } from '../App/routes.tsx';
-
 interface ResetPasswordParams extends Record<string, string | undefined> {
     uuid: string | undefined;
     token: string | undefined;

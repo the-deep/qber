@@ -1,6 +1,7 @@
 import { useRef, useCallback, useMemo } from 'react';
 import {
     useLocation,
+    useNavigate,
 } from 'react-router-dom';
 
 import { useMutation, gql } from '@apollo/client';
@@ -140,6 +141,7 @@ export function Component() {
     ]);
 
     const alert = useAlert();
+    const navigate = useNavigate();
 
     const [
         resetPasswordTrigger,
@@ -154,19 +156,20 @@ export function Component() {
                 }
                 if (response.ok) {
                     alert.show(
-                        'Logged in successfully!',
+                        'Password changed successfully!',
                         { variant: 'success' },
                     );
+                    navigate('/login');
                 } else {
                     alert.show(
-                        'Failed to log in!',
+                        'Failed to change password!',
                         { variant: 'error' },
                     );
                 }
             },
             onError: () => {
                 alert.show(
-                    'Failed to log in!',
+                    'Failed to change password!',
                     { variant: 'error' },
                 );
             },
@@ -260,7 +263,6 @@ export function Component() {
                     type="submit"
                     disabled={pristine || resetPasswordPending}
                     onClick={handleSubmit}
-                    // FIXME: disable button when submitting
                 >
                     Reset password
                 </Button>

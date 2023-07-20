@@ -114,16 +114,18 @@ function Navbar() {
                                 name={fullName}
                             />
                         )}
-                        variant="transparent"
+                        variant="action"
                     >
                         <DropdownMenuItem
                             // FIXME: Fix routes
+                            className={styles.dropDownMenuItem}
                             href="#"
                         >
                             Profile
                         </DropdownMenuItem>
                         <DropdownMenuItem
                             // FIXME: Fix routes
+                            className={styles.dropDownMenuItem}
                             name={undefined}
                             actions={<IoLogOutOutline />}
                             onClick={handleLogoutClick}

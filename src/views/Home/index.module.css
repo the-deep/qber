@@ -7,7 +7,6 @@
     .page-content {
         display: flex;
         flex-grow: 1;
-        padding: var(--dui-spacing-extra-large);
         gap: var(--dui-spacing-medium);
 
         .left-pane {
@@ -16,9 +15,9 @@
             flex-direction: column;
             flex-shrink: 0;
             background-color: var(--color-gray1);
-            padding: var(--dui-spacing-medium);
+            padding: var(--dui-spacing-extra-large);
             width: var(--width-left-pane);
-            gap: var(--dui-spacing-small);
+            gap: var(--dui-spacing-medium);
 
             .projects {
                 display: flex;
