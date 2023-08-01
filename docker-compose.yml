@@ -1,11 +1,68 @@
-version: '3.8'
+version: '3.2'
+
 services:
   react:
+    tty: true
     build: .
-    command: sh -c 'yarn install && yarn dev --host'
     environment:
-      APP_TITLE: ${APP_TITLE:-React Base App}
-    volumes:
-      - .:/code
+      APP_TITLE: ${APP_TITLE:-Questionnaire Builder}
+      APP_STATIC_ENDPOINT: ${APP_STATIC_ENDPOINT:-http://localhost:8311}
+      APP_GRAPHQL_ENDPOINT: ${APP_GRAPHQL_ENDPOINT:-http://localhost:8311/graphql/}
+    env_file:
+      - .env
+    command: sh -c 'yarn install && yarn start --host'
     ports:
       - '3000:3000'
+    volumes:
+      - .:/code
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: questionnaire_builder
+    volumes:
+      - postgres-data15:/var/lib/postgresql/data
+
+  api:
+    image: ghcr.io/the-deep/questionnaire-builder-backend:${DOCKER_BACKEND_TAG:-latest}
+    build:
+      context: ./backend/
+    environment:
+      APP_ENVIRONMENT: development
+      APP_TYPE: web
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY?err}
+      # To overwrite this values. set the values in .env
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-True}
+      APP_DOMAIN: localhost:8311
+      APP_HTTP_PROTOCOL: http
+      APP_FRONTEND_HOST: localhost:3000
+      SESSION_COOKIE_DOMAIN: ${SESSION_COOKIE_DOMAIN:-localhost}
+      CSRF_COOKIE_DOMAIN: ${CSRF_COOKIE_DOMAIN:-localhost}
+      DJANGO_ALLOWED_HOST: ${DJANGO_ALLOWED_HOST:-*}
+      DJANGO_DB_NAME: ${DJANGO_DB_NAME:-questionnaire_builder}
+      DJANGO_DB_USER: ${DJANGO_DB_USER:-postgres}
+      DJANGO_DB_PASSWORD: ${DJANGO_DB_PASSWORD:-postgres}
+      DJANGO_DB_PORT: ${DJANGO_DB_PORT:-5432}
+      DJANGO_DB_HOST: ${DJANGO_DB_HOST:-db}
+      # EMAIL
+      EMAIL_FROM: ${EMAIL_FROM:-dev@example.com}
+    command: ./scripts/run_develop.sh
+    env_file:
+      # Provide additional environment variables using .env file
+      - .env
+    volumes:
+      - ./backend/:/code
+      - media:/media
+      - ipython_data_local:/root/.ipython/profile_default   # persist ipython data, including ipython history
+    ports:
+      - 8311:8000
+    depends_on:
+        - db
+
+
+volumes:
+  media:
+  postgres-data15:
+  ipython_data_local:

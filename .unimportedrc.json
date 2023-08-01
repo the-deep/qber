@@ -1,11 +1,17 @@
 {
-    "entry": ["./src/main.tsx"],
+    "entry": ["./src/index.tsx"],
     "ignorePatterns": ["**/node_modules/**", "build/**"],
-    "ignoreUnimported": ["**/*.d.ts"],
+    "ignoreUnimported": ["**/*.d.ts", "**/*.test.tsx", "**/*.test.ts"],
     "ignoreUnused": [],
     "extensions": [".ts", ".js", ".tsx", ".jsx"],
     "aliases": {
         "#views/*": ["./src/views/*"],
-        "#utils/*": ["./src/utils/*"]
+        "#utils/*": ["./src/utils/*"],
+        "#redirects/*": ["./src/redirects/*"],
+        "#contexts/*": ["./src/contexts/*"],
+        "#components/*": ["./src/components/*"],
+        "#hooks/*": ["./src/hooks/*"],
+        "#configs/*": ["./src/configs/*"],
+        "#generated/*": ["./generated/*"]
     }
 }

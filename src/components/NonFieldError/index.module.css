@@ -1,0 +1,15 @@
+.non-field-error {
+    --duration-animation-fast: .13s;
+    --duration-animation-slow: 1.2s;
+
+    animation: flash var(--duration-animation-fast) ease-in-out;
+    animation-delay: var(--duration-animation-slow);
+    color: var(--dui-color-brand);
+    font-weight: var(--dui-font-weight-bold);
+}
+
+@keyframes flash {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}

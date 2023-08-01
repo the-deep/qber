@@ -1,0 +1,59 @@
+.login {
+    display: flex;
+    position: relative;
+    align-items: center;
+    justify-content: space-around;
+    background-color: var(--background-color);
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+
+    &:before {
+        display: block;
+        position: absolute;
+        top: 0;
+        clip-path: polygon(0% 0%, 40% 0, 75% 50%, 40% 100%, 0% 100%);
+        border: 1px solid #F0F0F0;
+        background-color: #FCFAFF;
+        width: 100vw;
+        height: 100vh;
+        content: '';
+    }
+
+    .logo-container {
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+        z-index: 1;
+        max-width: 30rem;
+        text-align: center;
+
+        .logo {
+            width: 30rem;
+        }
+    }
+
+    .login-form {
+        display: flex;
+        flex-direction: column;
+        z-index: 1;
+        border: 0.5px solid #D2D2D2;
+        border-radius: 30px;
+        background: #fff;
+        padding: var(--dui-spacing-super-large) var(--dui-spacing-mega-large);
+        gap: var(--dui-spacing-large);
+
+        .button {
+            align-self: center;
+        }
+
+        .footnote {
+            display: flex;
+            align-items: baseline;
+            .footnote-button {
+                padding: var(--dui-spacing-extra-small);
+                color: var(--dui-color-brand);
+            }
+        }
+    }
+}

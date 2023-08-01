@@ -7,11 +7,13 @@ on:
       - 'develop'
 
 env:
+  APP_TITLE: ${{ vars.APP_TITLE }}
   GITHUB_WORKFLOW: true
 
 jobs:
   test:
     name: Run tests
+    environment: 'Test'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -21,7 +23,7 @@ jobs:
           cache: 'yarn'
 
       - name: Install dependencies
-        run: yarn install --prefer-online
+        run: yarn install --prefer-offline --frozen-lockfile
 
       - name: Run test
         run: yarn test
@@ -36,25 +38,27 @@ jobs:
           cache: 'yarn'
 
       - name: Install dependencies
-        run: yarn install --prefer-online
+        run: yarn install --prefer-offline --frozen-lockfile
 
       - name: Run unimported
-        run: yarn unimported
+        run: yarn lint:unused
   lint:
     name: Lint JS
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          submodules: true
       - uses: actions/setup-node@v1
         with:
           node-version: '18.x'
           cache: 'yarn'
 
       - name: Install dependencies
-        run: yarn install --prefer-online
+        run: yarn install --prefer-offline --frozen-lockfile
 
       - name: Lint
-        run: yarn lint
+        run: yarn generate && yarn lint:js
   css-lint:
     name: Lint CSS
     runs-on: ubuntu-latest
@@ -66,38 +70,44 @@ jobs:
           cache: 'yarn'
 
       - name: Install dependencies
-        run: yarn install --prefer-online
+        run: yarn install --prefer-offline --frozen-lockfile
 
       - name: Css Lint
-        run: yarn css-lint
+        run: yarn lint:css
   typecheck:
     name: Typecheck
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          submodules: true
+
       - uses: actions/setup-node@v1
         with:
           node-version: '18.x'
           cache: 'yarn'
 
       - name: Install dependencies
-        run: yarn install --prefer-online
+        run: yarn install --prefer-offline --frozen-lockfile
 
       - name: Typecheck
-        run: yarn typecheck
+        run: yarn generate && yarn typecheck
   build:
     name: Build
+    environment: 'Test'
     needs: [lint, css-lint, typecheck, test]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          submodules: true
       - uses: actions/setup-node@v1
         with:
           node-version: '18.x'
           cache: 'yarn'
 
       - name: Install dependencies
-        run: yarn install --prefer-online
+        run: yarn install --prefer-offline --frozen-lockfile
 
       - name: Build
-        run: yarn export
+        run: yarn generate && yarn build

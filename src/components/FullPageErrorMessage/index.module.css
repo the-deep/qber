@@ -1,0 +1,54 @@
+.error-page {
+    display: flex;
+    position: relative;
+    align-items: center;
+    justify-content: space-around;
+    background-color: var(--background-color);
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    gap: var(--dui-spacing-large);
+
+    &:before {
+        display: block;
+        position: absolute;
+        top: 0;
+        clip-path: polygon(0% 0%, 40% 0, 75% 50%, 40% 100%, 0% 100%);
+        border: 1px solid #F0F0F0;
+        background-color: #FCFAFF;
+        width: 100vw;
+        height: 100vh;
+        content: '';
+    }
+
+    .logo-container {
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+        z-index: 1;
+        max-width: 30rem;
+        text-align: center;
+
+        .logo {
+            width: 34rem;
+        }
+    }
+
+    .message {
+        display: flex;
+        flex-direction: column;
+        z-index: 1;
+        padding: var(--dui-spacing-super-large) var(--dui-spacing-mega-large);
+        gap: var(--dui-spacing-large);
+
+        .error-message-title {
+            margin: var(--dui-spacing-medium) 0;
+            font-size: var(--dui-font-size-heading-extra-large);
+        }
+    }
+
+    .buttons {
+        display: flex;
+        gap: var(--dui-spacing-medium);
+    }
+}

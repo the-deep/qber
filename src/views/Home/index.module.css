@@ -1,7 +1,33 @@
-.card {
-    padding: var(--padding-medium);
-}
+.page {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--background-color-gray);
+    height: 100vh;
 
-.read-the-docs {
-    color: var(--label-color);
+    .page-content {
+        display: flex;
+        flex-grow: 1;
+        gap: var(--dui-spacing-medium);
+
+        .left-pane {
+            --width-left-pane: 30rem;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            background-color: var(--color-gray1);
+            padding: var(--dui-spacing-extra-large);
+            width: var(--width-left-pane);
+            gap: var(--dui-spacing-medium);
+
+            .projects {
+                display: flex;
+                flex-direction: column;
+            }
+        }
+        .content {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+    }
 }
