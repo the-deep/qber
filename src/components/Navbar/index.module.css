@@ -1,7 +1,7 @@
 .navbar {
     --height-navbar: 4rem;
     display: flex;
-    background-color: var(--dui-color-white);
+    background-color: var(--dui-color-secondary);
     padding: var(--dui-spacing-medium) var(--dui-spacing-super-large);
     padding-bottom: 0;
     height: var(--height-navbar);
@@ -14,11 +14,17 @@
             width: 4rem;
         }
     }
+    .mid-section {
+        display: flex;
+        align-self: center;
+        flex-grow: 1;
+        padding-left: calc(20rem - 4rem);
+    }
 
     .right {
         display: flex;
         align-items: flex-end;
-        flex-grow: 1;
+        flex-shrink: 0;
         justify-content: flex-end;
 
         .nav-links {
@@ -34,13 +40,15 @@
                 padding: var(--dui-spacing-medium) var(--dui-spacing-medium);
                 text-transform: uppercase;
                 text-decoration: none;
-                color: var(--dui-color-text);
+                color: var(--dui-color-primary);
+                font-size: var(--dui-font-size-small);
                 font-weight: var(--dui-font-weight-bold);
             }
         }
 
         .actions {
             align-self: center;
+            color: var(--dui-color-primary);
         }
     }
 }

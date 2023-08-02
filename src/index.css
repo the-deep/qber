@@ -5,7 +5,13 @@
     --color-gray2: #F5F5F5;
     --color-gray3: #EAEAEA;
 
-    --color-brand: #5A3070;
+    --dui-color-primary: #5A3070;
+    --dui-color-secondary: #EFEDF7;
+
+    --dui-color-background: #FFF;
+    --dui-color-foreground: #F9F9F9;
+
+    --dui-color-foreground-scrollbar: #DAD4F1;
 
     --text-color: #414141;
     --text-color-dark: #00033F;
@@ -56,4 +62,5 @@ body {
 
 body {
     height: 100vh;
+
 }

@@ -1,23 +1,27 @@
 import { useMemo, useState, useCallback } from 'react';
 import { AiOutlineSearch } from 'react-icons/ai';
 import { HiMiniChevronDoubleDown } from 'react-icons/hi2';
-import { IoAdd } from 'react-icons/io5';
+import {
+    IoAdd,
+    IoChevronBackOutline,
+} from 'react-icons/io5';
 import { gql, useQuery } from '@apollo/client';
 import { isNotDefined, isDefined } from '@togglecorp/fujs';
 import {
+    CollapsibleContainer,
     TextInput,
     ListView,
     Button,
-    useModalState,
-    Container,
-    Message,
     Header,
+    Heading,
+    useModalState,
+    Message,
 } from '@the-deep/deep-ui';
 
 import Navbar from '#components/Navbar';
 import useDebouncedValue from '#hooks/useDebouncedValue';
 import EditQuestionnaireModal from '#components/EditQuestionnaireModal';
-import ProjectEditModal from '#components/ProjectEditModal';
+import ProjectCreateModal from '#components/ProjectCreateModal';
 import {
     ProjectsQuery,
     ProjectsQueryVariables,
@@ -102,9 +106,9 @@ export function Component() {
     ] = useModalState(false);
 
     const [
-        projectEditModalShown,
-        showProjectEditModal,
-        hideProjectEditModal,
+        projectCreateModalShown,
+        showProjectCreateModal,
+        hideProjectCreateModal,
     ] = useModalState(false);
 
     const variablesForProjects = useMemo(() => ({
@@ -173,12 +177,15 @@ export function Component() {
         projects?.limit,
     ]);
 
-    const projectListRendererParams = useCallback((_: string, datum: ProjectType) => ({
+    const projectListRendererParams = useCallback((projectId: string, datum: ProjectType) => ({
         projectItem: datum,
+        projectId,
         onProjectItemClick: setActiveProject,
         activeProject,
+        refreshProjectList: retriggerProjectsResponse,
     }), [
         activeProject,
+        retriggerProjectsResponse,
     ]);
 
     const activeProjectData = projects?.items.find((p) => p.id === activeProject);
@@ -220,23 +227,42 @@ export function Component() {
 
     return (
         <div className={styles.page}>
-            <Navbar />
+            <Navbar
+                header={(
+                    <Heading
+                        size="small"
+                    >
+                        {activeProjectData?.title}
+                    </Heading>
+                )}
+            />
             <div className={styles.pageContent}>
-                <div className={styles.leftPane}>
-                    <Header
-                        heading="My Projects"
-                        actions={(
-                            <Button
-                                name={undefined}
-                                icons={<IoAdd />}
-                                variant="tertiary"
-                                onClick={showProjectEditModal}
-                            >
-                                Add project
-                            </Button>
-                        )}
-                    />
+
+                <CollapsibleContainer
+                    className={styles.leftPane}
+                    expandButtonClassName={styles.expandChartsButton}
+                    collapseButtonClassName={styles.collapseChartsButton}
+                    heading="My Projects"
+                    collapseButtonContent={<IoChevronBackOutline />}
+                    expandButtonContent={(
+                        <div className={styles.buttonText}>
+                            Show Projects
+                            <IoChevronBackOutline />
+                        </div>
+                    )}
+                    contentClassName={styles.leftContent}
+                >
+                    <Button
+                        className={styles.addProjectButton}
+                        name={undefined}
+                        icons={<IoAdd />}
+                        variant="primary"
+                        onClick={showProjectCreateModal}
+                    >
+                        Add project
+                    </Button>
                     <TextInput
+                        className={styles.searchField}
                         name={undefined}
                         icons={<AiOutlineSearch />}
                         placeholder="Search projects"
@@ -268,25 +294,24 @@ export function Component() {
                             Show more
                         </Button>
                     )}
-                </div>
+                </CollapsibleContainer>
                 {isDefined(activeProject) && (
-                    <Container
-                        className={styles.contentWrapper}
-                        contentClassName={styles.content}
-                        heading={activeProjectData?.title}
-                        headerActions={(
-                            <Button
-                                name={undefined}
-                                icons={<IoAdd />}
-                                onClick={showQuestionnaireModal}
-                                variant="secondary"
-                            >
-                                Create Questionnaire
-                            </Button>
-                        )}
-                    >
+                    <div className={styles.content}>
+                        <Header
+                            headingSize="extraSmall"
+                            className={styles.questionnaireHeader}
+                            heading="My Questionnaires"
+                            actions={(
+                                <Button
+                                    name={undefined}
+                                    icons={<IoAdd />}
+                                    onClick={showQuestionnaireModal}
+                                >
+                                    Create Questionnaire
+                                </Button>
+                            )}
+                        />
                         <ListView
-                            className={styles.projects}
                             data={questionnaires}
                             keySelector={questionnaireKeySelector}
                             renderer={QuestionnaireItem}
@@ -296,7 +321,7 @@ export function Component() {
                             errored={false}
                             pending={questionnairesLoading}
                         />
-                    </Container>
+                    </div>
                 )}
                 {isNotDefined(activeProject) && (
                     <Message
@@ -311,9 +336,9 @@ export function Component() {
                     onSuccess={retriggerQuestionnairesResponse}
                 />
             )}
-            {projectEditModalShown && (
-                <ProjectEditModal
-                    onClose={hideProjectEditModal}
+            {projectCreateModalShown && (
+                <ProjectCreateModal
+                    onClose={hideProjectCreateModal}
                     onSuccess={retriggerProjectsResponse}
                 />
             )}

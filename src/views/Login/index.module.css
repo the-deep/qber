@@ -52,7 +52,7 @@
             align-items: baseline;
             .footnote-button {
                 padding: var(--dui-spacing-extra-small);
-                color: var(--dui-color-brand);
+                color: var(--dui-color-primary);
             }
         }
     }

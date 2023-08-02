@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import {
     IoEllipsisVertical,
 } from 'react-icons/io5';
+import { isNotDefined } from '@togglecorp/fujs';
 import { gql, useMutation } from '@apollo/client';
 import {
     Header,
@@ -87,9 +88,12 @@ function QuestionnaireItem(props: Props) {
     );
 
     const handleDeleteQuestionnaire = useCallback(() => {
+        if (isNotDefined(projectId)) {
+            return;
+        }
         triggerQuestionnaireDelete({
             variables: {
-                projectId: projectId ?? '',
+                projectId,
                 questionnaireId: questionnaireItem.id,
             },
         });
@@ -123,7 +127,7 @@ function QuestionnaireItem(props: Props) {
                 actions={(
                     <QuickActionDropdownMenu
                         label={<IoEllipsisVertical />}
-                        variant="primary"
+                        variant="secondary"
                         disabled={questionnaireDeletePending}
                     >
                         <DropdownMenuItem

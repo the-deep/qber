@@ -18,9 +18,8 @@ import {
 import {
     CreateProjectMutation,
     CreateProjectMutationVariables,
+    ProjectCreateInput,
 } from '#generated/types';
-
-import styles from './index.module.css';
 
 const CREATE_PROJECT = gql`
     mutation CreateProject(
@@ -35,11 +34,7 @@ const CREATE_PROJECT = gql`
     }
 `;
 
-interface ProjectInput {
-    title: string;
-}
-
-type FormType = PartialForm<ProjectInput>;
+type FormType = PartialForm<ProjectCreateInput>;
 type FormSchema = ObjectSchema<FormType>;
 type FormSchemaFields = ReturnType<FormSchema['fields']>;
 
@@ -52,19 +47,17 @@ const schema: FormSchema = {
     }),
 };
 
-const initialValue: FormType = {};
-
 interface Props {
     onClose: () => void;
     onSuccess: () => void;
-    // editMode: boolean,
 }
+
+const initialFormValue: FormType = {};
 
 function ProjectEditModal(props: Props) {
     const {
         onClose,
         onSuccess,
-        // editMode,
     } = props;
 
     const alert = useAlert();
@@ -76,7 +69,7 @@ function ProjectEditModal(props: Props) {
         error: formError,
         setFieldValue,
         setError,
-    } = useForm(schema, { value: initialValue });
+    } = useForm(schema, { value: initialFormValue });
 
     const fieldError = getErrorObject(formError);
 
@@ -140,12 +133,15 @@ function ProjectEditModal(props: Props) {
         <Modal
             onCloseButtonClick={onClose}
             heading="Create Project"
-            className={styles.modal}
+            freeHeight
             footer={(
                 <Button
                     name={undefined}
                     onClick={handleSubmit}
-                    disabled={pristine || projectCreatePending}
+                    disabled={
+                        pristine
+                        || projectCreatePending
+                    }
                 >
                     Save
                 </Button>

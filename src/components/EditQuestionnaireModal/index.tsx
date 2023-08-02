@@ -18,9 +18,8 @@ import {
 import {
     CreateQuestionnaireMutation,
     CreateQuestionnaireMutationVariables,
+    QuestionnaireCreateInput,
 } from '#generated/types';
-
-import styles from './index.module.css';
 
 const CREATE_QUESTIONNAIRE = gql`
     mutation CreateQuestionnaire(
@@ -38,11 +37,7 @@ const CREATE_QUESTIONNAIRE = gql`
     }
 `;
 
-interface QuestionnaireInput {
-    title: string;
-}
-
-type FormType = PartialForm<QuestionnaireInput>;
+type FormType = PartialForm<QuestionnaireCreateInput>;
 type FormSchema = ObjectSchema<FormType>;
 type FormSchemaFields = ReturnType<FormSchema['fields']>;
 
@@ -147,7 +142,7 @@ function EditQuestionnaireModal(props: Props) {
         <Modal
             onCloseButtonClick={onClose}
             heading="Create Questionnaire"
-            className={styles.modal}
+            freeHeight
             footer={(
                 <Button
                     name={undefined}

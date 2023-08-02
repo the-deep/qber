@@ -1,10 +1,19 @@
+import {
+    IoEllipsisVerticalOutline,
+} from 'react-icons/io5';
+import {
+    generatePath,
+} from 'react-router-dom';
 import { _cs } from '@togglecorp/fujs';
 import {
     TextOutput,
     DateOutput,
     Button,
+    QuickActionDropdownMenu,
+    DropdownMenuItem,
 } from '@the-deep/deep-ui';
 
+import { wrappedRoutes } from '#app/routes';
 import {
     ProjectsQuery,
 } from '#generated/types';
@@ -16,6 +25,7 @@ type ProjectType = NonNullable<NonNullable<NonNullable<ProjectsQuery['private']>
 interface Props {
     projectItem: ProjectType;
     onProjectItemClick: React.Dispatch<React.SetStateAction<string | undefined>>;
+    projectId: string;
     activeProject: string | undefined;
 }
 
@@ -23,8 +33,11 @@ function ProjectItem(props: Props) {
     const {
         projectItem,
         onProjectItemClick,
+        projectId,
         activeProject,
     } = props;
+
+    const link = generatePath(wrappedRoutes.projectEdit.absolutePath, { projectId });
 
     return (
         <Button
@@ -35,6 +48,15 @@ function ProjectItem(props: Props) {
             )}
             variant="general"
             onClick={onProjectItemClick}
+            actions={(
+                <QuickActionDropdownMenu label={<IoEllipsisVerticalOutline />}>
+                    <DropdownMenuItem
+                        href={link}
+                    >
+                        Edit Project
+                    </DropdownMenuItem>
+                </QuickActionDropdownMenu>
+            )}
         >
             <TextOutput
                 value={projectItem.title}

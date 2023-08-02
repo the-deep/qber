@@ -116,6 +116,18 @@ const resetPasswordRedirect = myWrapRoute({
     },
 });
 
+const projectEdit = myWrapRoute({
+    path: 'project/:projectId/edit',
+    component: {
+        render: () => import('#views/ProjectEdit'),
+        props: {},
+    },
+    context: {
+        title: 'Edit project',
+        visibility: 'is-authenticated',
+    },
+});
+
 const fourHundredFour = myWrapRoute({
     path: '*',
     component: {
@@ -139,7 +151,9 @@ export const wrappedRoutes = {
     register,
     resetPassword,
     resetPasswordRedirect,
+    projectEdit,
     fourHundredFour,
 };
 
+export type WrappedRoutes = typeof wrappedRoutes;
 export const unwrappedRoutes = unwrapRoute(Object.values(wrappedRoutes));
