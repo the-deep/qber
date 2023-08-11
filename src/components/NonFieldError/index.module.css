@@ -4,7 +4,7 @@
 
     animation: flash var(--duration-animation-fast) ease-in-out;
     animation-delay: var(--duration-animation-slow);
-    color: var(--dui-color-brand);
+    color: var(--dui-color-primary);
     font-weight: var(--dui-font-weight-bold);
 }
 

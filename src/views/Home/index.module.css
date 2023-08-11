@@ -1,33 +1,77 @@
 .page {
     display: flex;
     flex-direction: column;
-    background-color: var(--background-color-gray);
+    background-color: var(--dui-color-foreground);
     height: 100vh;
+    overflow-y: auto;
 
     .page-content {
         display: flex;
         flex-grow: 1;
-        gap: var(--dui-spacing-medium);
+        overflow-y: auto;
 
         .left-pane {
-            --width-left-pane: 30rem;
+            --width-left-pane: 24rem;
             display: flex;
             flex-direction: column;
             flex-shrink: 0;
-            background-color: var(--color-gray1);
-            padding: var(--dui-spacing-extra-large);
             width: var(--width-left-pane);
+            overflow-y: auto;
+            border-right: var(--dui-width-separator-thin) solid var(--dui-color-separator);
             gap: var(--dui-spacing-medium);
 
-            .projects {
+            .show-more-button {
+                align-self: flex-end;
+                color: var(--dui-color-primary);
+                font-size: var(--dui-font-size-extra-small);
+                flex-shrink: 0;
+            }
+
+            .add-project-button {
+                flex-shrink: 0;
+            }
+
+            .left-content {
                 display: flex;
                 flex-direction: column;
+                gap: var(--dui-spacing-large);
+                overflow-y: auto;
+
+                .projects {
+                    display: flex;
+                    flex-direction: column;
+                    flex-shrink: 0;
+                    overflow-y: auto;
+                }
             }
         }
+
         .content {
             display: flex;
             flex-direction: column;
             flex-grow: 1;
+            overflow-y: auto;
+            gap: var(--dui-spacing-large);
+
+            .questionnaire-header {
+                flex-shrink: 0;
+                background-color: var(--dui-color-white);
+                padding: var(--dui-spacing-large);
+
+            }
+            .questionnaire-list {
+                flex-shrink: 0;
+                flex-grow: 1;
+                padding: 0 var(--dui-spacing-extra-large);
+                overflow-y: auto;
+            }
+        }
+        .message {
+            display: flex;
+            align-items: center;
+            flex-grow: 1;
+            justify-content: center;
+            font-size: var(--dui-font-size-extra-large);
         }
     }
 }

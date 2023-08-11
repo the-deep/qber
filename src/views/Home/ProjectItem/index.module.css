@@ -2,13 +2,13 @@
     display: flex;
     border: unset;
     border-radius: 0;
-    background-color: var(--color-gray2);
+    background-color: transparent;
     padding: var(--dui-spacing-medium);
     width: 100%;
     text-align: left;
 
     &:hover, &.active {
-        background-color: var(--color-gray3);
+        background-color: var(--dui-color-secondary);
     }
 
     .description {

@@ -1,0 +1,9 @@
+.questionnaire {
+    display: flex;
+    background-color: var(--dui-color-white);
+    padding: var(--dui-spacing-large);
+
+    .heading {
+        width: 100%;
+    }
+}

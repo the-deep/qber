@@ -17,17 +17,25 @@ import {
 import styles from './index.module.css';
 
 const LOGOUT = gql`
-mutation Logout {
-    public {
-        logout {
-            ok
-            errors
+    mutation Logout {
+        public {
+            logout {
+                ok
+                errors
+            }
         }
     }
-}
 `;
 
-function Navbar() {
+interface Props {
+    header?: React.ReactNode;
+}
+
+function Navbar(props: Props) {
+    const {
+        header,
+    } = props;
+
     const { userDetails } = useContext(UserContext);
     const alert = useAlert();
 
@@ -89,6 +97,9 @@ function Navbar() {
                         alt="Questionnaire Builder Logo"
                     />
                 </Link>
+            </div>
+            <div className={styles.midSection}>
+                {header}
             </div>
             <div className={styles.right}>
                 <div className={styles.navLinks}>
