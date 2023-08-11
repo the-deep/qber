@@ -1,0 +1,35 @@
+.sub-navbar {
+    --height-navbar: 4rem;
+    display: flex;
+    background-color: var(--dui-color-secondary);
+    padding: var(--dui-spacing-medium) var(--dui-spacing-super-large);
+    height: var(--height-navbar);
+
+    .logo-container {
+        display: flex;
+        flex-shrink: 0;
+
+        .logo {
+            width: 4rem;
+        }
+    }
+
+    .mid-section {
+        display: flex;
+        align-self: center;
+        flex-grow: 1;
+        padding-left: calc(20rem - 4rem);
+    }
+
+    .right {
+        display: flex;
+        align-items: flex-end;
+        flex-shrink: 0;
+        justify-content: flex-end;
+
+        .nav-links {
+            display: flex;
+            gap: var(--dui-spacing-medium);
+        }
+    }
+}

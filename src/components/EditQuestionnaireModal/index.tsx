@@ -1,5 +1,6 @@
-import { useCallback } from 'react';
-import { gql, useMutation } from '@apollo/client';
+import { useCallback, useMemo } from 'react';
+import { isDefined, isNotDefined } from '@togglecorp/fujs';
+import { gql, useMutation, useQuery } from '@apollo/client';
 import {
     Modal,
     Button,
@@ -18,6 +19,10 @@ import {
 import {
     CreateQuestionnaireMutation,
     CreateQuestionnaireMutationVariables,
+    EditQuestionnaireMutation,
+    EditQuestionnaireMutationVariables,
+    QuestionnaireDetailQuery,
+    QuestionnaireDetailQueryVariables,
     QuestionnaireCreateInput,
 } from '#generated/types';
 
@@ -37,6 +42,45 @@ const CREATE_QUESTIONNAIRE = gql`
     }
 `;
 
+const EDIT_QUESTIONNAIRE = gql`
+    mutation EditQuestionnaire(
+        $projectId: ID!,
+        $questionnaireId: ID!,
+        $input: QuestionnaireUpdateInput!,
+    ) {
+        private {
+            projectScope(pk: $projectId) {
+                updateQuestionnaire(data: $input, id: $questionnaireId) {
+                    errors
+                    ok
+                    result {
+                        id
+                        title
+                    }
+                }
+            }
+        }
+    }
+`;
+
+const QUESTIONNAIRE_DETAIL = gql`
+    query QuestionnaireDetail(
+        $projectId: ID!,
+        $questionnaireId: ID!,
+    ) {
+        private {
+            projectScope(pk: $projectId) {
+                questionnaire(pk: $questionnaireId) {
+                    createdAt
+                    id
+                    title
+                    projectId
+                }
+            }
+        }
+    }
+`;
+
 type FormType = PartialForm<QuestionnaireCreateInput>;
 type FormSchema = ObjectSchema<FormType>;
 type FormSchemaFields = ReturnType<FormSchema['fields']>;
@@ -50,13 +94,11 @@ const schema: FormSchema = {
     }),
 };
 
-const initialValue: FormType = {};
-
 interface Props {
     onClose: () => void;
     projectId: string;
     onSuccess: () => void;
-    // editMode: boolean,
+    questionnaireId?: string,
 }
 
 function EditQuestionnaireModal(props: Props) {
@@ -64,10 +106,27 @@ function EditQuestionnaireModal(props: Props) {
         onClose,
         projectId,
         onSuccess,
-        // editMode,
+        questionnaireId,
     } = props;
 
     const alert = useAlert();
+
+    const editMode = isDefined(questionnaireId);
+
+    const questionnaireVariables = useMemo(() => {
+        if (isNotDefined(projectId) || isNotDefined(questionnaireId)) {
+            return undefined;
+        }
+        return ({
+            projectId,
+            questionnaireId,
+        });
+    }, [
+        projectId,
+        questionnaireId,
+    ]);
+
+    const initialValue: FormType = {};
 
     const {
         pristine,
@@ -76,9 +135,24 @@ function EditQuestionnaireModal(props: Props) {
         error: formError,
         setFieldValue,
         setError,
+        setValue,
     } = useForm(schema, { value: initialValue });
 
     const fieldError = getErrorObject(formError);
+
+    useQuery<QuestionnaireDetailQuery, QuestionnaireDetailQueryVariables>(
+        QUESTIONNAIRE_DETAIL,
+        {
+            skip: !editMode,
+            variables: questionnaireVariables,
+            onCompleted: (response) => {
+                const questionnaireDetails = response?.private?.projectScope?.questionnaire;
+                setValue({
+                    title: questionnaireDetails?.title,
+                });
+            },
+        },
+    );
 
     const [
         triggerQuestionnaireCreate,
@@ -114,27 +188,75 @@ function EditQuestionnaireModal(props: Props) {
         },
     );
 
+    const [
+        triggerQuestionnaireUpdate,
+        { loading: questionnaireUpdatePending },
+    ] = useMutation<EditQuestionnaireMutation, EditQuestionnaireMutationVariables>(
+        EDIT_QUESTIONNAIRE,
+        {
+            onCompleted: (questionnaireResponse) => {
+                const response = questionnaireResponse?.private?.projectScope?.updateQuestionnaire;
+                if (!response) {
+                    return;
+                }
+                if (response.ok) {
+                    setValue({
+                        title: response.result?.title,
+                    });
+                    onSuccess();
+                    onClose();
+                    alert.show(
+                        'Questionnaire updated successfully.',
+                        { variant: 'success' },
+                    );
+                } else {
+                    alert.show(
+                        'Failed to update questionnaire',
+                        { variant: 'error' },
+                    );
+                }
+            },
+            onError: () => {
+                alert.show(
+                    'Failed to update questionnaire',
+                    { variant: 'error' },
+                );
+            },
+        },
+    );
+
     const handleSubmit = useCallback(() => {
         const handler = createSubmitHandler(
             validate,
             setError,
             (val) => {
-                triggerQuestionnaireCreate({
-                    variables: {
-                        projectId,
-                        input: {
-                            title: val.title ?? '',
+                if (editMode) {
+                    triggerQuestionnaireUpdate({
+                        variables: {
+                            projectId,
+                            questionnaireId,
+                            input: val,
                         },
-                    },
-                });
+                    });
+                } else {
+                    triggerQuestionnaireCreate({
+                        variables: {
+                            projectId,
+                            input: val as QuestionnaireCreateInput,
+                        },
+                    });
+                }
             },
         );
 
         handler();
     }, [
+        editMode,
         setError,
+        questionnaireId,
         projectId,
         triggerQuestionnaireCreate,
+        triggerQuestionnaireUpdate,
         validate,
     ]);
 
@@ -148,7 +270,10 @@ function EditQuestionnaireModal(props: Props) {
                 <Button
                     name={undefined}
                     onClick={handleSubmit}
-                    disabled={pristine || questionnaireCreatePending}
+                    disabled={
+                        pristine
+                        || (editMode ? questionnaireUpdatePending : questionnaireCreatePending)
+                    }
                 >
                     Save
                 </Button>
@@ -160,6 +285,7 @@ function EditQuestionnaireModal(props: Props) {
                 value={formValue?.title}
                 error={fieldError?.title}
                 onChange={setFieldValue}
+                autoFocus
             />
         </Modal>
     );

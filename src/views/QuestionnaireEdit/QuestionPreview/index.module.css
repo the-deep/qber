@@ -1,0 +1,8 @@
+.preview {
+    gap: var(--dui-spacing-large);
+    background-color: var(--dui-color-background);
+
+    .question-item {
+        padding: var(--dui-spacing-extra-large);
+    }
+}

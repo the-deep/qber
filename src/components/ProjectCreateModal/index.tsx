@@ -114,9 +114,7 @@ function ProjectEditModal(props: Props) {
             (val) => {
                 triggerProjectCreate({
                     variables: {
-                        input: {
-                            title: val.title ?? '',
-                        },
+                        input: val as ProjectCreateInput,
                     },
                 });
             },

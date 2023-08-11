@@ -1,8 +1,14 @@
 import { useCallback } from 'react';
 import {
+    generatePath,
+} from 'react-router-dom';
+import {
     IoEllipsisVertical,
 } from 'react-icons/io5';
-import { isNotDefined } from '@togglecorp/fujs';
+import {
+    isNotDefined,
+    isDefined,
+} from '@togglecorp/fujs';
 import { gql, useMutation } from '@apollo/client';
 import {
     Header,
@@ -12,8 +18,11 @@ import {
     DropdownMenuItem,
     useConfirmation,
     useAlert,
+    useModalState,
 } from '@the-deep/deep-ui';
 
+import { wrappedRoutes } from '#app/routes';
+import EditQuestionnaireModal from '#components/EditQuestionnaireModal';
 import {
     QuestionnairesForProjectQuery,
     DeleteQuestionnaireMutation,
@@ -53,6 +62,20 @@ function QuestionnaireItem(props: Props) {
     } = props;
 
     const alert = useAlert();
+
+    const [
+        questionnaireModalShown,
+        showQuestionnaireModal,
+        hideQuestionnaireModal,
+    ] = useModalState(false);
+
+    const questionsEditLink = generatePath(
+        wrappedRoutes.questionnaireEdit.absolutePath,
+        {
+            projectId,
+            questionnaireId: questionnaireItem.id,
+        },
+    );
 
     const [
         triggerQuestionnaireDelete,
@@ -132,6 +155,17 @@ function QuestionnaireItem(props: Props) {
                     >
                         <DropdownMenuItem
                             name={undefined}
+                            onClick={showQuestionnaireModal}
+                        >
+                            Edit questionnaire
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                            href={questionsEditLink}
+                        >
+                            Edit questions
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                            name={undefined}
                             onClick={onDeleteQuestionnaireClick}
                         >
                             Delete
@@ -139,6 +173,14 @@ function QuestionnaireItem(props: Props) {
                     </QuickActionDropdownMenu>
                 )}
             />
+            {questionnaireModalShown && isDefined(projectId) && (
+                <EditQuestionnaireModal
+                    projectId={projectId}
+                    questionnaireId={questionnaireItem.id}
+                    onClose={hideQuestionnaireModal}
+                    onSuccess={onQuestionnaireDeleteSuccess}
+                />
+            )}
             {modal}
         </div>
     );

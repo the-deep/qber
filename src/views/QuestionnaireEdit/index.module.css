@@ -1,0 +1,90 @@
+.page {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--dui-color-foreground);
+    height: 100vh;
+
+    .sub-navbar {
+        flex-shrink: 0;
+        .title {
+            font-size: var(--dui-font-size-extra-large);
+        }
+        .description {
+            font-size: var(--dui-font-size-medium);
+        }
+    }
+    .page-content {
+        display: flex;
+        flex-grow: 1;
+        overflow-y: auto;
+
+        .left-pane {
+            --width-left-pane: 20rem;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            padding: var(--dui-spacing-large);
+            padding-right: var(--dui-spacing-super-small);
+            padding-left: var(--dui-spacing-extra-large);
+            width: var(--width-left-pane);
+            overflow-y: auto;
+            gap: var(--dui-spacing-medium);
+
+            .show-more-button {
+                align-self: flex-end;
+                color: var(--dui-color-primary);
+                font-size: var(--dui-font-size-extra-small);
+            }
+            .left-content {
+                display: flex;
+                flex-direction: column;
+                padding-right: var(--dui-spacing-small);
+                gap: var(--dui-spacing-large);
+
+                &::-webkit-scrollbar {
+                    width: 0.4em;
+                }
+                &::-webkit-scrollbar-thumb {
+                    border-radius: var(--dui-radius-scrollbar-border);
+                    background-color: var(--dui-color-foreground-scrollbar);
+                }
+
+            }
+        }
+
+        .content {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            margin: 0 var(--dui-spacing-extra-large);
+            gap: var(--dui-spacing-large);
+
+            .header {
+                background-color: var(--dui-color-white);
+                padding: var(--dui-spacing-large);
+            }
+
+            .question-list {
+                display: flex;
+                flex-direction: column;
+            }
+
+        }
+        .right-pane {
+            --width-right-pane: 33rem;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--dui-color-white);
+            padding: var(--dui-spacing-large);
+            width: var(--width-right-pane);
+            gap: var(--dui-spacing-large);
+
+            .question-types {
+                display: flex;
+                flex-wrap: wrap;
+                gap: var(--dui-spacing-medium);
+
+            }
+        }
+    }
+}
