@@ -224,8 +224,9 @@ function ProjectMembershipEditModal(props: MembershipProps) {
             className={styles.item}
             heading="Edit Memberships"
             onCloseButtonClick={onClose}
+            size="small"
             freeHeight
-            footer={(
+            footerActions={(
                 <Button
                     name={undefined}
                     onClick={handleSubmit}

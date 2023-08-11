@@ -143,7 +143,8 @@ function EditQuestionnaireModal(props: Props) {
             onCloseButtonClick={onClose}
             heading="Create Questionnaire"
             freeHeight
-            footer={(
+            size="small"
+            footerActions={(
                 <Button
                     name={undefined}
                     onClick={handleSubmit}

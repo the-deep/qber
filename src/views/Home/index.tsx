@@ -3,17 +3,15 @@ import { AiOutlineSearch } from 'react-icons/ai';
 import { HiMiniChevronDoubleDown } from 'react-icons/hi2';
 import {
     IoAdd,
-    IoChevronBackOutline,
 } from 'react-icons/io5';
 import { gql, useQuery } from '@apollo/client';
 import { isNotDefined, isDefined } from '@togglecorp/fujs';
 import {
-    CollapsibleContainer,
+    Container,
     TextInput,
     ListView,
     Button,
     Header,
-    Heading,
     useModalState,
     Message,
 } from '@the-deep/deep-ui';
@@ -227,48 +225,36 @@ export function Component() {
 
     return (
         <div className={styles.page}>
-            <Navbar
-                header={(
-                    <Heading
-                        size="small"
-                    >
-                        {activeProjectData?.title}
-                    </Heading>
-                )}
-            />
+            <Navbar />
             <div className={styles.pageContent}>
-
-                <CollapsibleContainer
+                <Container
                     className={styles.leftPane}
-                    expandButtonClassName={styles.expandChartsButton}
-                    collapseButtonClassName={styles.collapseChartsButton}
                     heading="My Projects"
-                    collapseButtonContent={<IoChevronBackOutline />}
-                    expandButtonContent={(
-                        <div className={styles.buttonText}>
-                            Show Projects
-                            <IoChevronBackOutline />
-                        </div>
+                    spacing="loose"
+                    headerActions={(
+                        <Button
+                            className={styles.addProjectButton}
+                            name={undefined}
+                            icons={<IoAdd />}
+                            variant="primary"
+                            onClick={showProjectCreateModal}
+                        >
+                            Add project
+                        </Button>
+                    )}
+                    headerDescription={(
+                        <TextInput
+                            className={styles.searchField}
+                            name={undefined}
+                            icons={<AiOutlineSearch />}
+                            placeholder="Search projects"
+                            onChange={setSearchText}
+                            variant="general"
+                            value={searchText}
+                        />
                     )}
                     contentClassName={styles.leftContent}
                 >
-                    <Button
-                        className={styles.addProjectButton}
-                        name={undefined}
-                        icons={<IoAdd />}
-                        variant="primary"
-                        onClick={showProjectCreateModal}
-                    >
-                        Add project
-                    </Button>
-                    <TextInput
-                        className={styles.searchField}
-                        name={undefined}
-                        icons={<AiOutlineSearch />}
-                        placeholder="Search projects"
-                        onChange={setSearchText}
-                        value={searchText}
-                    />
                     <ListView
                         className={styles.projects}
                         data={projects?.items}
@@ -294,13 +280,14 @@ export function Component() {
                             Show more
                         </Button>
                     )}
-                </CollapsibleContainer>
+                </Container>
                 {isDefined(activeProject) && (
                     <div className={styles.content}>
                         <Header
-                            headingSize="extraSmall"
+                            headingSize="large"
                             className={styles.questionnaireHeader}
-                            heading="My Questionnaires"
+                            heading={activeProjectData?.title}
+                            description="Questionnaires"
                             actions={(
                                 <Button
                                     name={undefined}
@@ -312,11 +299,14 @@ export function Component() {
                             )}
                         />
                         <ListView
+                            className={styles.questionnaireList}
                             data={questionnaires}
                             keySelector={questionnaireKeySelector}
                             renderer={QuestionnaireItem}
                             rendererParams={questionnaireListRendererParams}
                             borderBetweenItem
+                            emptyMessage="There are no questionnaires in this project yet."
+                            messageShown
                             filtered={false}
                             errored={false}
                             pending={questionnairesLoading}
@@ -325,7 +315,8 @@ export function Component() {
                 )}
                 {isNotDefined(activeProject) && (
                     <Message
-                        message="No project selected"
+                        className={styles.message}
+                        message="You have not selected any projects yet."
                     />
                 )}
             </div>

@@ -7,6 +7,7 @@
 
     --dui-color-primary: #5A3070;
     --dui-color-secondary: #EFEDF7;
+    --dui-color-background-hover-primary-button: #6E4780;
 
     --dui-color-background: #FFF;
     --dui-color-foreground: #F9F9F9;
@@ -57,7 +58,15 @@ html,
 body {
     margin: 0;
     padding: 0;
-    scrollbar-gutter: stable;
+
+    ::-webkit-scrollbar {
+        width: 0.4em;
+    }
+    ::-webkit-scrollbar-thumb {
+        border-radius: var(--dui-radius-scrollbar-border);
+        background-color: var(--dui-color-foreground-scrollbar);
+    }
+
 }
 
 body {

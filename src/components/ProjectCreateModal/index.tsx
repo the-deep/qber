@@ -134,7 +134,8 @@ function ProjectEditModal(props: Props) {
             onCloseButtonClick={onClose}
             heading="Create Project"
             freeHeight
-            footer={(
+            size="small"
+            footerActions={(
                 <Button
                     name={undefined}
                     onClick={handleSubmit}
