@@ -12,6 +12,7 @@ import {
     MdOutlineAbc,
     MdOutlineChecklist,
 } from 'react-icons/md';
+import { GrDrag } from 'react-icons/gr';
 import {
     isNotDefined,
     isDefined,
@@ -31,6 +32,7 @@ import {
 } from '@the-deep/deep-ui';
 
 import SubNavbar from '#components/SubNavbar';
+import SortableList, { Attributes, Listeners } from '#components/SortableList';
 import {
     QuestionnaireQuery,
     QuestionnaireQueryVariables,
@@ -91,12 +93,66 @@ const QUESTIONNAIRE = gql`
                         questionnaireId
                     }
                 }
+                groups(filters: {
+                    questionnaire: {
+                        pk: $questionnaireId
+                    }
+                }) {
+                    items {
+                        id
+                        parentId
+                        relevant
+                        questionnaireId
+                        label
+                        name
+                    }
+                }
             }
         }
     }
 `;
+
 type Question = NonNullable<NonNullable<NonNullable<NonNullable<QuestionnaireQuery['private']>['projectScope']>['questions']>['items']>[number];
+type QuestionGroup = NonNullable<NonNullable<NonNullable<NonNullable<QuestionnaireQuery['private']>['projectScope']>['groups']>['items']>[number];
 const questionKeySelector = (q: Question) => q.id;
+const questionGroupKeySelector = (g: QuestionGroup) => g.id;
+
+interface QuestionGroupProps {
+    id: string;
+    item: QuestionGroup;
+    attributes?: Attributes;
+    listeners?: Listeners;
+}
+
+function QuestionGroupItem(props: QuestionGroupProps) {
+    const {
+        id,
+        item,
+        attributes,
+        listeners,
+    } = props;
+
+    return (
+        <Container
+            headerIcons={(
+                <QuickActionButton
+                    name={id}
+                    // FIXME: use translation
+                    title="Drag"
+                    // eslint-disable-next-line react/jsx-props-no-spreading
+                    {...attributes}
+                    // eslint-disable-next-line react/jsx-props-no-spreading
+                    {...listeners}
+                >
+                    <GrDrag />
+                </QuickActionButton>
+            )}
+            className={styles.groupItem}
+            heading={item.label}
+            headingSize="extraSmall"
+        />
+    );
+}
 
 const questionTypes: QuestionType[] = [
     {
@@ -128,6 +184,10 @@ const questionTypes: QuestionType[] = [
 
 const questionTypeKeySelector = (q: QuestionType) => q.key;
 const PAGE_SIZE = 15;
+
+function reorder<T extends { order?: number }>(data: T[]) {
+    return data.map((v, i) => ({ ...v, order: i + 1 }));
+}
 
 // FIXME: The type is not right
 interface QuestionnaireParams {
@@ -189,6 +249,9 @@ export function Component() {
     const projectTitle = questionnaireResponse?.private.projectScope?.project.title;
     const questionsData = questionnaireResponse?.private.projectScope?.questions?.items;
 
+    const questionGroups = questionnaireResponse?.private.projectScope?.groups.items;
+    const filteredParentGroups = questionGroups?.filter((group) => group.parentId === null);
+
     const questionTypeRendererParams = useCallback((key: string, data: QuestionType) => ({
         questionType: data,
         name: key,
@@ -199,6 +262,15 @@ export function Component() {
         question: data,
     }), [
     ]);
+
+    const tocRendererParams = useCallback((key: string, data: QuestionGroup) => ({
+        id: key,
+        item: data,
+    }), []);
+
+    const handleGroupOrderChange = useCallback((...args) => {
+            console.warn('here', args);
+    }, []);
 
     if (isNotDefined(projectId) || isNotDefined(questionnaireId)) {
         return undefined;
@@ -226,7 +298,20 @@ export function Component() {
                     heading="Select Questions"
                     contentClassName={styles.leftContent}
                 >
-                    Here will be the list of sections
+                    <SortableList
+                        className={styles.sortableList}
+                        name="toc"
+                        onChange={handleGroupOrderChange}
+                        data={filteredParentGroups}
+                        keySelector={questionGroupKeySelector}
+                        renderer={QuestionGroupItem}
+                        rendererParams={tocRendererParams}
+                        direction="vertical"
+                        emptyMessage="No groups found"
+                        messageShown
+                        messageIconShown
+                        compactEmptyMessage
+                    />
                 </Container>
                 <div className={styles.content}>
                     <Header
