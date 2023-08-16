@@ -14,7 +14,10 @@ interface Props {
     hint?: string | null;
 }
 
-function SelectMultipleQuestionPreview(props: Props) {
+const keySelector = (d) => d.id;
+const labelSelector = (d) => d.name;
+
+function SelectMultipleQuestionsPreview(props: Props) {
     const {
         className,
         label,
@@ -30,15 +33,16 @@ function SelectMultipleQuestionPreview(props: Props) {
                 block
             />
             <MultiSelectInput
-                keySelector={function noRefCheck() { }}
+                keySelector={keySelector}
                 label="Country"
-                labelSelector={function noRefCheck() { }}
+                labelSelector={labelSelector}
                 name="test"
                 onChange={function noRefCheck() { }}
                 options={[]}
+                value={[]}
             />
         </div>
     );
 }
 
-export default SelectMultipleQuestionPreview;
+export default SelectMultipleQuestionsPreview;

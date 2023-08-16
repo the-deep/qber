@@ -21,21 +21,25 @@ function SelectOneQuestionPreview(props: Props) {
         hint,
     } = props;
 
+    const keySelector = (d) => d.id;
+    const labelSelector = (d) => d.name;
+
     return (
         <div className={_cs(styles.preview, className)}>
             <TextOutput
-                value={label?? 'Which Country needs the assistance quickest?'}
+                value={label ?? 'Which Country needs the assistance quickest?'}
                 description={hint ?? 'Choose One'}
                 spacing="none"
                 block
             />
             <RadioInput
-                keySelector={function noRefCheck() { }}
+                keySelector={keySelector}
                 label="Country"
-                labelSelector={function noRefCheck() { }}
+                labelSelector={labelSelector}
                 name="test"
                 onChange={function noRefCheck() { }}
                 options={[]}
+                value={[]}
             />
         </div>
     );

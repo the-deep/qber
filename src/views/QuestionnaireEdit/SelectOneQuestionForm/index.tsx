@@ -1,5 +1,6 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
+    isNotDefined,
     randomString,
 } from '@togglecorp/fujs';
 import {
@@ -23,8 +24,8 @@ import {
     CreateTextQuestionMutationVariables,
     QuestionCreateInput,
     QuestionTypeEnum,
-    OptionsQuery,
-    OptionsQueryVariables,
+    PillarsQuery,
+    PillarsQueryVariables,
 } from '#generated/types';
 import SelectOneQuestionPreview from '#components/questionPreviews/SelectOneQuestionPreview';
 
@@ -48,6 +49,28 @@ const CREATE_TEXT_QUESTION = gql`
     }
 `;
 
+const PILLARS = gql`
+    query Pillars (
+        $projectId: ID!
+    ) {
+        private {
+            projectScope(pk: $projectId) {
+                groups {
+                        items {
+                            id
+                            name
+                            label
+                            parentId
+                            questionnaireId
+                        }
+                    limit
+                    offset
+                }
+            }
+        }
+    }
+`;
+
 const OPTIONS = gql`
     query Options (
         $projectId: ID!,
@@ -55,12 +78,13 @@ const OPTIONS = gql`
     ){
         private {
             projectScope(pk: $projectId) {
-                choiceCollections(filters: {questionnaire: {pk: $questionnaireId}}) {
+                groups {
                     items {
                         id
-                        label
                         name
+                        parentId
                         questionnaireId
+                        label
                     }
                 }
             }
@@ -94,6 +118,8 @@ const schema: FormSchema = {
     }),
 };
 
+const PAGE_SIZE = 20;
+
 interface Props {
     projectId: string;
     questionnaireId: string;
@@ -107,14 +133,32 @@ function SelectOneQuestionForm(props: Props) {
 
     const alert = useAlert();
 
+    const pillarsVariables = useMemo(() => {
+        if (isNotDefined(projectId)) {
+            return undefined;
+        }
+        return ({
+            projectId,
+            limit: PAGE_SIZE,
+            offset: 0,
+        });
+    }, [
+        projectId,
+    ]);
+
     const {
-        data: optionsResponse,
-        loading: optionsLoading,
-    } = useQuery<OptionsQuery, OptionsQueryVariables>(
-        OPTIONS,
+        data: pillarsResponse,
+    } = useQuery<PillarsQuery, PillarsQueryVariables>(
+        PILLARS,
+        {
+            variables: pillarsVariables,
+        }
     );
 
-    console.warn('optionssss', optionsResponse?.private?.projectScope?.choiceCollections?.items);
+    const pillarsOptions = pillarsResponse?.private?.projectScope?.groups.items || [];
+
+    const pillarKeySelector = (data: { id: PillarsQuery }) => data.id;
+    const pillarLabelSelector = (data: { label: PillarsQuery }) => data.label;
 
     const [
         triggerQuestionCreate,
@@ -193,13 +237,6 @@ function SelectOneQuestionForm(props: Props) {
                 hint={formValue.hint}
             />
             <div className={styles.editSection}>
-                <SelectInput
-                    name="label"
-                    label="Change Question type"
-                    value={formValue.label}
-                    error={fieldError?.label}
-                    onChange={setFieldValue}
-                />
                 <TextInput
                     name="label"
                     label="Question label"
@@ -217,10 +254,13 @@ function SelectOneQuestionForm(props: Props) {
                 <>Options</>
                 <SelectInput
                     name="label"
-                    label="Change Question type"
+                    label="Pillar and Sub pillar"
                     value={formValue.label}
                     error={fieldError?.label}
                     onChange={setFieldValue}
+                    keySelector={pillarKeySelector}
+                    labelSelector={pillarLabelSelector}
+                    options={pillarsOptions}
                 />
             </div>
             <Button

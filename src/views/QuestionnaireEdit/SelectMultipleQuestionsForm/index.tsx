@@ -1,5 +1,6 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
+    isNotDefined,
     randomString,
 } from '@togglecorp/fujs';
 import {
@@ -8,7 +9,7 @@ import {
     TextInput,
     useAlert,
 } from '@the-deep/deep-ui';
-import { gql, useMutation } from '@apollo/client';
+import { gql, useMutation, useQuery } from '@apollo/client';
 import {
     ObjectSchema,
     createSubmitHandler,
@@ -21,11 +22,14 @@ import {
 import {
     CreateTextQuestionMutation,
     CreateTextQuestionMutationVariables,
+    PillarsQuery,
+    PillarsQueryVariables,
     QuestionCreateInput,
     QuestionTypeEnum,
 } from '#generated/types';
 
 import styles from './index.module.css';
+import SelectMultipleQuestionPreview from '#components/SelectMultipleQuestionsPreview';
 
 const CREATE_TEXT_QUESTION = gql`
     mutation CreateTextQuestion(
@@ -39,6 +43,28 @@ const CREATE_TEXT_QUESTION = gql`
                 ) {
                     ok
                     errors
+                }
+            }
+        }
+    }
+`;
+
+const PILLARS = gql`
+    query Pillars (
+        $projectId: ID!
+    ) {
+        private {
+            projectScope(pk: $projectId) {
+                groups {
+                        items {
+                            id
+                            name
+                            label
+                            parentId
+                            questionnaireId
+                        }
+                    limit
+                    offset
                 }
             }
         }
@@ -71,6 +97,8 @@ const schema: FormSchema = {
     }),
 };
 
+const PAGE_SIZE = 20;
+
 interface Props {
     projectId: string;
     questionnaireId: string;
@@ -84,6 +112,32 @@ function SelectMultipleQuestionsForm(props: Props) {
 
     const alert = useAlert();
 
+    const pillarsVariables = useMemo(() => {
+        if (isNotDefined(projectId)) {
+            return undefined;
+        }
+        return ({
+            projectId,
+            limit: PAGE_SIZE,
+            offset: 0,
+        });
+    }, [
+        projectId,
+    ]);
+
+    const {
+        data: pillarsResponse,
+    } = useQuery<PillarsQuery, PillarsQueryVariables>(
+        PILLARS,
+        {
+            variables: pillarsVariables,
+        }
+    );
+
+    const pillarsOptions = pillarsResponse?.private?.projectScope?.groups.items || [];
+
+    const pillarKeySelector = (data: { id: string }) => data.id;
+    const pillarLabelSelector = (data: { label: string }) => data.label;
     const [
         triggerQuestionCreate,
         { loading: createQuestionPending },
@@ -155,19 +209,12 @@ function SelectMultipleQuestionsForm(props: Props) {
 
     return (
         <form className={styles.question}>
-            <SelectMultipleQuestionsForm
+            <SelectMultipleQuestionPreview
                 className={styles.preview}
                 label={formValue.label}
                 hint={formValue.hint}
             />
             <div className={styles.editSection}>
-                <SelectInput
-                    name="label"
-                    label="Change Question type"
-                    value={formValue.label}
-                    error={fieldError?.label}
-                    onChange={setFieldValue}
-                />
                 <TextInput
                     name="label"
                     label="Question label"
@@ -185,10 +232,13 @@ function SelectMultipleQuestionsForm(props: Props) {
                 <>Options</>
                 <SelectInput
                     name="label"
-                    label="Change Question type"
+                    label="Pillar and Sub pillar"
                     value={formValue.label}
                     error={fieldError?.label}
                     onChange={setFieldValue}
+                    keySelector={pillarKeySelector}
+                    labelSelector={pillarLabelSelector}
+                    options={pillarsOptions}
                 />
             </div>
             <Button
