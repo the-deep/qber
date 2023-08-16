@@ -39,8 +39,11 @@ import {
 import TextQuestionForm from './TextQuestionForm';
 import IntegerQuestionForm from './IntegerQuestionForm';
 import RankQuestionForm from './RankQuestionForm';
+import SelectOneQuestionForm from './SelectOneQuestionForm';
 import QuestionTypeItem, { QuestionType } from './QuestionTypeItem';
 import QuestionPreview from './QuestionPreview';
+import SelectMultipleQuestionsForm from './SelectMultipleQuestionsForm';
+
 import styles from './index.module.css';
 
 const QUESTIONNAIRE = gql`
@@ -296,6 +299,18 @@ export function Component() {
                             )}
                             {(selectedQuestionType === 'RANK') && (
                                 <RankQuestionForm
+                                    projectId={projectId}
+                                    questionnaireId={questionnaireId}
+                                />
+                            )}
+                            {(selectedQuestionType === 'SELECT_ONE') && (
+                                <SelectOneQuestionForm
+                                    projectId={projectId}
+                                    questionnaireId={questionnaireId}
+                                />
+                            )}
+                            {(selectedQuestionType === 'SELECT_MULTIPLE') && (
+                                <SelectMultipleQuestionsForm
                                     projectId={projectId}
                                     questionnaireId={questionnaireId}
                                 />
