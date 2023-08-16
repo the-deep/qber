@@ -33,6 +33,7 @@ import {
 
 import SubNavbar from '#components/SubNavbar';
 import SortableList, { Attributes, Listeners } from '#components/SortableList';
+import TocList from '#components/TocList';
 import {
     QuestionnaireQuery,
     QuestionnaireQueryVariables,
@@ -122,6 +123,7 @@ interface QuestionGroupProps {
     item: QuestionGroup;
     attributes?: Attributes;
     listeners?: Listeners;
+    options: QuestionGroup[];
 }
 
 function QuestionGroupItem(props: QuestionGroupProps) {
@@ -130,7 +132,14 @@ function QuestionGroupItem(props: QuestionGroupProps) {
         item,
         attributes,
         listeners,
+        options,
     } = props;
+
+    const rendererParams = useCallback((key: string, datum: QuestionGroup) => ({
+        id: key,
+        item: datum,
+        options,
+    }), [options]);
 
     return (
         <Container
@@ -150,7 +159,14 @@ function QuestionGroupItem(props: QuestionGroupProps) {
             className={styles.groupItem}
             heading={item.label}
             headingSize="extraSmall"
-        />
+        >
+            <TocList
+                parentId={item.id}
+                options={options}
+                renderer={QuestionGroupItem}
+                rendererParams={rendererParams}
+            />
+        </Container>
     );
 }
 
@@ -184,10 +200,6 @@ const questionTypes: QuestionType[] = [
 
 const questionTypeKeySelector = (q: QuestionType) => q.key;
 const PAGE_SIZE = 15;
-
-function reorder<T extends { order?: number }>(data: T[]) {
-    return data.map((v, i) => ({ ...v, order: i + 1 }));
-}
 
 // FIXME: The type is not right
 interface QuestionnaireParams {
@@ -250,7 +262,6 @@ export function Component() {
     const questionsData = questionnaireResponse?.private.projectScope?.questions?.items;
 
     const questionGroups = questionnaireResponse?.private.projectScope?.groups.items;
-    const filteredParentGroups = questionGroups?.filter((group) => group.parentId === null);
 
     const questionTypeRendererParams = useCallback((key: string, data: QuestionType) => ({
         questionType: data,
@@ -267,10 +278,6 @@ export function Component() {
         id: key,
         item: data,
     }), []);
-
-    const handleGroupOrderChange = useCallback((...args) => {
-            console.warn('here', args);
-    }, []);
 
     if (isNotDefined(projectId) || isNotDefined(questionnaireId)) {
         return undefined;
@@ -298,19 +305,11 @@ export function Component() {
                     heading="Select Questions"
                     contentClassName={styles.leftContent}
                 >
-                    <SortableList
-                        className={styles.sortableList}
-                        name="toc"
-                        onChange={handleGroupOrderChange}
-                        data={filteredParentGroups}
-                        keySelector={questionGroupKeySelector}
+                    <TocList
+                        options={questionGroups}
                         renderer={QuestionGroupItem}
                         rendererParams={tocRendererParams}
-                        direction="vertical"
-                        emptyMessage="No groups found"
-                        messageShown
-                        messageIconShown
-                        compactEmptyMessage
+                        parentId={null}
                     />
                 </Container>
                 <div className={styles.content}>
