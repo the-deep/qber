@@ -1,4 +1,9 @@
-import React, { useState, memo, useMemo, useCallback } from 'react';
+import React, {
+    useState,
+    memo,
+    useMemo,
+    useCallback,
+} from 'react';
 import {
     Portal,
     ListView,
@@ -67,6 +72,7 @@ interface SortableItemProps<
     itemContainerParams?: ItemContainerParams;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 function SortableItem<
     D,
     P,
@@ -103,17 +109,20 @@ function SortableItem<
         <div
             ref={setNodeRef}
             style={style}
+            // eslint-disable-next-line react/jsx-props-no-spreading
             {...itemContainerParams ?? {}}
         >
             <Renderer
                 attributes={attributes}
                 listeners={listeners}
+                // eslint-disable-next-line react/jsx-props-no-spreading
                 {...rendererParams}
             />
         </div>
     );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 const MemoizedSortableItem = genericMemo(SortableItem);
 
 export type Props<
@@ -142,6 +151,7 @@ export type Props<
     errored?: boolean;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 function SortableList<
     N extends string,
     D,
@@ -183,7 +193,7 @@ function SortableList<
 
     const handleDragStart = useCallback((event: DragStartEvent) => {
         const { active } = event;
-        setActiveId(active.id);
+        setActiveId(active.id.toString());
     }, []);
 
     const handleDragEnd = useCallback((event: DragEndEvent) => {
@@ -191,8 +201,8 @@ function SortableList<
         setActiveId(undefined);
 
         if (active.id && over?.id && active.id !== over?.id && items && onChange) {
-            const oldIndex = items.indexOf(active.id);
-            const newIndex = items.indexOf(over.id);
+            const oldIndex = items.indexOf(active.id.toString());
+            const newIndex = items.indexOf(over.id.toString());
 
             const newItems = arrayMove(items, oldIndex, newIndex);
             const dataMap = listToMap(
@@ -226,6 +236,7 @@ function SortableList<
         }
         return (
             <Renderer
+                // eslint-disable-next-line react/jsx-props-no-spreading
                 {...params}
             />
         );
@@ -299,7 +310,7 @@ function SortableList<
                 strategy={sortingStrategy}
             >
                 <ListView
-                    // eslint-disable-next-line jsx-props-no-spreading
+                    // eslint-disable-next-line react/jsx-props-no-spreading
                     {...otherProps}
                     className={className}
                     data={data}
@@ -323,4 +334,5 @@ function SortableList<
     );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export default genericMemo(SortableList);

@@ -1,0 +1,30 @@
+.sortable-list {
+    display: flex;
+    flex-direction: column;
+
+    .group-item {
+        display: flex;
+        padding: var(--dui-spacing-small);
+
+        .header-icons {
+            display: flex;
+            align-items: center;
+            padding-right: var(--dui-spacing-extra-small);
+        }
+
+        .heading {
+            font-weight: var(--dui-font-weight-regular);
+        }
+
+        .content {
+            display: flex;
+            flex-direction: column;
+            padding-left: var(--dui-spacing-large);
+            gap: var(--dui-spacing-small);
+        }
+    }
+
+    &.nested-list {
+        padding-top: var(--dui-spacing-small);
+    }
+}

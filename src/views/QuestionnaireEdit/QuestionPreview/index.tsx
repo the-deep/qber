@@ -1,5 +1,12 @@
 import {
-    QuestionnaireQuery,
+    isNotDefined,
+} from '@togglecorp/fujs';
+import {
+    TabPanel,
+} from '@the-deep/deep-ui';
+
+import {
+    QuestionsByGroupQuery,
 } from '#generated/types';
 import TextQuestionPreview from '#components/questionPreviews/TextQuestionPreview';
 import IntegerQuestionPreview from '#components/questionPreviews/IntegerQuestionPreview';
@@ -7,7 +14,7 @@ import RankQuestionPreview from '#components/questionPreviews/RankQuestionPrevie
 
 import styles from './index.module.css';
 
-type Question = NonNullable<NonNullable<NonNullable<NonNullable<QuestionnaireQuery['private']>['projectScope']>['questions']>['items']>[number];
+type Question = NonNullable<NonNullable<NonNullable<NonNullable<QuestionsByGroupQuery['private']>['projectScope']>['questions']>['items']>[number];
 
 interface QuestionProps {
     question: Question;
@@ -18,8 +25,15 @@ function QuestionPreview(props: QuestionProps) {
         question,
     } = props;
 
+    if (isNotDefined(question.groupId)) {
+        return null;
+    }
+
     return (
-        <div className={styles.preview}>
+        <TabPanel
+            name={question.groupId}
+            className={styles.preview}
+        >
             {(question.type === 'TEXT') && (
                 <TextQuestionPreview
                     className={styles.questionItem}
@@ -41,7 +55,7 @@ function QuestionPreview(props: QuestionProps) {
                     hint={question.hint}
                 />
             )}
-        </div>
+        </TabPanel>
     );
 }
 

@@ -12,7 +12,6 @@ import {
     MdOutlineAbc,
     MdOutlineChecklist,
 } from 'react-icons/md';
-import { GrDrag } from 'react-icons/gr';
 import {
     isNotDefined,
     isDefined,
@@ -27,16 +26,19 @@ import {
     Header,
     ListView,
     QuickActionButton,
+    Tab,
+    Tabs,
     TextOutput,
     useModalState,
 } from '@the-deep/deep-ui';
 
 import SubNavbar from '#components/SubNavbar';
-import SortableList, { Attributes, Listeners } from '#components/SortableList';
 import TocList from '#components/TocList';
 import {
     QuestionnaireQuery,
     QuestionnaireQueryVariables,
+    QuestionsByGroupQuery,
+    QuestionsByGroupQueryVariables,
 } from '#generated/types';
 
 import TextQuestionForm from './TextQuestionForm';
@@ -53,8 +55,6 @@ const QUESTIONNAIRE = gql`
     query Questionnaire(
         $projectId: ID!,
         $questionnaireId: ID!,
-        $limit: Int,
-        $offset: Int,
     ) {
         private {
             projectScope(pk: $projectId) {
@@ -66,33 +66,6 @@ const QUESTIONNAIRE = gql`
                 questionnaire(pk: $questionnaireId) {
                     id
                     title
-                }
-                questions(
-                    filters: {
-                        questionnaire: {
-                            pk: $questionnaireId,
-                        }
-                    }
-                    order: {
-                        createdAt: ASC
-                    }
-                    pagination: {
-                        limit: $limit,
-                        offset: $offset,
-                    }
-                ) {
-                    count
-                    limit
-                    offset
-                    items {
-                        createdAt
-                        hint
-                        id
-                        label
-                        name
-                        type
-                        questionnaireId
-                    }
                 }
                 groups(filters: {
                     questionnaire: {
@@ -113,62 +86,50 @@ const QUESTIONNAIRE = gql`
     }
 `;
 
-type Question = NonNullable<NonNullable<NonNullable<NonNullable<QuestionnaireQuery['private']>['projectScope']>['questions']>['items']>[number];
+const QUESTIONS_BY_GROUP = gql`
+    query QuestionsByGroup(
+        $projectId: ID!,
+        $questionnaireId: ID!,
+        $groupId: DjangoModelFilterInput,
+    ) {
+        private {
+            projectScope(pk: $projectId) {
+                id
+                questions(
+                    filters: {
+                        questionnaire: {
+                            pk: $questionnaireId,
+                        },
+                        group: $groupId,
+                        includeChildGroup: true,
+                    }
+                    order: {
+                        createdAt: ASC
+                    }
+                ) {
+                    count
+                    limit
+                    offset
+                    items {
+                        createdAt
+                        hint
+                        id
+                        groupId
+                        label
+                        name
+                        type
+                        questionnaireId
+                    }
+                }
+            }
+        }
+    }
+`;
+
+type Question = NonNullable<NonNullable<NonNullable<NonNullable<QuestionsByGroupQuery['private']>['projectScope']>['questions']>['items']>[number];
 type QuestionGroup = NonNullable<NonNullable<NonNullable<NonNullable<QuestionnaireQuery['private']>['projectScope']>['groups']>['items']>[number];
 const questionKeySelector = (q: Question) => q.id;
-const questionGroupKeySelector = (g: QuestionGroup) => g.id;
-
-interface QuestionGroupProps {
-    id: string;
-    item: QuestionGroup;
-    attributes?: Attributes;
-    listeners?: Listeners;
-    options: QuestionGroup[];
-}
-
-function QuestionGroupItem(props: QuestionGroupProps) {
-    const {
-        id,
-        item,
-        attributes,
-        listeners,
-        options,
-    } = props;
-
-    const rendererParams = useCallback((key: string, datum: QuestionGroup) => ({
-        id: key,
-        item: datum,
-        options,
-    }), [options]);
-
-    return (
-        <Container
-            headerIcons={(
-                <QuickActionButton
-                    name={id}
-                    // FIXME: use translation
-                    title="Drag"
-                    // eslint-disable-next-line react/jsx-props-no-spreading
-                    {...attributes}
-                    // eslint-disable-next-line react/jsx-props-no-spreading
-                    {...listeners}
-                >
-                    <GrDrag />
-                </QuickActionButton>
-            )}
-            className={styles.groupItem}
-            heading={item.label}
-            headingSize="extraSmall"
-        >
-            <TocList
-                parentId={item.id}
-                options={options}
-                renderer={QuestionGroupItem}
-                rendererParams={rendererParams}
-            />
-        </Container>
-    );
-}
+const groupTabKeySelector = (g: QuestionGroup) => g.id;
 
 const questionTypes: QuestionType[] = [
     {
@@ -201,18 +162,12 @@ const questionTypes: QuestionType[] = [
 const questionTypeKeySelector = (q: QuestionType) => q.key;
 const PAGE_SIZE = 15;
 
-// FIXME: The type is not right
-interface QuestionnaireParams {
-    projectId: string | undefined;
-    questionnaireId: string | undefined;
-}
-
 // eslint-disable-next-line import/prefer-default-export
 export function Component() {
     const {
         projectId,
         questionnaireId,
-    } = useParams<QuestionnaireParams>();
+    } = useParams<{projectId: string, questionnaireId: string}>();
 
     const [
         addQuestionPaneShown,
@@ -225,6 +180,11 @@ export function Component() {
         setSelectedQuestionType,
     ] = useState<string | undefined>();
 
+    const [
+        selectedGroups,
+        setSelectedGroups,
+    ] = useState<string[]>([]);
+
     const handleRightPaneClose = useCallback(() => {
         hideAddQuestionPane();
         setSelectedQuestionType(undefined);
@@ -236,6 +196,7 @@ export function Component() {
         if (isNotDefined(projectId) || isNotDefined(questionnaireId)) {
             return undefined;
         }
+
         return ({
             projectId,
             questionnaireId,
@@ -247,6 +208,11 @@ export function Component() {
         questionnaireId,
     ]);
 
+    const [
+        orderedOptions,
+        setOrderedOptions,
+    ] = useState<QuestionGroup[]>([]);
+
     const {
         data: questionnaireResponse,
     } = useQuery<QuestionnaireQuery, QuestionnaireQueryVariables>(
@@ -254,15 +220,60 @@ export function Component() {
         {
             skip: isNotDefined(questionnaireVariables),
             variables: questionnaireVariables,
+            onCompleted: (response) => {
+                const questionGroups = response?.private.projectScope?.groups?.items;
+                setOrderedOptions(questionGroups ?? []);
+            },
         },
     );
 
     const questionnaireTitle = questionnaireResponse?.private.projectScope?.questionnaire?.title;
     const projectTitle = questionnaireResponse?.private.projectScope?.project.title;
-    const questionsData = questionnaireResponse?.private.projectScope?.questions?.items;
 
-    const questionGroups = questionnaireResponse?.private.projectScope?.groups.items;
+    const parentQuestionGroups = orderedOptions?.filter(
+        (item) => item.parentId === null,
+    );
 
+    const selectedParentQuestionGroups = parentQuestionGroups?.filter(
+        (group) => selectedGroups.includes(group.id),
+    );
+
+    const [activeGroupTab, setActiveGroupTab] = useState<string | undefined>(
+        selectedParentQuestionGroups?.[0]?.name,
+    );
+
+    // NOTE: If none of the tabs are selected, 1st group should be selected
+    const finalSelectedTab = activeGroupTab ?? selectedGroups[0];
+
+    const questionsVariables = useMemo(() => {
+        if (isNotDefined(projectId)
+            || isNotDefined(questionnaireId)
+            || isNotDefined(finalSelectedTab)) {
+            return undefined;
+        }
+
+        return ({
+            projectId,
+            questionnaireId,
+            activeGroupTab: finalSelectedTab,
+        });
+    }, [
+        projectId,
+        questionnaireId,
+        finalSelectedTab,
+    ]);
+
+    const {
+        data: questionsResponse,
+    } = useQuery<QuestionsByGroupQuery, QuestionsByGroupQueryVariables>(
+        QUESTIONS_BY_GROUP,
+        {
+            skip: isNotDefined(questionsVariables),
+            variables: questionsVariables,
+        },
+    );
+
+    const questionsData = questionsResponse?.private.projectScope?.questions?.items;
     const questionTypeRendererParams = useCallback((key: string, data: QuestionType) => ({
         questionType: data,
         name: key,
@@ -271,16 +282,15 @@ export function Component() {
 
     const questionRendererParams = useCallback((_: string, data: Question) => ({
         question: data,
-    }), [
-    ]);
+    }), []);
 
-    const tocRendererParams = useCallback((key: string, data: QuestionGroup) => ({
-        id: key,
-        item: data,
+    const groupTabRenderParams = useCallback((_: string, datum: QuestionGroup) => ({
+        children: datum.label,
+        name: datum.id,
     }), []);
 
     if (isNotDefined(projectId) || isNotDefined(questionnaireId)) {
-        return undefined;
+        return null;
     }
 
     return (
@@ -306,10 +316,12 @@ export function Component() {
                     contentClassName={styles.leftContent}
                 >
                     <TocList
-                        options={questionGroups}
-                        renderer={QuestionGroupItem}
-                        rendererParams={tocRendererParams}
                         parentId={null}
+                        orderedOptions={orderedOptions}
+                        onOrderedOptionsChange={setOrderedOptions}
+                        onSelectedGroupsChange={setSelectedGroups}
+                        selectedGroups={selectedGroups}
+                        onActiveTabChange={setActiveGroupTab}
                     />
                 </Container>
                 <div className={styles.content}>
@@ -327,19 +339,35 @@ export function Component() {
                             </Button>
                         )}
                     />
-                    <ListView
-                        className={styles.questionList}
-                        data={questionsData}
-                        keySelector={questionKeySelector}
-                        renderer={QuestionPreview}
-                        rendererParams={questionRendererParams}
-                        borderBetweenItem
-                        emptyMessage="There are no questions in this questionnaire yet."
-                        messageShown
-                        filtered={false}
-                        errored={false}
-                        pending={false}
-                    />
+                    <Tabs
+                        onChange={setActiveGroupTab}
+                        value={finalSelectedTab}
+                        variant="secondary"
+                    >
+                        <ListView
+                            className={styles.tabs}
+                            data={selectedParentQuestionGroups}
+                            keySelector={groupTabKeySelector}
+                            renderer={Tab}
+                            rendererParams={groupTabRenderParams}
+                            filtered={false}
+                            errored={false}
+                            pending={false}
+                        />
+                        <ListView
+                            className={styles.questionList}
+                            data={questionsData}
+                            keySelector={questionKeySelector}
+                            renderer={QuestionPreview}
+                            rendererParams={questionRendererParams}
+                            borderBetweenItem
+                            emptyMessage="There are no questions in this questionnaire yet."
+                            messageShown
+                            filtered={false}
+                            errored={false}
+                            pending={false}
+                        />
+                    </Tabs>
                 </div>
                 {addQuestionPaneShown && (
                     <div className={styles.rightPane}>

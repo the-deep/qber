@@ -137,7 +137,7 @@ function UserSelectInput<K extends string, GK extends string>(props: UserSelectI
 
     return (
         <SearchSelectInput
-            // eslint-disable-next-line jsx-props-no-spreading
+            // eslint-disable-next-line react/jsx-props-no-spreading
             {...otherProps}
             className={className}
             searchOptions={users?.items}
