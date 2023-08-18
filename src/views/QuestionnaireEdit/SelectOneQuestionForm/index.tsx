@@ -1,10 +1,12 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
     isNotDefined,
     randomString,
 } from '@togglecorp/fujs';
 import {
     Button,
+    RadioInput,
+    SearchSelectInput,
     SelectInput,
     TextInput,
     useAlert,
@@ -26,12 +28,16 @@ import {
     QuestionTypeEnum,
     PillarsQuery,
     PillarsQueryVariables,
+    ChoiceCollectionsQuery,
+    OptionListQuery,
+    OptionListQueryVariables,
+    ChoiceCollectionsQueryVariables,
 } from '#generated/types';
 import SelectOneQuestionPreview from '#components/questionPreviews/SelectOneQuestionPreview';
 
 import styles from './index.module.css';
 
-const CREATE_TEXT_QUESTION = gql`
+const CREATE_SINGLE_SELECTION_QUESTION = gql`
     mutation CreateTextQuestion(
         $projectId: ID!,
         $input: QuestionCreateInput!,
@@ -56,36 +62,63 @@ const PILLARS = gql`
         private {
             projectScope(pk: $projectId) {
                 groups {
-                        items {
-                            id
-                            name
-                            label
-                            parentId
-                            questionnaireId
-                        }
-                    limit
-                    offset
+                    items {
+                        id
+                        name
+                        label
+                        parentId
+                        questionnaireId
+                    }
                 }
             }
         }
     }
 `;
 
-const OPTIONS = gql`
-    query Options (
+const CHOICE_COLLECTIONS = gql`
+    query ChoiceCollections(
         $projectId: ID!,
         $questionnaireId: ID!,
-    ){
+        $search:String
+        ) {
+    private {
+        projectScope(pk: $projectId) {
+            id
+            choiceCollections(
+                filters: {
+                    questionnaire: {pk: $questionnaireId},
+                     name: {iContains: $search }
+                    }
+            ) {
+                count
+                items {
+                    id
+                    label
+                    name
+                    questionnaireId
+                }
+            }
+        }
+    }
+    }
+`;
+
+const OPTION_LIST = gql`
+    query OptionList(
+        $projectId: ID!,
+        $choiceCollectionId: ID!,
+        ) {
         private {
             projectScope(pk: $projectId) {
-                groups {
-                    items {
+                choiceCollection(pk: $choiceCollectionId) {
+                    label
+                    name
+                    choices {
                         id
-                        name
-                        parentId
-                        questionnaireId
                         label
+                        name
                     }
+                    id
                 }
             }
         }
@@ -118,7 +151,11 @@ const schema: FormSchema = {
     }),
 };
 
-const PAGE_SIZE = 20;
+type Pillar = NonNullable<PillarsQuery['private']['projectScope']>['groups']['items'][number];
+type ChoiceCollection = NonNullable<ChoiceCollectionsQuery['private']['projectScope']>['choiceCollections']['items'][number];
+
+const choiceCollectionKeySelector = (d: ChoiceCollection) => d.id;
+const choiceCollectionLabelSelector = (d: ChoiceCollection) => d.label;
 
 interface Props {
     projectId: string;
@@ -139,8 +176,6 @@ function SelectOneQuestionForm(props: Props) {
         }
         return ({
             projectId,
-            limit: PAGE_SIZE,
-            offset: 0,
         });
     }, [
         projectId,
@@ -164,7 +199,7 @@ function SelectOneQuestionForm(props: Props) {
         triggerQuestionCreate,
         { loading: createQuestionPending },
     ] = useMutation<CreateTextQuestionMutation, CreateTextQuestionMutationVariables>(
-        CREATE_TEXT_QUESTION,
+        CREATE_SINGLE_SELECTION_QUESTION,
         {
             onCompleted: (questionResponse) => {
                 const response = questionResponse?.private?.projectScope?.createQuestion;
@@ -229,12 +264,71 @@ function SelectOneQuestionForm(props: Props) {
         validate,
     ]);
 
+
+    const [opened, setOpened] = useState(false);
+    const [search, setSearch] = useState<string>();
+    const [choiceCollectionOptions, setChoiceCollectionOptions] = useState<ChoiceCollection[] | undefined | null>();
+
+    const optionListVariables = useMemo(() => {
+        if (isNotDefined(projectId) || isNotDefined(formValue?.choiceCollection)) {
+            return undefined;
+        }
+        return ({
+            projectId: projectId,
+            choiceCollectionId: formValue?.choiceCollection,
+        });
+    }, [
+        projectId,
+        formValue?.choiceCollection,
+    ]);
+
+    const optionsVariables = useMemo(() => {
+        if (isNotDefined(projectId) || isNotDefined(questionnaireId)) {
+            return undefined;
+        }
+        return ({
+            projectId,
+            questionnaireId,
+            search,
+        });
+    }, [
+        projectId,
+        questionnaireId,
+        search,
+    ]);
+
+    const {
+        data: choiceCollectionsResponse,
+    } = useQuery<ChoiceCollectionsQuery, ChoiceCollectionsQueryVariables>(
+        CHOICE_COLLECTIONS, {
+        skip: isNotDefined(optionsVariables) || !opened,
+        variables: optionsVariables,
+    });
+
+    const {
+        data: optionsListResponse,
+    } = useQuery<OptionListQuery, OptionListQueryVariables>(
+        OPTION_LIST,
+        {
+            skip: isNotDefined(optionListVariables),
+            variables: optionListVariables,
+        }
+    );
+
     return (
         <form className={styles.question}>
             <SelectOneQuestionPreview
                 className={styles.preview}
                 label={formValue.label}
                 hint={formValue.hint}
+            />
+            <RadioInput
+                keySelector={choiceCollectionKeySelector}
+                label="Options"
+                labelSelector={choiceCollectionLabelSelector}
+                onChange={setFieldValue}
+                options={optionsListResponse?.private?.projectScope?.choiceCollection?.choices}
+                value={optionsListResponse?.private?.projectScope?.choiceCollection?.name}
             />
             <div className={styles.editSection}>
                 <TextInput
@@ -251,7 +345,19 @@ function SelectOneQuestionForm(props: Props) {
                     error={fieldError?.hint}
                     onChange={setFieldValue}
                 />
-                <>Options</>
+                <SearchSelectInput
+                    name="choiceCollection"
+                    keySelector={choiceCollectionKeySelector}
+                    label="Options"
+                    labelSelector={choiceCollectionLabelSelector}
+                    onChange={setFieldValue}
+                    onSearchValueChange={setSearch}
+                    onOptionsChange={setChoiceCollectionOptions}
+                    searchOptions={choiceCollectionsResponse?.private.projectScope?.choiceCollections.items}
+                    options={choiceCollectionOptions}
+                    onShowDropdownChange={setOpened}
+                    value={formValue.choiceCollection}
+                />
                 <SelectInput
                     name="label"
                     label="Pillar and Sub pillar"

@@ -1,10 +1,12 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
     isNotDefined,
     randomString,
 } from '@togglecorp/fujs';
 import {
     Button,
+    Checkbox,
+    SearchSelectInput,
     SelectInput,
     TextInput,
     useAlert,
@@ -22,10 +24,14 @@ import {
 import {
     CreateTextQuestionMutation,
     CreateTextQuestionMutationVariables,
+    ChoiceCollectionsQuery,
+    ChoiceCollectionsQueryVariables,
     PillarsQuery,
     PillarsQueryVariables,
     QuestionCreateInput,
     QuestionTypeEnum,
+    OptionListQuery,
+    OptionListQueryVariables,
 } from '#generated/types';
 
 import styles from './index.module.css';
@@ -56,15 +62,63 @@ const PILLARS = gql`
         private {
             projectScope(pk: $projectId) {
                 groups {
-                        items {
-                            id
-                            name
-                            label
-                            parentId
-                            questionnaireId
-                        }
-                    limit
-                    offset
+                    items {
+                        id
+                        name
+                        label
+                        parentId
+                        questionnaireId
+                    }
+                }
+            }
+        }
+    }
+`;
+
+const CHOICE_COLLECTIONS = gql`
+    query ChoiceCollections(
+        $projectId: ID!,
+        $questionnaireId: ID!,
+        $search:String
+        ) {
+    private {
+        projectScope(pk: $projectId) {
+            id
+            choiceCollections(
+                filters: {
+                    questionnaire: {pk: $questionnaireId},
+                     name: {iContains: $search }
+                    }
+            ) {
+                count
+                items {
+                    id
+                    label
+                    name
+                    questionnaireId
+                }
+            }
+        }
+    }
+    }
+`;
+
+const OPTION_LIST = gql`
+    query OptionList(
+        $projectId: ID!,
+        $choiceCollectionId: ID!,
+        ) {
+        private {
+            projectScope(pk: $projectId) {
+                choiceCollection(pk: $choiceCollectionId) {
+                    label
+                    name
+                    choices {
+                        id
+                        label
+                        name
+                    }
+                    id
                 }
             }
         }
@@ -93,11 +147,19 @@ const schema: FormSchema = {
             required: true,
             requiredValidation: requiredStringCondition,
         },
+        choiceCollection: {
+            required: true,
+            requiredValidation: requiredStringCondition,
+        },
         hint: {},
     }),
 };
 
-const PAGE_SIZE = 20;
+type Pillar = NonNullable<PillarsQuery['private']['projectScope']>['groups']['items'][number];
+type ChoiceCollection = NonNullable<ChoiceCollectionsQuery['private']['projectScope']>['choiceCollections']['items'][number];
+
+const choiceCollectionKeySelector = (d: ChoiceCollection) => d.id;
+const choiceCollectionLabelSelector = (d: ChoiceCollection) => d.label;
 
 interface Props {
     projectId: string;
@@ -118,8 +180,6 @@ function SelectMultipleQuestionsForm(props: Props) {
         }
         return ({
             projectId,
-            limit: PAGE_SIZE,
-            offset: 0,
         });
     }, [
         projectId,
@@ -130,14 +190,43 @@ function SelectMultipleQuestionsForm(props: Props) {
     } = useQuery<PillarsQuery, PillarsQueryVariables>(
         PILLARS,
         {
+            skip: isNotDefined(pillarsVariables),
             variables: pillarsVariables,
         }
     );
 
+    const [opened, setOpened] = useState(false);
+    const [search, setSearch] = useState<string>();
+    const [choiceCollectionOptions, setChoiceCollectionOptions] = useState<ChoiceCollection[] | undefined | null>();
+
+    const optionsVariables = useMemo(() => {
+        if (isNotDefined(projectId) || isNotDefined(questionnaireId)) {
+            return undefined;
+        }
+        return ({
+            projectId,
+            questionnaireId,
+            search,
+        });
+    }, [
+        projectId,
+        questionnaireId,
+        search,
+    ]);
+
+    const {
+        data: choiceCollectionsResponse,
+    } = useQuery<ChoiceCollectionsQuery, ChoiceCollectionsQueryVariables>(
+        CHOICE_COLLECTIONS, {
+        skip: isNotDefined(optionsVariables) || !opened,
+        variables: optionsVariables,
+    });
+
     const pillarsOptions = pillarsResponse?.private?.projectScope?.groups.items || [];
 
-    const pillarKeySelector = (data: { id: string }) => data.id;
-    const pillarLabelSelector = (data: { label: string }) => data.label;
+    const pillarKeySelector = (data: Pillar) => data.id;
+    const pillarLabelSelector = (data: Pillar) => data.label;
+
     const [
         triggerQuestionCreate,
         { loading: createQuestionPending },
@@ -170,7 +259,7 @@ function SelectMultipleQuestionsForm(props: Props) {
         },
     );
     const initialFormValue: FormType = {
-        type: 'SELECT_ONE' as QuestionTypeEnum,
+        type: 'SELECT_MULTIPLE' as QuestionTypeEnum,
         questionnaire: questionnaireId,
         name: randomString(),
     };
@@ -207,6 +296,29 @@ function SelectMultipleQuestionsForm(props: Props) {
         validate,
     ]);
 
+    const optionListVariables = useMemo(() => {
+        if (isNotDefined(projectId) || isNotDefined(formValue?.choiceCollection)) {
+            return undefined;
+        }
+        return ({
+            projectId: projectId,
+            choiceCollectionId: formValue?.choiceCollection,
+        });
+    }, [
+        projectId,
+        formValue?.choiceCollection,
+    ]);
+
+    const {
+        data: optionsListResponse,
+    } = useQuery<OptionListQuery, OptionListQueryVariables>(
+        OPTION_LIST,
+        {
+            skip: isNotDefined(optionListVariables),
+            variables: optionListVariables,
+        }
+    );
+
     return (
         <form className={styles.question}>
             <SelectMultipleQuestionPreview
@@ -214,6 +326,14 @@ function SelectMultipleQuestionsForm(props: Props) {
                 label={formValue.label}
                 hint={formValue.hint}
             />
+            {optionsListResponse?.private?.projectScope?.choiceCollection?.choices?.map((choice) => (
+                <Checkbox
+                    label={choice.label}
+                    onChange={setFieldValue}
+                    value={choice?.name}
+                    name="choiceCollection"
+                />
+            ))}
             <div className={styles.editSection}>
                 <TextInput
                     name="label"
@@ -229,7 +349,19 @@ function SelectMultipleQuestionsForm(props: Props) {
                     error={fieldError?.hint}
                     onChange={setFieldValue}
                 />
-                <>Options</>
+                <SearchSelectInput
+                    name="choiceCollection"
+                    keySelector={choiceCollectionKeySelector}
+                    label="Options"
+                    labelSelector={choiceCollectionLabelSelector}
+                    onChange={setFieldValue}
+                    onSearchValueChange={setSearch}
+                    onOptionsChange={setChoiceCollectionOptions}
+                    searchOptions={choiceCollectionsResponse?.private.projectScope?.choiceCollections.items}
+                    options={choiceCollectionOptions}
+                    onShowDropdownChange={setOpened}
+                    value={formValue.choiceCollection}
+                />
                 <SelectInput
                     name="label"
                     label="Pillar and Sub pillar"

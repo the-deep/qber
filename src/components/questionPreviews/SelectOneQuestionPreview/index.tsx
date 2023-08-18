@@ -3,7 +3,6 @@ import {
 } from '@togglecorp/fujs';
 import {
     TextOutput,
-    RadioInput,
 } from '@the-deep/deep-ui';
 
 import styles from './index.module.css';
@@ -21,9 +20,6 @@ function SelectOneQuestionPreview(props: Props) {
         hint,
     } = props;
 
-    const keySelector = (d) => d.id;
-    const labelSelector = (d) => d.name;
-
     return (
         <div className={_cs(styles.preview, className)}>
             <TextOutput
@@ -31,15 +27,6 @@ function SelectOneQuestionPreview(props: Props) {
                 description={hint ?? 'Choose One'}
                 spacing="none"
                 block
-            />
-            <RadioInput
-                keySelector={keySelector}
-                label="Country"
-                labelSelector={labelSelector}
-                name="test"
-                onChange={function noRefCheck() { }}
-                options={[]}
-                value={[]}
             />
         </div>
     );

@@ -1,9 +1,8 @@
 import {
-    _cs,
+    _cs
 } from '@togglecorp/fujs';
 import {
     TextOutput,
-    MultiSelectInput,
 } from '@the-deep/deep-ui';
 
 import styles from './index.module.css';
@@ -13,9 +12,6 @@ interface Props {
     label?: string;
     hint?: string | null;
 }
-
-const keySelector = (d) => d.id;
-const labelSelector = (d) => d.name;
 
 function SelectMultipleQuestionsPreview(props: Props) {
     const {
@@ -27,19 +23,10 @@ function SelectMultipleQuestionsPreview(props: Props) {
     return (
         <div className={_cs(styles.preview, className)}>
             <TextOutput
-                value={label?? 'Which Country needs the assistance quickest?'}
+                value={label ?? 'Which Country needs the assistance quickest?'}
                 description={hint ?? 'Choose One'}
                 spacing="none"
                 block
-            />
-            <MultiSelectInput
-                keySelector={keySelector}
-                label="Country"
-                labelSelector={labelSelector}
-                name="test"
-                onChange={function noRefCheck() { }}
-                options={[]}
-                value={[]}
             />
         </div>
     );
