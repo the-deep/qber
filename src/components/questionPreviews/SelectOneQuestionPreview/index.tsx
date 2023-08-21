@@ -1,5 +1,7 @@
 import {
-    _cs, isNotDefined
+    _cs,
+    isNotDefined,
+    noOp,
 } from '@togglecorp/fujs';
 import { useMemo } from 'react';
 import { gql, useQuery } from '@apollo/client';
@@ -66,8 +68,8 @@ function SelectOneQuestionPreview(props: Props) {
             return undefined;
         }
         return ({
-            projectId: projectId,
-            choiceCollectionId: choiceCollectionId,
+            projectId,
+            choiceCollectionId,
         });
     }, [
         projectId,
@@ -81,7 +83,7 @@ function SelectOneQuestionPreview(props: Props) {
         {
             skip: isNotDefined(optionListVariables),
             variables: optionListVariables,
-        }
+        },
     );
 
     const optionsList = optionsListResponse?.private?.projectScope?.choiceCollection?.choices || [];
@@ -100,7 +102,7 @@ function SelectOneQuestionPreview(props: Props) {
                 label="Options"
                 labelSelector={choiceCollectionLabelSelector}
                 name="options"
-                onChange={() => { }}
+                onChange={noOp}
                 options={optionsList as QuestionChoiceCollectionType[]}
                 value={optionsListResponse?.private?.projectScope?.choiceCollection?.name}
             />

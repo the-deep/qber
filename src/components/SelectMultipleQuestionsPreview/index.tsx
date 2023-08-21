@@ -1,7 +1,9 @@
 import { useCallback, useMemo } from 'react';
 import { gql, useQuery } from '@apollo/client';
 import {
-    _cs, isNotDefined
+    _cs,
+    isNotDefined,
+    noOp,
 } from '@togglecorp/fujs';
 import {
     Checkbox,
@@ -60,8 +62,8 @@ function SelectMultipleQuestionsPreview(props: Props) {
             return undefined;
         }
         return ({
-            projectId: projectId,
-            choiceCollectionId: choiceCollectionId,
+            projectId,
+            choiceCollectionId,
         });
     }, [
         projectId,
@@ -75,7 +77,7 @@ function SelectMultipleQuestionsPreview(props: Props) {
         {
             skip: isNotDefined(optionListVariables),
             variables: optionListVariables,
-        }
+        },
     );
 
     const checkboxListRendererParams = useCallback((_: string, datum: CheckboxType) => ({
@@ -83,7 +85,7 @@ function SelectMultipleQuestionsPreview(props: Props) {
         name: 'choiceCollection',
         value: false,
         readOnly: true,
-        onChange: () => {},
+        onChange: noOp,
     }), []);
 
     return (
@@ -95,6 +97,7 @@ function SelectMultipleQuestionsPreview(props: Props) {
                 block
             />
             <ListView
+                className={styles.questionList}
                 data={optionsListResponse?.private?.projectScope?.choiceCollection?.choices}
                 keySelector={checkboxKeySelector}
                 renderer={Checkbox}
@@ -102,7 +105,6 @@ function SelectMultipleQuestionsPreview(props: Props) {
                 filtered={false}
                 errored={false}
                 pending={false}
-
             />
         </div>
     );

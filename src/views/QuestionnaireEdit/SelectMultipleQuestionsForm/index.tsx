@@ -178,12 +178,15 @@ function SelectMultipleQuestionsForm(props: Props) {
         {
             skip: isNotDefined(pillarsVariables),
             variables: pillarsVariables,
-        }
+        },
     );
 
     const [opened, setOpened] = useState(false);
     const [search, setSearch] = useState<string>();
-    const [choiceCollectionOptions, setChoiceCollectionOptions] = useState<ChoiceCollection[] | undefined | null>();
+    const [
+        choiceCollectionOptions,
+        setChoiceCollectionOptions,
+    ] = useState<ChoiceCollection[] | undefined | null>();
 
     const optionsVariables = useMemo(() => {
         if (isNotDefined(projectId) || isNotDefined(questionnaireId)) {
@@ -202,8 +205,10 @@ function SelectMultipleQuestionsForm(props: Props) {
 
     const {
         data: choiceCollectionsResponse,
-    } = useQuery<ChoiceCollectionsQuery, ChoiceCollectionsQueryVariables>(
-        CHOICE_COLLECTIONS, {
+    } = useQuery<
+        ChoiceCollectionsQuery,
+        ChoiceCollectionsQueryVariables
+    >(CHOICE_COLLECTIONS, {
         skip: isNotDefined(optionsVariables) || !opened,
         variables: optionsVariables,
     });
@@ -282,7 +287,7 @@ function SelectMultipleQuestionsForm(props: Props) {
         validate,
     ]);
 
-    console.warn('form', formValue);
+    const searchOption = choiceCollectionsResponse?.private.projectScope?.choiceCollections.items;
 
     return (
         <form className={styles.question}>
@@ -316,7 +321,7 @@ function SelectMultipleQuestionsForm(props: Props) {
                     onChange={setFieldValue}
                     onSearchValueChange={setSearch}
                     onOptionsChange={setChoiceCollectionOptions}
-                    searchOptions={choiceCollectionsResponse?.private.projectScope?.choiceCollections.items}
+                    searchOptions={searchOption}
                     options={choiceCollectionOptions}
                     onShowDropdownChange={setOpened}
                     value={formValue.choiceCollection}

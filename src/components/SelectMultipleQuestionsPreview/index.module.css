@@ -3,4 +3,11 @@
     flex-direction: column;
     padding: var(--dui-spacing-extra-large) var(--dui-spacing-large);
     gap: var(--dui-spacing-medium);
+
+    .question-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--dui-spacing-small);
+        width: 10rem;
+    }
 }

@@ -29,7 +29,6 @@ import {
 } from '@togglecorp/toggle-form';
 
 import {
-    CreateTextQuestionMutation,
     CreateTextQuestionMutationVariables,
     QuestionCreateInput,
     QuestionTypeEnum,
@@ -182,7 +181,7 @@ function SelectOneQuestionForm(props: Props) {
         PILLARS,
         {
             variables: pillarsVariables,
-        }
+        },
     );
 
     const pillarsOptions = pillarsResponse?.private?.projectScope?.groups.items || [];
@@ -190,7 +189,10 @@ function SelectOneQuestionForm(props: Props) {
     const [
         triggerQuestionCreate,
         { loading: createQuestionPending },
-    ] = useMutation<CreateSingleSelectionQuestionMutation, CreateTextQuestionMutationVariables>(
+    ] = useMutation<
+        CreateSingleSelectionQuestionMutation,
+        CreateTextQuestionMutationVariables
+    >(
         CREATE_SINGLE_SELECTION_QUESTION,
         {
             onCompleted: (questionResponse) => {
@@ -256,10 +258,12 @@ function SelectOneQuestionForm(props: Props) {
         validate,
     ]);
 
-
     const [opened, setOpened] = useState(false);
     const [search, setSearch] = useState<string>();
-    const [choiceCollectionOptions, setChoiceCollectionOptions] = useState<ChoiceCollection[] | undefined | null>();
+    const [
+        choiceCollectionOptions,
+        setChoiceCollectionOptions,
+    ] = useState<ChoiceCollection[] | undefined | null>();
 
     const optionsVariables = useMemo(() => {
         if (isNotDefined(projectId) || isNotDefined(questionnaireId)) {
@@ -278,11 +282,15 @@ function SelectOneQuestionForm(props: Props) {
 
     const {
         data: choiceCollectionsResponse,
-    } = useQuery<ChoiceCollectionsQuery, ChoiceCollectionsQueryVariables>(
-        CHOICE_COLLECTIONS, {
+    } = useQuery<
+        ChoiceCollectionsQuery,
+        ChoiceCollectionsQueryVariables
+    >(CHOICE_COLLECTIONS, {
         skip: isNotDefined(optionsVariables) || !opened,
         variables: optionsVariables,
     });
+
+    const searchOption = choiceCollectionsResponse?.private.projectScope?.choiceCollections.items;
 
     return (
         <form className={styles.question}>
@@ -316,7 +324,7 @@ function SelectOneQuestionForm(props: Props) {
                     onChange={setFieldValue}
                     onSearchValueChange={setSearch}
                     onOptionsChange={setChoiceCollectionOptions}
-                    searchOptions={choiceCollectionsResponse?.private.projectScope?.choiceCollections.items}
+                    searchOptions={searchOption}
                     options={choiceCollectionOptions}
                     onShowDropdownChange={setOpened}
                     value={formValue.choiceCollection}
