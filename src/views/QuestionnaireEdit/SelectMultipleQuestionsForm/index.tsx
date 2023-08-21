@@ -1,17 +1,24 @@
-import { useCallback, useMemo, useState } from 'react';
+import {
+    useCallback,
+    useMemo,
+    useState,
+} from 'react';
 import {
     isNotDefined,
     randomString,
 } from '@togglecorp/fujs';
 import {
+    gql,
+    useMutation,
+    useQuery,
+} from '@apollo/client';
+import {
     Button,
-    Checkbox,
     SearchSelectInput,
     SelectInput,
     TextInput,
     useAlert,
 } from '@the-deep/deep-ui';
-import { gql, useMutation, useQuery } from '@apollo/client';
 import {
     ObjectSchema,
     createSubmitHandler,
@@ -20,9 +27,7 @@ import {
     useForm,
     PartialForm,
 } from '@togglecorp/toggle-form';
-
 import {
-    CreateTextQuestionMutation,
     CreateTextQuestionMutationVariables,
     ChoiceCollectionsQuery,
     ChoiceCollectionsQueryVariables,
@@ -30,15 +35,14 @@ import {
     PillarsQueryVariables,
     QuestionCreateInput,
     QuestionTypeEnum,
-    OptionListQuery,
-    OptionListQueryVariables,
+    CreateMultipleSelectionQuestionMutation,
 } from '#generated/types';
-
-import styles from './index.module.css';
 import SelectMultipleQuestionPreview from '#components/SelectMultipleQuestionsPreview';
 
-const CREATE_TEXT_QUESTION = gql`
-    mutation CreateTextQuestion(
+import styles from './index.module.css';
+
+const CREATE_MULTIPLE_SELECTION_QUESTION = gql`
+    mutation CreateMultipleSelectionQuestion(
         $projectId: ID!,
         $input: QuestionCreateInput!,
     ){
@@ -103,28 +107,6 @@ const CHOICE_COLLECTIONS = gql`
     }
 `;
 
-const OPTION_LIST = gql`
-    query OptionList(
-        $projectId: ID!,
-        $choiceCollectionId: ID!,
-        ) {
-        private {
-            projectScope(pk: $projectId) {
-                choiceCollection(pk: $choiceCollectionId) {
-                    label
-                    name
-                    choices {
-                        id
-                        label
-                        name
-                    }
-                    id
-                }
-            }
-        }
-    }
-`;
-
 type FormType = PartialForm<QuestionCreateInput>;
 type FormSchema = ObjectSchema<FormType>;
 type FormSchemaFields = ReturnType<FormSchema['fields']>;
@@ -148,6 +130,10 @@ const schema: FormSchema = {
             requiredValidation: requiredStringCondition,
         },
         choiceCollection: {
+            required: true,
+            requiredValidation: requiredStringCondition,
+        },
+        group: {
             required: true,
             requiredValidation: requiredStringCondition,
         },
@@ -230,8 +216,8 @@ function SelectMultipleQuestionsForm(props: Props) {
     const [
         triggerQuestionCreate,
         { loading: createQuestionPending },
-    ] = useMutation<CreateTextQuestionMutation, CreateTextQuestionMutationVariables>(
-        CREATE_TEXT_QUESTION,
+    ] = useMutation<CreateMultipleSelectionQuestionMutation, CreateTextQuestionMutationVariables>(
+        CREATE_MULTIPLE_SELECTION_QUESTION,
         {
             onCompleted: (questionResponse) => {
                 const response = questionResponse?.private?.projectScope?.createQuestion;
@@ -296,28 +282,7 @@ function SelectMultipleQuestionsForm(props: Props) {
         validate,
     ]);
 
-    const optionListVariables = useMemo(() => {
-        if (isNotDefined(projectId) || isNotDefined(formValue?.choiceCollection)) {
-            return undefined;
-        }
-        return ({
-            projectId: projectId,
-            choiceCollectionId: formValue?.choiceCollection,
-        });
-    }, [
-        projectId,
-        formValue?.choiceCollection,
-    ]);
-
-    const {
-        data: optionsListResponse,
-    } = useQuery<OptionListQuery, OptionListQueryVariables>(
-        OPTION_LIST,
-        {
-            skip: isNotDefined(optionListVariables),
-            variables: optionListVariables,
-        }
-    );
+    console.warn('form', formValue);
 
     return (
         <form className={styles.question}>
@@ -325,15 +290,9 @@ function SelectMultipleQuestionsForm(props: Props) {
                 className={styles.preview}
                 label={formValue.label}
                 hint={formValue.hint}
+                choiceCollectionId={formValue?.choiceCollection}
+                projectId={projectId}
             />
-            {optionsListResponse?.private?.projectScope?.choiceCollection?.choices?.map((choice) => (
-                <Checkbox
-                    label={choice.label}
-                    onChange={setFieldValue}
-                    value={choice?.name}
-                    name="choiceCollection"
-                />
-            ))}
             <div className={styles.editSection}>
                 <TextInput
                     name="label"
@@ -365,7 +324,7 @@ function SelectMultipleQuestionsForm(props: Props) {
                 <SelectInput
                     name="label"
                     label="Pillar and Sub pillar"
-                    value={formValue.label}
+                    value={formValue.group}
                     error={fieldError?.label}
                     onChange={setFieldValue}
                     keySelector={pillarKeySelector}

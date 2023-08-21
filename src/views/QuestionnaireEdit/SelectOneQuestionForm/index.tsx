@@ -1,17 +1,24 @@
-import { useCallback, useMemo, useState } from 'react';
+import {
+    useCallback,
+    useMemo,
+    useState,
+} from 'react';
 import {
     isNotDefined,
     randomString,
 } from '@togglecorp/fujs';
 import {
+    gql,
+    useMutation,
+    useQuery,
+} from '@apollo/client';
+import {
     Button,
-    RadioInput,
     SearchSelectInput,
     SelectInput,
     TextInput,
     useAlert,
 } from '@the-deep/deep-ui';
-import { gql, useMutation, useQuery } from '@apollo/client';
 import {
     ObjectSchema,
     createSubmitHandler,
@@ -29,16 +36,15 @@ import {
     PillarsQuery,
     PillarsQueryVariables,
     ChoiceCollectionsQuery,
-    OptionListQuery,
-    OptionListQueryVariables,
     ChoiceCollectionsQueryVariables,
+    CreateSingleSelectionQuestionMutation,
 } from '#generated/types';
 import SelectOneQuestionPreview from '#components/questionPreviews/SelectOneQuestionPreview';
 
 import styles from './index.module.css';
 
 const CREATE_SINGLE_SELECTION_QUESTION = gql`
-    mutation CreateTextQuestion(
+    mutation CreateSingleSelectionQuestion(
         $projectId: ID!,
         $input: QuestionCreateInput!,
     ){
@@ -103,28 +109,6 @@ const CHOICE_COLLECTIONS = gql`
     }
 `;
 
-const OPTION_LIST = gql`
-    query OptionList(
-        $projectId: ID!,
-        $choiceCollectionId: ID!,
-        ) {
-        private {
-            projectScope(pk: $projectId) {
-                choiceCollection(pk: $choiceCollectionId) {
-                    label
-                    name
-                    choices {
-                        id
-                        label
-                        name
-                    }
-                    id
-                }
-            }
-        }
-    }
-`;
-
 type FormType = PartialForm<QuestionCreateInput>;
 type FormSchema = ObjectSchema<FormType>;
 type FormSchemaFields = ReturnType<FormSchema['fields']>;
@@ -147,15 +131,26 @@ const schema: FormSchema = {
             required: true,
             requiredValidation: requiredStringCondition,
         },
+        choiceCollection: {
+            required: true,
+            requiredValidation: requiredStringCondition,
+        },
+        group: {
+            required: true,
+            requiredValidation: requiredStringCondition,
+        },
         hint: {},
     }),
 };
 
-type Pillar = NonNullable<PillarsQuery['private']['projectScope']>['groups']['items'][number];
+type Pillars = NonNullable<PillarsQuery['private']['projectScope']>['groups']['items'][number];
 type ChoiceCollection = NonNullable<ChoiceCollectionsQuery['private']['projectScope']>['choiceCollections']['items'][number];
 
 const choiceCollectionKeySelector = (d: ChoiceCollection) => d.id;
 const choiceCollectionLabelSelector = (d: ChoiceCollection) => d.label;
+
+const pillarKeySelector = (d: Pillars) => d.id;
+const pillarLabelSelector = (d: Pillars) => d.label;
 
 interface Props {
     projectId: string;
@@ -192,13 +187,10 @@ function SelectOneQuestionForm(props: Props) {
 
     const pillarsOptions = pillarsResponse?.private?.projectScope?.groups.items || [];
 
-    const pillarKeySelector = (data: { id: PillarsQuery }) => data.id;
-    const pillarLabelSelector = (data: { label: PillarsQuery }) => data.label;
-
     const [
         triggerQuestionCreate,
         { loading: createQuestionPending },
-    ] = useMutation<CreateTextQuestionMutation, CreateTextQuestionMutationVariables>(
+    ] = useMutation<CreateSingleSelectionQuestionMutation, CreateTextQuestionMutationVariables>(
         CREATE_SINGLE_SELECTION_QUESTION,
         {
             onCompleted: (questionResponse) => {
@@ -269,19 +261,6 @@ function SelectOneQuestionForm(props: Props) {
     const [search, setSearch] = useState<string>();
     const [choiceCollectionOptions, setChoiceCollectionOptions] = useState<ChoiceCollection[] | undefined | null>();
 
-    const optionListVariables = useMemo(() => {
-        if (isNotDefined(projectId) || isNotDefined(formValue?.choiceCollection)) {
-            return undefined;
-        }
-        return ({
-            projectId: projectId,
-            choiceCollectionId: formValue?.choiceCollection,
-        });
-    }, [
-        projectId,
-        formValue?.choiceCollection,
-    ]);
-
     const optionsVariables = useMemo(() => {
         if (isNotDefined(projectId) || isNotDefined(questionnaireId)) {
             return undefined;
@@ -305,30 +284,14 @@ function SelectOneQuestionForm(props: Props) {
         variables: optionsVariables,
     });
 
-    const {
-        data: optionsListResponse,
-    } = useQuery<OptionListQuery, OptionListQueryVariables>(
-        OPTION_LIST,
-        {
-            skip: isNotDefined(optionListVariables),
-            variables: optionListVariables,
-        }
-    );
-
     return (
         <form className={styles.question}>
             <SelectOneQuestionPreview
                 className={styles.preview}
                 label={formValue.label}
                 hint={formValue.hint}
-            />
-            <RadioInput
-                keySelector={choiceCollectionKeySelector}
-                label="Options"
-                labelSelector={choiceCollectionLabelSelector}
-                onChange={setFieldValue}
-                options={optionsListResponse?.private?.projectScope?.choiceCollection?.choices}
-                value={optionsListResponse?.private?.projectScope?.choiceCollection?.name}
+                choiceCollectionId={formValue?.choiceCollection}
+                projectId={projectId}
             />
             <div className={styles.editSection}>
                 <TextInput
