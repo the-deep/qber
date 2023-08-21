@@ -15,7 +15,6 @@ import {
 import {
     Button,
     SearchSelectInput,
-    SelectInput,
     TextInput,
     useAlert,
 } from '@the-deep/deep-ui';
@@ -32,13 +31,12 @@ import {
     CreateTextQuestionMutationVariables,
     QuestionCreateInput,
     QuestionTypeEnum,
-    PillarsQuery,
-    PillarsQueryVariables,
-    ChoiceCollectionsQuery,
     ChoiceCollectionsQueryVariables,
     CreateSingleSelectionQuestionMutation,
+    ChoiceCollectionsQuery,
 } from '#generated/types';
 import SelectOneQuestionPreview from '#components/questionPreviews/SelectOneQuestionPreview';
+import PillarSelectInput from '#components/PillarSelectInput';
 
 import styles from './index.module.css';
 
@@ -60,26 +58,6 @@ const CREATE_SINGLE_SELECTION_QUESTION = gql`
     }
 `;
 
-const PILLARS = gql`
-    query Pillars (
-        $projectId: ID!
-    ) {
-        private {
-            projectScope(pk: $projectId) {
-                groups {
-                    items {
-                        id
-                        name
-                        label
-                        parentId
-                        questionnaireId
-                    }
-                }
-            }
-        }
-    }
-`;
-
 const CHOICE_COLLECTIONS = gql`
     query ChoiceCollections(
         $projectId: ID!,
@@ -92,7 +70,7 @@ const CHOICE_COLLECTIONS = gql`
             choiceCollections(
                 filters: {
                     questionnaire: {pk: $questionnaireId},
-                     name: {iContains: $search }
+                    name: {iContains: $search }
                     }
             ) {
                 count
@@ -142,14 +120,10 @@ const schema: FormSchema = {
     }),
 };
 
-type Pillars = NonNullable<PillarsQuery['private']['projectScope']>['groups']['items'][number];
 type ChoiceCollection = NonNullable<ChoiceCollectionsQuery['private']['projectScope']>['choiceCollections']['items'][number];
 
 const choiceCollectionKeySelector = (d: ChoiceCollection) => d.id;
 const choiceCollectionLabelSelector = (d: ChoiceCollection) => d.label;
-
-const pillarKeySelector = (d: Pillars) => d.id;
-const pillarLabelSelector = (d: Pillars) => d.label;
 
 interface Props {
     projectId: string;
@@ -163,29 +137,6 @@ function SelectOneQuestionForm(props: Props) {
     } = props;
 
     const alert = useAlert();
-
-    const pillarsVariables = useMemo(() => {
-        if (isNotDefined(projectId)) {
-            return undefined;
-        }
-        return ({
-            projectId,
-        });
-    }, [
-        projectId,
-    ]);
-
-    const {
-        data: pillarsResponse,
-    } = useQuery<PillarsQuery, PillarsQueryVariables>(
-        PILLARS,
-        {
-            variables: pillarsVariables,
-        },
-    );
-
-    const pillarsOptions = pillarsResponse?.private?.projectScope?.groups.items || [];
-
     const [
         triggerQuestionCreate,
         { loading: createQuestionPending },
@@ -266,7 +217,8 @@ function SelectOneQuestionForm(props: Props) {
     ] = useState<ChoiceCollection[] | undefined | null>();
 
     const optionsVariables = useMemo(() => {
-        if (isNotDefined(projectId) || isNotDefined(questionnaireId)) {
+        if (isNotDefined(projectId) || isNotDefined(questionnaireId)
+        ) {
             return undefined;
         }
         return ({
@@ -329,15 +281,13 @@ function SelectOneQuestionForm(props: Props) {
                     onShowDropdownChange={setOpened}
                     value={formValue.choiceCollection}
                 />
-                <SelectInput
-                    name="label"
-                    label="Pillar and Sub pillar"
-                    value={formValue.label}
-                    error={fieldError?.label}
+                <PillarSelectInput
+                    name="group"
+                    projectId={projectId}
+                    questionnaireId={questionnaireId}
+                    value={formValue.group}
+                    error={fieldError?.group}
                     onChange={setFieldValue}
-                    keySelector={pillarKeySelector}
-                    labelSelector={pillarLabelSelector}
-                    options={pillarsOptions}
                 />
             </div>
             <Button

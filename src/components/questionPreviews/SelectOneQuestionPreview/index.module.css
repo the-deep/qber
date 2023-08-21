@@ -6,6 +6,7 @@
 
     .question-list {
         display: flex;
+        align-items: flex-start;
         flex-direction: column;
         gap: var(--dui-spacing-small);
         width: 10rem;

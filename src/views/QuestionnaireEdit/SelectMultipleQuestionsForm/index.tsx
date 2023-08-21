@@ -15,7 +15,6 @@ import {
 import {
     Button,
     SearchSelectInput,
-    SelectInput,
     TextInput,
     useAlert,
 } from '@the-deep/deep-ui';
@@ -31,13 +30,12 @@ import {
     CreateTextQuestionMutationVariables,
     ChoiceCollectionsQuery,
     ChoiceCollectionsQueryVariables,
-    PillarsQuery,
-    PillarsQueryVariables,
     QuestionCreateInput,
     QuestionTypeEnum,
     CreateMultipleSelectionQuestionMutation,
 } from '#generated/types';
 import SelectMultipleQuestionPreview from '#components/SelectMultipleQuestionsPreview';
+import PillarSelectInput from '#components/PillarSelectInput';
 
 import styles from './index.module.css';
 
@@ -59,26 +57,6 @@ const CREATE_MULTIPLE_SELECTION_QUESTION = gql`
     }
 `;
 
-const PILLARS = gql`
-    query Pillars (
-        $projectId: ID!
-    ) {
-        private {
-            projectScope(pk: $projectId) {
-                groups {
-                    items {
-                        id
-                        name
-                        label
-                        parentId
-                        questionnaireId
-                    }
-                }
-            }
-        }
-    }
-`;
-
 const CHOICE_COLLECTIONS = gql`
     query ChoiceCollections(
         $projectId: ID!,
@@ -91,7 +69,7 @@ const CHOICE_COLLECTIONS = gql`
             choiceCollections(
                 filters: {
                     questionnaire: {pk: $questionnaireId},
-                     name: {iContains: $search }
+                    name: {iContains: $search }
                     }
             ) {
                 count
@@ -141,7 +119,6 @@ const schema: FormSchema = {
     }),
 };
 
-type Pillar = NonNullable<PillarsQuery['private']['projectScope']>['groups']['items'][number];
 type ChoiceCollection = NonNullable<ChoiceCollectionsQuery['private']['projectScope']>['choiceCollections']['items'][number];
 
 const choiceCollectionKeySelector = (d: ChoiceCollection) => d.id;
@@ -159,28 +136,6 @@ function SelectMultipleQuestionsForm(props: Props) {
     } = props;
 
     const alert = useAlert();
-
-    const pillarsVariables = useMemo(() => {
-        if (isNotDefined(projectId)) {
-            return undefined;
-        }
-        return ({
-            projectId,
-        });
-    }, [
-        projectId,
-    ]);
-
-    const {
-        data: pillarsResponse,
-    } = useQuery<PillarsQuery, PillarsQueryVariables>(
-        PILLARS,
-        {
-            skip: isNotDefined(pillarsVariables),
-            variables: pillarsVariables,
-        },
-    );
-
     const [opened, setOpened] = useState(false);
     const [search, setSearch] = useState<string>();
     const [
@@ -212,11 +167,6 @@ function SelectMultipleQuestionsForm(props: Props) {
         skip: isNotDefined(optionsVariables) || !opened,
         variables: optionsVariables,
     });
-
-    const pillarsOptions = pillarsResponse?.private?.projectScope?.groups.items || [];
-
-    const pillarKeySelector = (data: Pillar) => data.id;
-    const pillarLabelSelector = (data: Pillar) => data.label;
 
     const [
         triggerQuestionCreate,
@@ -326,15 +276,13 @@ function SelectMultipleQuestionsForm(props: Props) {
                     onShowDropdownChange={setOpened}
                     value={formValue.choiceCollection}
                 />
-                <SelectInput
-                    name="label"
-                    label="Pillar and Sub pillar"
+                <PillarSelectInput
+                    name="group"
+                    projectId={projectId}
+                    questionnaireId={questionnaireId}
                     value={formValue.group}
-                    error={fieldError?.label}
+                    error={fieldError?.group}
                     onChange={setFieldValue}
-                    keySelector={pillarKeySelector}
-                    labelSelector={pillarLabelSelector}
-                    options={pillarsOptions}
                 />
             </div>
             <Button
