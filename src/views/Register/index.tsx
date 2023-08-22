@@ -132,13 +132,7 @@ export function Component() {
                 elementRef.current?.resetCaptcha();
                 triggerRegister({
                     variables: {
-                        input: {
-                            firstName: val.firstName,
-                            lastName: val.lastName,
-                            // TODO: Fix this type error
-                            email: val.email ?? '',
-                            captcha: val.captcha ?? '',
-                        },
+                        input: val as RegisterInput,
                     },
                 });
             },

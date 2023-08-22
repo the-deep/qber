@@ -4,35 +4,6 @@
     gap: var(--dui-spacing-large);
     height: 100vh;
 
-    .sub-navbar {
-        --height-navbar: 4rem;
-        display: flex;
-        background-color: var(--dui-color-secondary);
-        padding: var(--dui-spacing-medium) var(--dui-spacing-super-large);
-        height: var(--height-navbar);
-
-        .logo-container {
-            display: flex;
-            flex-shrink: 0;
-
-            .logo {
-                width: 4rem;
-            }
-        }
-
-        .right {
-            display: flex;
-            align-items: flex-end;
-            flex-grow: 1;
-            justify-content: flex-end;
-
-            .nav-links {
-                display: flex;
-                gap: var(--dui-spacing-medium);
-            }
-        }
-    }
-
     .content {
         display: flex;
         flex-direction: column;

@@ -120,10 +120,7 @@ export function Component() {
             (val) => {
                 triggerLogin({
                     variables: {
-                        input: {
-                            email: val.email ?? '',
-                            password: val.password ?? '',
-                        },
+                        input: val as LoginInput,
                     },
                 });
             },

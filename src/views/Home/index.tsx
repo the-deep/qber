@@ -32,54 +32,54 @@ import ProjectItem from './ProjectItem';
 import styles from './index.module.css';
 
 const PROJECTS = gql`
-query Projects (
-    $search: String,
-    $limit: Int,
-    $offset: Int,
-) {
-    private {
-        projects (
-            filters: {
-                search: $search,
-            },
-            pagination: {
-                limit: $limit,
-                offset: $offset,
-            },
-        ) {
-            items {
-                createdAt
-                currentUserRole
-                id
-                title
+    query Projects (
+        $search: String,
+        $limit: Int,
+        $offset: Int,
+    ) {
+        private {
+            projects (
+                filters: {
+                    search: $search,
+                },
+                pagination: {
+                    limit: $limit,
+                    offset: $offset,
+                },
+            ) {
+                items {
+                    createdAt
+                    currentUserRole
+                    id
+                    title
+                }
+                count
+                limit
+                offset
             }
-            count
-            limit
-            offset
         }
     }
-}
 `;
 
 const QUESTIONNAIRES_FOR_PROJECT = gql`
-query QuestionnairesForProject (
-    $projectId: ID!,
-) {
-    private {
-        projectScope(pk: $projectId){
-            id
-            questionnaires {
-                items {
-                    createdAt
-                    id
-                    title
-                    projectId
+    query QuestionnairesForProject (
+        $projectId: ID!,
+    ) {
+        private {
+            projectScope(pk: $projectId){
+                id
+                questionnaires {
+                    items {
+                        createdAt
+                        id
+                        title
+                        projectId
+                    }
+                    count
                 }
-                count
             }
         }
     }
-}
 `;
 
 type ProjectType = NonNullable<NonNullable<NonNullable<ProjectsQuery['private']>['projects']>['items']>[number];

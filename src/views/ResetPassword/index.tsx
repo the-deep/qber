@@ -34,6 +34,7 @@ import { hCaptchaKey } from '#configs/hCaptcha';
 import {
     ResetPasswordConfirmMutation,
     ResetPasswordConfirmMutationVariables,
+    PasswordResetConfirmInput,
 } from '#generated/types';
 
 import styles from './index.module.css';
@@ -196,12 +197,7 @@ export function Component() {
                 console.log('submit value', val);
                 resetPasswordTrigger({
                     variables: {
-                        input: {
-                            captcha: val.captcha ?? '',
-                            newPassword: val.confirmPassword ?? '',
-                            token: val.token ?? '',
-                            uuid: val.uuid ?? '',
-                        },
+                        input: val as PasswordResetConfirmInput,
                     },
                 });
             },

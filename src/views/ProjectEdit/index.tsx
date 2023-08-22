@@ -6,8 +6,6 @@ import {
 } from 'react';
 import {
     useParams,
-    Link,
-    NavLink,
 } from 'react-router-dom';
 import { IoAddOutline } from 'react-icons/io5';
 import { gql, useQuery, useMutation } from '@apollo/client';
@@ -34,6 +32,7 @@ import {
     PartialForm,
 } from '@togglecorp/toggle-form';
 
+import SubNavbar from '#components/SubNavbar';
 import {
     MembershipsQuery,
     MembershipsQueryVariables,
@@ -356,9 +355,7 @@ export function Component() {
             (val) => {
                 triggerProjectUpdate({
                     variables: {
-                        input: {
-                            title: val.title ?? '',
-                        },
+                        input: val,
                         projectId,
                     },
                 });
@@ -375,26 +372,9 @@ export function Component() {
 
     return (
         <div className={styles.projectEdit}>
-            <nav className={styles.subNavbar}>
-                <div className={styles.logoContainer}>
-                    <Link
-                        to="/"
-                    >
-                        <img
-                            src="/logo.png"
-                            className={styles.logo}
-                            alt="Questionnaire Builder Logo"
-                        />
-                    </Link>
-                </div>
-                <div className={styles.right}>
-                    <NavLink
-                        to="/"
-                    >
-                        Close
-                    </NavLink>
-                </div>
-            </nav>
+            <SubNavbar
+                onCloseLink="/"
+            />
             <div className={styles.content}>
                 <form className={styles.editFields}>
                     <Heading>
