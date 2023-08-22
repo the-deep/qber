@@ -42,7 +42,7 @@ import RankQuestionForm from './RankQuestionForm';
 import SelectOneQuestionForm from './SelectOneQuestionForm';
 import QuestionTypeItem, { QuestionType } from './QuestionTypeItem';
 import QuestionPreview from './QuestionPreview';
-import SelectMultipleQuestionsForm from './SelectMultipleQuestionsForm';
+import SelectMultipleQuestionForm from './SelectMultipleQuestionForm';
 
 import styles from './index.module.css';
 
@@ -310,7 +310,7 @@ export function Component() {
                                 />
                             )}
                             {(selectedQuestionType === 'SELECT_MULTIPLE') && (
-                                <SelectMultipleQuestionsForm
+                                <SelectMultipleQuestionForm
                                     projectId={projectId}
                                     questionnaireId={questionnaireId}
                                 />

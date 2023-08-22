@@ -1,9 +1,9 @@
+import { useMemo } from 'react';
 import {
     _cs,
     isNotDefined,
     noOp,
 } from '@togglecorp/fujs';
-import { useMemo } from 'react';
 import { gql, useQuery } from '@apollo/client';
 import {
     RadioInput,
@@ -105,6 +105,8 @@ function SelectOneQuestionPreview(props: Props) {
                 onChange={noOp}
                 options={optionsList as QuestionChoiceCollectionType[]}
                 value={optionsListResponse?.private?.projectScope?.choiceCollection?.name}
+                readOnly
+                disabled={false}
             />
         </div>
     );

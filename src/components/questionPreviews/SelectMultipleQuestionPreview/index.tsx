@@ -48,7 +48,7 @@ interface Props {
     projectId: string;
 }
 
-function SelectMultipleQuestionsPreview(props: Props) {
+function SelectMultipleQuestionPreview(props: Props) {
     const {
         className,
         label,
@@ -110,4 +110,4 @@ function SelectMultipleQuestionsPreview(props: Props) {
     );
 }
 
-export default SelectMultipleQuestionsPreview;
+export default SelectMultipleQuestionPreview;

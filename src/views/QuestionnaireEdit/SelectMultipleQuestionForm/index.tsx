@@ -34,7 +34,7 @@ import {
     QuestionTypeEnum,
     CreateMultipleSelectionQuestionMutation,
 } from '#generated/types';
-import SelectMultipleQuestionPreview from '#components/SelectMultipleQuestionsPreview';
+import SelectMultipleQuestionPreview from '#components/questionPreviews/SelectMultipleQuestionPreview';
 import PillarSelectInput from '#components/PillarSelectInput';
 
 import styles from './index.module.css';
@@ -129,7 +129,7 @@ interface Props {
     questionnaireId: string;
 }
 
-function SelectMultipleQuestionsForm(props: Props) {
+function SelectMultipleQuestionForm(props: Props) {
     const {
         projectId,
         questionnaireId,
@@ -297,4 +297,4 @@ function SelectMultipleQuestionsForm(props: Props) {
     );
 }
 
-export default SelectMultipleQuestionsForm;
+export default SelectMultipleQuestionForm;

@@ -85,6 +85,7 @@ function PillarSelectInput<T extends string>(props: PillarProps<T>) {
             keySelector={pillarKeySelector}
             labelSelector={pillarLabelSelector}
             options={pillarsOptions}
+            disabled={false}
         />
     );
 }
