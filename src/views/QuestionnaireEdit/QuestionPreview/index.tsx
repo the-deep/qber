@@ -11,6 +11,8 @@ import {
 import TextQuestionPreview from '#components/questionPreviews/TextQuestionPreview';
 import IntegerQuestionPreview from '#components/questionPreviews/IntegerQuestionPreview';
 import RankQuestionPreview from '#components/questionPreviews/RankQuestionPreview';
+import DateQuestionPreview from '#components/questionPreviews/DateQuestionPreview';
+import TimeQuestionPreview from '#components/questionPreviews/TimeQuestionPreview';
 
 import styles from './index.module.css';
 
@@ -50,6 +52,20 @@ function QuestionPreview(props: QuestionProps) {
             )}
             {(question.type === 'RANK') && (
                 <RankQuestionPreview
+                    className={styles.questionItem}
+                    label={question.label}
+                    hint={question.hint}
+                />
+            )}
+            {(question.type === 'DATE') && (
+                <DateQuestionPreview
+                    className={styles.questionItem}
+                    label={question.label}
+                    hint={question.hint}
+                />
+            )}
+            {(question.type === 'TIME') && (
+                <TimeQuestionPreview
                     className={styles.questionItem}
                     label={question.label}
                     hint={question.hint}

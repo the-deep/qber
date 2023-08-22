@@ -18,17 +18,17 @@ import {
 } from '@togglecorp/toggle-form';
 
 import {
-    CreateRankQuestionMutation,
-    CreateRankQuestionMutationVariables,
+    CreateImageQuestionMutation,
+    CreateImageQuestionMutationVariables,
     QuestionCreateInput,
     QuestionTypeEnum,
 } from '#generated/types';
-import TextQuestionPreview from '#components/questionPreviews/TextQuestionPreview';
+import ImageQuestionPreview from '#components/questionPreviews/ImageQuestionPreview';
 
 import styles from './index.module.css';
 
-const CREATE_RANK_QUESTION = gql`
-    mutation CreateRankQuestion(
+const CREATE_IMAGE_QUESTION = gql`
+    mutation CreateImageQuestion(
         $projectId: ID!,
         $input: QuestionCreateInput!,
     ){
@@ -76,7 +76,7 @@ interface Props {
     questionnaireId: string;
 }
 
-function RankQuestionForm(props: Props) {
+function ImageQuestionForm(props: Props) {
     const {
         projectId,
         questionnaireId,
@@ -87,8 +87,8 @@ function RankQuestionForm(props: Props) {
     const [
         triggerQuestionCreate,
         { loading: createQuestionPending },
-    ] = useMutation<CreateRankQuestionMutation, CreateRankQuestionMutationVariables>(
-        CREATE_RANK_QUESTION,
+    ] = useMutation<CreateImageQuestionMutation, CreateImageQuestionMutationVariables>(
+        CREATE_IMAGE_QUESTION,
         {
             onCompleted: (questionResponse) => {
                 const response = questionResponse?.private?.projectScope?.createQuestion;
@@ -116,7 +116,7 @@ function RankQuestionForm(props: Props) {
         },
     );
     const initialFormValue: FormType = {
-        type: 'RANK' as QuestionTypeEnum,
+        type: 'IMAGE' as QuestionTypeEnum,
         questionnaire: questionnaireId,
         name: randomString(),
     };
@@ -155,7 +155,7 @@ function RankQuestionForm(props: Props) {
 
     return (
         <form className={styles.question}>
-            <TextQuestionPreview
+            <ImageQuestionPreview
                 className={styles.preview}
                 label={formValue.label}
                 hint={formValue.hint}
@@ -188,4 +188,4 @@ function RankQuestionForm(props: Props) {
     );
 }
 
-export default RankQuestionForm;
+export default ImageQuestionForm;

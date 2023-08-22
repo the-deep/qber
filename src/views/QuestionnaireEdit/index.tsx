@@ -4,13 +4,18 @@ import {
 } from 'react-router-dom';
 import {
     IoAdd,
+    IoCameraOutline,
     IoCloseOutline,
+    IoDocumentTextOutline,
     IoRadioButtonOn,
 } from 'react-icons/io5';
 import {
     MdOutline123,
     MdOutlineAbc,
+    MdOutlineCalendarMonth,
     MdOutlineChecklist,
+    MdOutlineEditNote,
+    MdOutlineSchedule,
 } from 'react-icons/md';
 import {
     isNotDefined,
@@ -44,7 +49,14 @@ import {
 import TextQuestionForm from './TextQuestionForm';
 import IntegerQuestionForm from './IntegerQuestionForm';
 import RankQuestionForm from './RankQuestionForm';
+import DateQuestionForm from './DateQuestionForm';
+import TimeQuestionForm from './TimeQuestionForm';
+import NoteQuestionForm from './NoteQuestionForm';
+import FileQuestionForm from './FileQuestionForm';
+import ImageQuestionForm from './ImageQuestionForm';
 import SelectOneQuestionForm from './SelectOneQuestionForm';
+import SelectMultipleQuestionForm from './SelectMultipleQuestionForm';
+
 import QuestionTypeItem, { QuestionType } from './QuestionTypeItem';
 import QuestionPreview from './QuestionPreview';
 import SelectMultipleQuestionForm from './SelectMultipleQuestionForm';
@@ -156,6 +168,31 @@ const questionTypes: QuestionType[] = [
         key: 'RANK',
         name: 'Rank',
         icon: <MdOutlineChecklist />,
+    },
+    {
+        key: 'DATE',
+        name: 'Date',
+        icon: <MdOutlineCalendarMonth />,
+    },
+    {
+        key: 'TIME',
+        name: 'Time',
+        icon: <MdOutlineSchedule />,
+    },
+    {
+        key: 'IMAGE',
+        name: 'Image',
+        icon: <IoCameraOutline />,
+    },
+    {
+        key: 'FILE',
+        name: 'File',
+        icon: <IoDocumentTextOutline />,
+    },
+    {
+        key: 'NOTE',
+        name: 'Note',
+        icon: <MdOutlineEditNote />,
     },
 ];
 
@@ -423,6 +460,36 @@ export function Component() {
                             )}
                             {(selectedQuestionType === 'SELECT_MULTIPLE') && (
                                 <SelectMultipleQuestionForm
+                                    projectId={projectId}
+                                    questionnaireId={questionnaireId}
+                                />
+                            )}
+                            {(selectedQuestionType === 'DATE') && (
+                                <DateQuestionForm
+                                    projectId={projectId}
+                                    questionnaireId={questionnaireId}
+                                />
+                            )}
+                            {(selectedQuestionType === 'TIME') && (
+                                <TimeQuestionForm
+                                    projectId={projectId}
+                                    questionnaireId={questionnaireId}
+                                />
+                            )}
+                            {(selectedQuestionType === 'NOTE') && (
+                                <NoteQuestionForm
+                                    projectId={projectId}
+                                    questionnaireId={questionnaireId}
+                                />
+                            )}
+                            {(selectedQuestionType === 'FILE') && (
+                                <FileQuestionForm
+                                    projectId={projectId}
+                                    questionnaireId={questionnaireId}
+                                />
+                            )}
+                            {(selectedQuestionType === 'IMAGE') && (
+                                <ImageQuestionForm
                                     projectId={projectId}
                                     questionnaireId={questionnaireId}
                                 />

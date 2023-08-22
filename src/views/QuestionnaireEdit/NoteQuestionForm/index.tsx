@@ -18,17 +18,17 @@ import {
 } from '@togglecorp/toggle-form';
 
 import {
-    CreateRankQuestionMutation,
-    CreateRankQuestionMutationVariables,
+    CreateNoteQuestionMutation,
+    CreateNoteQuestionMutationVariables,
     QuestionCreateInput,
     QuestionTypeEnum,
 } from '#generated/types';
-import TextQuestionPreview from '#components/questionPreviews/TextQuestionPreview';
+import NoteQuestionPreview from '#components/questionPreviews/NoteQuestionPreview';
 
 import styles from './index.module.css';
 
-const CREATE_RANK_QUESTION = gql`
-    mutation CreateRankQuestion(
+const CREATE_NOTE_QUESTION = gql`
+    mutation CreateNoteQuestion(
         $projectId: ID!,
         $input: QuestionCreateInput!,
     ){
@@ -67,7 +67,6 @@ const schema: FormSchema = {
             required: true,
             requiredValidation: requiredStringCondition,
         },
-        hint: {},
     }),
 };
 
@@ -76,7 +75,7 @@ interface Props {
     questionnaireId: string;
 }
 
-function RankQuestionForm(props: Props) {
+function NoteQuestionForm(props: Props) {
     const {
         projectId,
         questionnaireId,
@@ -87,8 +86,8 @@ function RankQuestionForm(props: Props) {
     const [
         triggerQuestionCreate,
         { loading: createQuestionPending },
-    ] = useMutation<CreateRankQuestionMutation, CreateRankQuestionMutationVariables>(
-        CREATE_RANK_QUESTION,
+    ] = useMutation<CreateNoteQuestionMutation, CreateNoteQuestionMutationVariables>(
+        CREATE_NOTE_QUESTION,
         {
             onCompleted: (questionResponse) => {
                 const response = questionResponse?.private?.projectScope?.createQuestion;
@@ -116,7 +115,7 @@ function RankQuestionForm(props: Props) {
         },
     );
     const initialFormValue: FormType = {
-        type: 'RANK' as QuestionTypeEnum,
+        type: 'NOTE' as QuestionTypeEnum,
         questionnaire: questionnaireId,
         name: randomString(),
     };
@@ -155,10 +154,9 @@ function RankQuestionForm(props: Props) {
 
     return (
         <form className={styles.question}>
-            <TextQuestionPreview
+            <NoteQuestionPreview
                 className={styles.preview}
                 label={formValue.label}
-                hint={formValue.hint}
             />
             <div className={styles.editSection}>
                 <TextInput
@@ -166,13 +164,6 @@ function RankQuestionForm(props: Props) {
                     label="Question label"
                     value={formValue.label}
                     error={fieldError?.label}
-                    onChange={setFieldValue}
-                />
-                <TextInput
-                    name="hint"
-                    label="Question hint"
-                    value={formValue.hint}
-                    error={fieldError?.hint}
                     onChange={setFieldValue}
                 />
             </div>
@@ -188,4 +179,4 @@ function RankQuestionForm(props: Props) {
     );
 }
 
-export default RankQuestionForm;
+export default NoteQuestionForm;
