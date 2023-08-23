@@ -117,6 +117,7 @@ interface Props {
     projectId: string;
     questionnaireId: string;
     questionId?: string;
+    onSuccess: (questionId: string | undefined) => void;
 }
 
 function IntegerQuestionForm(props: Props) {
@@ -124,6 +125,7 @@ function IntegerQuestionForm(props: Props) {
         projectId,
         questionnaireId,
         questionId,
+        onSuccess,
     } = props;
 
     const alert = useAlert();
@@ -189,6 +191,7 @@ function IntegerQuestionForm(props: Props) {
                     return;
                 }
                 if (response.ok) {
+                    onSuccess(response.result?.id);
                     alert.show(
                         'Question created successfully.',
                         { variant: 'success' },
@@ -221,6 +224,7 @@ function IntegerQuestionForm(props: Props) {
                     return;
                 }
                 if (response.ok) {
+                    onSuccess(response.result?.id);
                     alert.show(
                         'Question updated successfully.',
                         { variant: 'success' },

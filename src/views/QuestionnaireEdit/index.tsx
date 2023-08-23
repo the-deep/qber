@@ -305,6 +305,7 @@ export function Component() {
 
     const {
         data: questionsResponse,
+        refetch: retriggerQuestions,
     } = useQuery<QuestionsByGroupQuery, QuestionsByGroupQueryVariables>(
         QUESTIONS_BY_GROUP,
         {
@@ -312,6 +313,14 @@ export function Component() {
             variables: questionsVariables,
         },
     );
+
+    const handleQuestionCreateSuccess = useCallback(() => {
+        hideAddQuestionPane();
+        retriggerQuestions();
+    }, [
+        hideAddQuestionPane,
+        retriggerQuestions,
+    ]);
 
     const questionsData = questionsResponse?.private.projectScope?.questions?.items;
     const questionTypeRendererParams = useCallback((key: string, data: QuestionType) => ({
@@ -449,6 +458,7 @@ export function Component() {
                                     projectId={projectId}
                                     questionnaireId={questionnaireId}
                                     questionId={activeQuestionId}
+                                    onSuccess={handleQuestionCreateSuccess}
                                 />
                             )}
                             {(selectedQuestionType === 'INTEGER') && (
@@ -456,6 +466,7 @@ export function Component() {
                                     projectId={projectId}
                                     questionnaireId={questionnaireId}
                                     questionId={activeQuestionId}
+                                    onSuccess={handleQuestionCreateSuccess}
                                 />
                             )}
                             {(selectedQuestionType === 'RANK') && (
@@ -463,18 +474,21 @@ export function Component() {
                                     projectId={projectId}
                                     questionnaireId={questionnaireId}
                                     questionId={activeQuestionId}
+                                    onSuccess={handleQuestionCreateSuccess}
                                 />
                             )}
                             {(selectedQuestionType === 'SELECT_ONE') && (
                                 <SelectOneQuestionForm
                                     projectId={projectId}
                                     questionnaireId={questionnaireId}
+                                    onSuccess={handleQuestionCreateSuccess}
                                 />
                             )}
                             {(selectedQuestionType === 'SELECT_MULTIPLE') && (
                                 <SelectMultipleQuestionForm
                                     projectId={projectId}
                                     questionnaireId={questionnaireId}
+                                    onSuccess={handleQuestionCreateSuccess}
                                 />
                             )}
                             {(selectedQuestionType === 'DATE') && (
@@ -482,6 +496,7 @@ export function Component() {
                                     projectId={projectId}
                                     questionnaireId={questionnaireId}
                                     questionId={activeQuestionId}
+                                    onSuccess={handleQuestionCreateSuccess}
                                 />
                             )}
                             {(selectedQuestionType === 'TIME') && (
@@ -489,6 +504,7 @@ export function Component() {
                                     projectId={projectId}
                                     questionnaireId={questionnaireId}
                                     questionId={activeQuestionId}
+                                    onSuccess={handleQuestionCreateSuccess}
                                 />
                             )}
                             {(selectedQuestionType === 'NOTE') && (
@@ -496,6 +512,7 @@ export function Component() {
                                     projectId={projectId}
                                     questionnaireId={questionnaireId}
                                     questionId={activeQuestionId}
+                                    onSuccess={handleQuestionCreateSuccess}
                                 />
                             )}
                             {(selectedQuestionType === 'FILE') && (
@@ -503,6 +520,7 @@ export function Component() {
                                     projectId={projectId}
                                     questionnaireId={questionnaireId}
                                     questionId={activeQuestionId}
+                                    onSuccess={handleQuestionCreateSuccess}
                                 />
                             )}
                             {(selectedQuestionType === 'IMAGE') && (
@@ -510,6 +528,7 @@ export function Component() {
                                     projectId={projectId}
                                     questionnaireId={questionnaireId}
                                     questionId={activeQuestionId}
+                                    onSuccess={handleQuestionCreateSuccess}
                                 />
                             )}
                         </div>

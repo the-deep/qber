@@ -30,9 +30,13 @@ import SelectOneQuestionPreview from '#components/questionPreviews/SelectOneQues
 import PillarSelectInput from '#components/PillarSelectInput';
 import ChoiceCollectionSelectInput from '#components/ChoiceCollectionSelectInput';
 
+import {
+    QUESTION_FRAGMENT,
+} from '../queries.ts';
 import styles from './index.module.css';
 
 const CREATE_SINGLE_SELECTION_QUESTION = gql`
+    ${QUESTION_FRAGMENT}
     mutation CreateSingleSelectionQuestion(
         $projectId: ID!,
         $input: QuestionCreateInput!,
@@ -44,6 +48,9 @@ const CREATE_SINGLE_SELECTION_QUESTION = gql`
                 ) {
                     ok
                     errors
+                    result {
+                        ...QuestionResponse
+                    }
                 }
             }
         }
@@ -87,12 +94,14 @@ const schema: FormSchema = {
 interface Props {
     projectId: string;
     questionnaireId: string;
+    onSuccess: (questionId: string | undefined) => void;
 }
 
 function SelectOneQuestionForm(props: Props) {
     const {
         projectId,
         questionnaireId,
+        onSuccess,
     } = props;
 
     const alert = useAlert();
@@ -111,6 +120,7 @@ function SelectOneQuestionForm(props: Props) {
                     return;
                 }
                 if (response.ok) {
+                    onSuccess(response.result?.id);
                     alert.show(
                         'Question created successfully.',
                         { variant: 'success' },
