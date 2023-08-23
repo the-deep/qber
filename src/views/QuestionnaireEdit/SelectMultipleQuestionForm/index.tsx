@@ -101,7 +101,7 @@ function SelectMultipleQuestionForm(props: Props) {
         { loading: createQuestionPending },
     ] = useMutation<
         CreateMultipleSelectionQuestionMutation,
-        CreateMultipleSelectionQuestionMutationVariables,
+        CreateMultipleSelectionQuestionMutationVariables
     >(
         CREATE_MULTIPLE_SELECTION_QUESTION,
         {
