@@ -34,8 +34,9 @@ import {
     QuestionUpdateInput,
     QuestionTypeEnum,
 } from '#generated/types';
-import TextQuestionPreview from '#components/questionPreviews/TextQuestionPreview';
+import RankQuestionPreview from '#components/questionPreviews/RankQuestionPreview';
 import PillarSelectInput from '#components/PillarSelectInput';
+import ChoiceCollectionSelectInput from '#components/ChoiceCollectionSelectInput';
 
 import {
     QUESTION_FRAGMENT,
@@ -111,6 +112,10 @@ const schema: FormSchema = {
             required: true,
             requiredValidation: requiredStringCondition,
         },
+        choiceCollection: {
+            required: true,
+            requiredValidation: requiredStringCondition,
+        },
         leafGroup: {
             required: true,
             requiredValidation: requiredStringCondition,
@@ -180,6 +185,7 @@ function RankQuestionForm(props: Props) {
                     label: questionResponse?.label,
                     leafGroup: questionResponse?.leafGroupId,
                     hint: questionResponse?.hint,
+                    choiceCollection: questionResponse?.choiceCollection?.id,
                 });
             },
         },
@@ -285,10 +291,12 @@ function RankQuestionForm(props: Props) {
 
     return (
         <form className={styles.question}>
-            <TextQuestionPreview
+            <RankQuestionPreview
                 className={styles.preview}
                 label={formValue.label}
                 hint={formValue.hint}
+                projectId={projectId}
+                choiceCollectionId={formValue.choiceCollection}
             />
             <div className={styles.editSection}>
                 <TextInput
@@ -311,6 +319,15 @@ function RankQuestionForm(props: Props) {
                     value={formValue.name}
                     error={fieldError?.name}
                     onChange={setFieldValue}
+                />
+                <ChoiceCollectionSelectInput
+                    name="choiceCollection"
+                    value={formValue.choiceCollection}
+                    label="Options"
+                    onChange={setFieldValue}
+                    projectId={projectId}
+                    questionnaireId={questionnaireId}
+                    error={fieldError?.choiceCollection}
                 />
                 <PillarSelectInput
                     name="leafGroup"

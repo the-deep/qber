@@ -1,10 +1,12 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
-    randomString,
+    isDefined,
+    isNotDefined,
 } from '@togglecorp/fujs';
 import {
     gql,
     useMutation,
+    useQuery,
 } from '@apollo/client';
 import {
     Button,
@@ -21,10 +23,15 @@ import {
 } from '@togglecorp/toggle-form';
 
 import {
-    QuestionCreateInput,
-    QuestionTypeEnum,
     CreateSingleSelectionQuestionMutation,
     CreateSingleSelectionQuestionMutationVariables,
+    UpdateSingleSelectionQuestionMutation,
+    UpdateSingleSelectionQuestionMutationVariables,
+    QuestionInfoQuery,
+    QuestionInfoQueryVariables,
+    QuestionCreateInput,
+    QuestionUpdateInput,
+    QuestionTypeEnum,
 } from '#generated/types';
 import SelectOneQuestionPreview from '#components/questionPreviews/SelectOneQuestionPreview';
 import PillarSelectInput from '#components/PillarSelectInput';
@@ -32,6 +39,7 @@ import ChoiceCollectionSelectInput from '#components/ChoiceCollectionSelectInput
 
 import {
     QUESTION_FRAGMENT,
+    QUESTION_INFO,
 } from '../queries.ts';
 import styles from './index.module.css';
 
@@ -45,6 +53,30 @@ const CREATE_SINGLE_SELECTION_QUESTION = gql`
             projectScope(pk: $projectId) {
                 createQuestion(
                     data: $input,
+                ) {
+                    ok
+                    errors
+                    result {
+                        ...QuestionResponse
+                    }
+                }
+            }
+        }
+    }
+`;
+
+const UPDATE_SINGLE_SELECTION_QUESTION = gql`
+    ${QUESTION_FRAGMENT}
+    mutation UpdateSingleSelectionQuestion(
+        $projectId: ID!,
+        $questionId: ID!,
+        $input: QuestionUpdateInput!,
+    ) {
+        private {
+            projectScope(pk: $projectId) {
+                updateQuestion (
+                    data: $input
+                    id: $questionId,
                 ) {
                     ok
                     errors
@@ -94,6 +126,7 @@ const schema: FormSchema = {
 interface Props {
     projectId: string;
     questionnaireId: string;
+    questionId?: string;
     onSuccess: (questionId: string | undefined) => void;
 }
 
@@ -101,10 +134,62 @@ function SelectOneQuestionForm(props: Props) {
     const {
         projectId,
         questionnaireId,
+        questionId,
         onSuccess,
     } = props;
 
     const alert = useAlert();
+
+    const initialFormValue: FormType = {
+        type: 'SELECT_ONE' as QuestionTypeEnum,
+        questionnaire: questionnaireId,
+    };
+
+    const {
+        pristine,
+        validate,
+        value: formValue,
+        error: formError,
+        setFieldValue,
+        setValue,
+        setError,
+    } = useForm(schema, { value: initialFormValue });
+
+    const fieldError = getErrorObject(formError);
+
+    const questionInfoVariables = useMemo(() => {
+        if (isNotDefined(projectId) || isNotDefined(questionId)) {
+            return undefined;
+        }
+        return ({
+            projectId,
+            questionId,
+        });
+    }, [
+        projectId,
+        questionId,
+    ]);
+
+    useQuery<QuestionInfoQuery, QuestionInfoQueryVariables>(
+        QUESTION_INFO,
+        {
+            skip: isNotDefined(questionInfoVariables),
+            variables: questionInfoVariables,
+            onCompleted: (response) => {
+                const questionResponse = response.private.projectScope?.question;
+                setValue({
+                    name: questionResponse?.name,
+                    type: questionResponse?.type,
+                    questionnaire: questionResponse?.questionnaireId,
+                    label: questionResponse?.label,
+                    group: questionResponse?.groupId,
+                    hint: questionResponse?.hint,
+                    choiceCollection: questionResponse?.choiceCollection?.id,
+                });
+            },
+        },
+    );
+
     const [
         triggerQuestionCreate,
         { loading: createQuestionPending },
@@ -140,39 +225,71 @@ function SelectOneQuestionForm(props: Props) {
             },
         },
     );
-    const initialFormValue: FormType = {
-        type: 'SELECT_ONE' as QuestionTypeEnum,
-        questionnaire: questionnaireId,
-        name: randomString(),
-    };
 
-    const {
-        pristine,
-        validate,
-        value: formValue,
-        error: formError,
-        setFieldValue,
-        setError,
-    } = useForm(schema, { value: initialFormValue });
-
-    const fieldError = getErrorObject(formError);
+    const [
+        triggerQuestionUpdate,
+        { loading: updateQuestionPending },
+    ] = useMutation<
+    UpdateSingleSelectionQuestionMutation,
+    UpdateSingleSelectionQuestionMutationVariables
+    >(
+        UPDATE_SINGLE_SELECTION_QUESTION,
+        {
+            onCompleted: (questionResponse) => {
+                const response = questionResponse?.private?.projectScope?.updateQuestion;
+                if (!response) {
+                    return;
+                }
+                if (response.ok) {
+                    onSuccess(response.result?.id);
+                    alert.show(
+                        'Question updated successfully.',
+                        { variant: 'success' },
+                    );
+                } else {
+                    alert.show(
+                        'Failed to update question.',
+                        { variant: 'error' },
+                    );
+                }
+            },
+            onError: () => {
+                alert.show(
+                    'Failed to update question.',
+                    { variant: 'error' },
+                );
+            },
+        },
+    );
 
     const handleQuestionSubmit = useCallback(() => {
         const handler = createSubmitHandler(
             validate,
             setError,
             (valueFromForm) => {
-                triggerQuestionCreate({
-                    variables: {
-                        projectId,
-                        input: valueFromForm as QuestionCreateInput,
-                    },
-                });
+                if (isDefined(questionId)) {
+                    triggerQuestionUpdate({
+                        variables: {
+                            projectId,
+                            questionId,
+                            input: valueFromForm as QuestionUpdateInput,
+                        },
+                    });
+                } else {
+                    triggerQuestionCreate({
+                        variables: {
+                            projectId,
+                            input: valueFromForm as QuestionCreateInput,
+                        },
+                    });
+                }
             },
         );
         handler();
     }, [
         triggerQuestionCreate,
+        triggerQuestionUpdate,
+        questionId,
         projectId,
         setError,
         validate,
@@ -202,6 +319,13 @@ function SelectOneQuestionForm(props: Props) {
                     error={fieldError?.hint}
                     onChange={setFieldValue}
                 />
+                <TextInput
+                    name="name"
+                    label="Question name"
+                    value={formValue.name}
+                    error={fieldError?.name}
+                    onChange={setFieldValue}
+                />
                 <ChoiceCollectionSelectInput
                     name="choiceCollection"
                     value={formValue.choiceCollection}
@@ -224,7 +348,12 @@ function SelectOneQuestionForm(props: Props) {
                 name={undefined}
                 className={styles.button}
                 onClick={handleQuestionSubmit}
-                disabled={pristine || createQuestionPending}
+                disabled={
+                    pristine
+                    || (isDefined(questionId)
+                        ? updateQuestionPending
+                        : createQuestionPending)
+                }
             >
                 Apply
             </Button>

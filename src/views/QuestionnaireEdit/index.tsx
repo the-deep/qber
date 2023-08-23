@@ -8,6 +8,7 @@ import {
     IoCloseOutline,
     IoDocumentTextOutline,
     IoRadioButtonOn,
+    IoSwapVertical,
 } from 'react-icons/io5';
 import {
     MdOutline123,
@@ -173,7 +174,7 @@ const questionTypes: QuestionType[] = [
     {
         key: 'RANK',
         name: 'Rank',
-        icon: <MdOutlineChecklist />,
+        icon: <IoSwapVertical />,
     },
     {
         key: 'DATE',
@@ -459,6 +460,13 @@ export function Component() {
         projectId,
     ]);
 
+    const handleQuestionAdd = useCallback(() => {
+        showAddQuestionPane();
+        setActiveQuestionId(undefined);
+    }, [
+        showAddQuestionPane,
+    ]);
+
     const groupTabRenderParams = useCallback((_: string, datum: QuestionGroup) => ({
         children: datum.name,
         name: datum.id,
@@ -505,7 +513,7 @@ export function Component() {
                         actions={(
                             <Button
                                 name={undefined}
-                                onClick={showAddQuestionPane}
+                                onClick={handleQuestionAdd}
                                 icons={<IoAdd />}
                                 disabled={addQuestionPaneShown}
                             >
@@ -599,6 +607,7 @@ export function Component() {
                                 <SelectOneQuestionForm
                                     projectId={projectId}
                                     questionnaireId={questionnaireId}
+                                    questionId={activeQuestionId}
                                     onSuccess={handleQuestionCreateSuccess}
                                 />
                             )}
@@ -606,6 +615,7 @@ export function Component() {
                                 <SelectMultipleQuestionForm
                                     projectId={projectId}
                                     questionnaireId={questionnaireId}
+                                    questionId={activeQuestionId}
                                     onSuccess={handleQuestionCreateSuccess}
                                 />
                             )}

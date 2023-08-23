@@ -1,7 +1,6 @@
 .preview {
     display: flex;
     flex-direction: column;
-    padding: var(--dui-spacing-extra-large) var(--dui-spacing-large);
     gap: var(--dui-spacing-medium);
 
     .upload-preview-wrapper {

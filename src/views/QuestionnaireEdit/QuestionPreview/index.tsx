@@ -5,10 +5,12 @@ import {
 import {
     isNotDefined,
     isDefined,
+    noOp,
 } from '@togglecorp/fujs';
 import {
     TabPanel,
     Element,
+    Checkbox,
     QuickActionDropdownMenu,
     DropdownMenuItem,
 } from '@the-deep/deep-ui';
@@ -70,6 +72,14 @@ function QuestionPreview(props: QuestionProps) {
         >
             <Element
                 className={styles.questionWrapper}
+                icons={(
+                    // TODO: Fix the selection behavior
+                    <Checkbox
+                        name={undefined}
+                        value={false}
+                        onChange={noOp}
+                    />
+                )}
                 actions={(
                     <QuickActionDropdownMenu
                         label={<IoEllipsisVertical />}
@@ -98,11 +108,13 @@ function QuestionPreview(props: QuestionProps) {
                         hint={question.hint}
                     />
                 )}
-                {(question.type === 'RANK') && (
+                {(question.type === 'RANK') && isDefined(projectId) && (
                     <RankQuestionPreview
                         className={styles.questionItem}
                         label={question.label}
                         hint={question.hint}
+                        projectId={projectId}
+                        choiceCollectionId={question.choiceCollection?.id}
                     />
                 )}
                 {(question.type === 'DATE') && (
