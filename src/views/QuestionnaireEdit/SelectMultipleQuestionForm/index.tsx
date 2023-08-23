@@ -1,20 +1,13 @@
+import { useCallback } from 'react';
 import {
-    useCallback,
-    useMemo,
-    useState,
-} from 'react';
-import {
-    isNotDefined,
     randomString,
 } from '@togglecorp/fujs';
 import {
     gql,
     useMutation,
-    useQuery,
 } from '@apollo/client';
 import {
     Button,
-    SearchSelectInput,
     TextInput,
     useAlert,
 } from '@the-deep/deep-ui';
@@ -28,14 +21,13 @@ import {
 } from '@togglecorp/toggle-form';
 import {
     CreateTextQuestionMutationVariables,
-    ChoiceCollectionsQuery,
-    ChoiceCollectionsQueryVariables,
     QuestionCreateInput,
     QuestionTypeEnum,
     CreateMultipleSelectionQuestionMutation,
 } from '#generated/types';
 import SelectMultipleQuestionPreview from '#components/questionPreviews/SelectMultipleQuestionPreview';
 import PillarSelectInput from '#components/PillarSelectInput';
+import ChoiceCollectionSelectInput from '#components/ChoiceCollectionSelectInput';
 
 import styles from './index.module.css';
 
@@ -54,34 +46,6 @@ const CREATE_MULTIPLE_SELECTION_QUESTION = gql`
                 }
             }
         }
-    }
-`;
-
-const CHOICE_COLLECTIONS = gql`
-    query ChoiceCollections(
-        $projectId: ID!,
-        $questionnaireId: ID!,
-        $search:String
-        ) {
-    private {
-        projectScope(pk: $projectId) {
-            id
-            choiceCollections(
-                filters: {
-                    questionnaire: {pk: $questionnaireId},
-                    name: {iContains: $search }
-                    }
-            ) {
-                count
-                items {
-                    id
-                    label
-                    name
-                    questionnaireId
-                }
-            }
-        }
-    }
     }
 `;
 
@@ -119,11 +83,6 @@ const schema: FormSchema = {
     }),
 };
 
-type ChoiceCollection = NonNullable<ChoiceCollectionsQuery['private']['projectScope']>['choiceCollections']['items'][number];
-
-const choiceCollectionKeySelector = (d: ChoiceCollection) => d.id;
-const choiceCollectionLabelSelector = (d: ChoiceCollection) => d.label;
-
 interface Props {
     projectId: string;
     questionnaireId: string;
@@ -136,37 +95,6 @@ function SelectMultipleQuestionForm(props: Props) {
     } = props;
 
     const alert = useAlert();
-    const [opened, setOpened] = useState(false);
-    const [search, setSearch] = useState<string>();
-    const [
-        choiceCollectionOptions,
-        setChoiceCollectionOptions,
-    ] = useState<ChoiceCollection[] | undefined | null>();
-
-    const optionsVariables = useMemo(() => {
-        if (isNotDefined(projectId) || isNotDefined(questionnaireId)) {
-            return undefined;
-        }
-        return ({
-            projectId,
-            questionnaireId,
-            search,
-        });
-    }, [
-        projectId,
-        questionnaireId,
-        search,
-    ]);
-
-    const {
-        data: choiceCollectionsResponse,
-    } = useQuery<
-        ChoiceCollectionsQuery,
-        ChoiceCollectionsQueryVariables
-    >(CHOICE_COLLECTIONS, {
-        skip: isNotDefined(optionsVariables) || !opened,
-        variables: optionsVariables,
-    });
 
     const [
         triggerQuestionCreate,
@@ -237,8 +165,6 @@ function SelectMultipleQuestionForm(props: Props) {
         validate,
     ]);
 
-    const searchOption = choiceCollectionsResponse?.private.projectScope?.choiceCollections.items;
-
     return (
         <form className={styles.question}>
             <SelectMultipleQuestionPreview
@@ -263,18 +189,14 @@ function SelectMultipleQuestionForm(props: Props) {
                     error={fieldError?.hint}
                     onChange={setFieldValue}
                 />
-                <SearchSelectInput
+                <ChoiceCollectionSelectInput
                     name="choiceCollection"
-                    keySelector={choiceCollectionKeySelector}
-                    label="Options"
-                    labelSelector={choiceCollectionLabelSelector}
-                    onChange={setFieldValue}
-                    onSearchValueChange={setSearch}
-                    onOptionsChange={setChoiceCollectionOptions}
-                    searchOptions={searchOption}
-                    options={choiceCollectionOptions}
-                    onShowDropdownChange={setOpened}
                     value={formValue.choiceCollection}
+                    label="Options"
+                    onChange={setFieldValue}
+                    projectId={projectId}
+                    questionnaireId={questionnaireId}
+                    error={fieldError?.choiceCollection}
                 />
                 <PillarSelectInput
                     name="group"

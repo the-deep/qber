@@ -12,22 +12,23 @@ import {
 
 import {
     ChoiceCollectionsQuery,
-    OptionListQuery,
-    OptionListQueryVariables,
-    QuestionChoiceCollectionType,
+    SingleOptionListQuery,
+    SingleOptionListQueryVariables,
 } from '#generated/types';
 
 import styles from './index.module.css';
 
-const OPTION_LIST = gql`
-    query OptionList(
+const SINGLE_OPTION_LIST = gql`
+    query SingleOptionList(
         $projectId: ID!,
         $choiceCollectionId: ID!,
+        $questionnaireId: ID!,
         ) {
         private {
             projectScope(pk: $projectId) {
                 choiceCollection(pk: $choiceCollectionId) {
                     label
+                    id
                     name
                     choices {
                         id
@@ -36,10 +37,17 @@ const OPTION_LIST = gql`
                     }
                     id
                 }
+                choiceCollections(filters: {questionnaire: {pk: $questionnaireId}}) {
+                    limit
+                    offset
+                }
             }
         }
     }
 `;
+
+const choiceCollectionKeySelector = (d: { id: string }) => d.id;
+const choiceCollectionLabelSelector = (d: { name: string }) => d.name;
 
 interface Props {
     className?: string;
@@ -47,6 +55,7 @@ interface Props {
     hint?: string | null;
     choiceCollectionId: string | undefined | null;
     projectId: string;
+    questionnaireId: string;
 }
 
 function SelectOneQuestionPreview(props: Props) {
@@ -56,42 +65,40 @@ function SelectOneQuestionPreview(props: Props) {
         hint,
         choiceCollectionId,
         projectId,
+        questionnaireId,
     } = props;
 
-    type ChoiceCollection = NonNullable<ChoiceCollectionsQuery['private']['projectScope']>['choiceCollections']['items'][number];
-
-    const choiceCollectionKeySelector = (d: ChoiceCollection) => d.id;
-    const choiceCollectionLabelSelector = (d: ChoiceCollection) => d.label;
-
     const optionListVariables = useMemo(() => {
-        if (isNotDefined(projectId) || isNotDefined(choiceCollectionId)) {
+        if (isNotDefined(projectId) || isNotDefined(choiceCollectionId) || isNotDefined(questionnaireId)) {
             return undefined;
         }
         return ({
             projectId,
             choiceCollectionId,
+            questionnaireId
         });
     }, [
         projectId,
         choiceCollectionId,
+        questionnaireId,
     ]);
 
     const {
         data: optionsListResponse,
-    } = useQuery<OptionListQuery, OptionListQueryVariables>(
-        OPTION_LIST,
+    } = useQuery<SingleOptionListQuery, SingleOptionListQueryVariables>(
+        SINGLE_OPTION_LIST,
         {
             skip: isNotDefined(optionListVariables),
             variables: optionListVariables,
         },
     );
 
-    const optionsList = optionsListResponse?.private?.projectScope?.choiceCollection?.choices || [];
+    const optionsList = optionsListResponse?.private?.projectScope?.choiceCollection?.choices ?? [];
 
     return (
         <div className={_cs(styles.preview, className)}>
             <TextOutput
-                value={label ?? 'Which Country needs the assistance quickest?'}
+                value={label ?? 'Title'}
                 description={hint ?? 'Choose One'}
                 spacing="none"
                 block
@@ -103,7 +110,7 @@ function SelectOneQuestionPreview(props: Props) {
                 labelSelector={choiceCollectionLabelSelector}
                 name="options"
                 onChange={noOp}
-                options={optionsList as QuestionChoiceCollectionType[]}
+                options={optionsList}
                 value={optionsListResponse?.private?.projectScope?.choiceCollection?.name}
                 readOnly
                 disabled={false}

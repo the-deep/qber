@@ -11,18 +11,20 @@ import {
     TextOutput,
 } from '@the-deep/deep-ui';
 
-import { OptionListQuery, OptionListQueryVariables } from '#generated/types';
+import { MultipleOptionListQuery, MultipleOptionListQueryVariables } from '#generated/types';
 
 import styles from './index.module.css';
 
-const OPTION_LIST = gql`
-    query OptionList(
+const MULTIPLE_OPTION_LIST = gql`
+    query MultipleOptionList(
         $projectId: ID!,
         $choiceCollectionId: ID!,
         ) {
         private {
             projectScope(pk: $projectId) {
                 choiceCollection(pk: $choiceCollectionId) {
+                    questionnaireId
+                    id
                     label
                     name
                     choices {
@@ -37,7 +39,7 @@ const OPTION_LIST = gql`
     }
 `;
 
-type CheckboxType = NonNullable<NonNullable<OptionListQuery['private']['projectScope']>['choiceCollection']>['choices'][number];
+type CheckboxType = NonNullable<NonNullable<MultipleOptionListQuery['private']['projectScope']>['choiceCollection']>['choices'][number];
 const checkboxKeySelector = (d: CheckboxType) => d.id;
 
 interface Props {
@@ -72,8 +74,8 @@ function SelectMultipleQuestionPreview(props: Props) {
 
     const {
         data: optionsListResponse,
-    } = useQuery<OptionListQuery, OptionListQueryVariables>(
-        OPTION_LIST,
+    } = useQuery<MultipleOptionListQuery, MultipleOptionListQueryVariables>(
+        MULTIPLE_OPTION_LIST,
         {
             skip: isNotDefined(optionListVariables),
             variables: optionListVariables,
@@ -91,7 +93,7 @@ function SelectMultipleQuestionPreview(props: Props) {
     return (
         <div className={_cs(styles.preview, className)}>
             <TextOutput
-                value={label ?? 'Which Country needs the assistance quickest?'}
+                value={label ?? 'Title'}
                 description={hint ?? 'Choose One'}
                 spacing="none"
                 block

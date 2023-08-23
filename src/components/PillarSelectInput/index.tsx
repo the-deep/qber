@@ -37,6 +37,9 @@ interface PillarProps<T>{
 
 type Pillar = NonNullable<PillarsQuery['private']['projectScope']>['groups']['items'][number];
 
+const pillarKeySelector = (data: Pillar) => data.id;
+const pillarLabelSelector = (data: Pillar) => data.label;
+
 function PillarSelectInput<T extends string>(props: PillarProps<T>) {
     const {
         projectId,
@@ -71,9 +74,6 @@ function PillarSelectInput<T extends string>(props: PillarProps<T>) {
     );
 
     const pillarsOptions = pillarsResponse?.private?.projectScope?.groups.items || [];
-
-    const pillarKeySelector = (data: Pillar) => data.id;
-    const pillarLabelSelector = (data: Pillar) => data.label;
 
     return (
         <SelectInput
