@@ -1,13 +1,18 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
-    randomString,
+    isDefined,
+    isNotDefined,
 } from '@togglecorp/fujs';
 import {
     TextInput,
     Button,
     useAlert,
 } from '@the-deep/deep-ui';
-import { gql, useMutation } from '@apollo/client';
+import {
+    gql,
+    useMutation,
+    useQuery,
+} from '@apollo/client';
 import {
     ObjectSchema,
     createSubmitHandler,
@@ -20,14 +25,25 @@ import {
 import {
     CreateNoteQuestionMutation,
     CreateNoteQuestionMutationVariables,
+    UpdateNoteQuestionMutation,
+    UpdateNoteQuestionMutationVariables,
+    QuestionInfoQuery,
+    QuestionInfoQueryVariables,
     QuestionCreateInput,
+    QuestionUpdateInput,
     QuestionTypeEnum,
 } from '#generated/types';
 import NoteQuestionPreview from '#components/questionPreviews/NoteQuestionPreview';
+import PillarSelectInput from '#components/PillarSelectInput';
 
+import {
+    QUESTION_FRAGMENT,
+    QUESTION_INFO,
+} from '../queries.ts';
 import styles from './index.module.css';
 
 const CREATE_NOTE_QUESTION = gql`
+    ${QUESTION_FRAGMENT}
     mutation CreateNoteQuestion(
         $projectId: ID!,
         $input: QuestionCreateInput!,
@@ -39,6 +55,33 @@ const CREATE_NOTE_QUESTION = gql`
                 ) {
                     ok
                     errors
+                    result {
+                        ...QuestionResponse
+                    }
+                }
+            }
+        }
+    }
+`;
+
+const UPDATE_NOTE_QUESTION = gql`
+    ${QUESTION_FRAGMENT}
+    mutation UpdateNoteQuestion(
+        $projectId: ID!,
+        $questionId: ID!,
+        $input: QuestionUpdateInput!,
+    ) {
+        private {
+            projectScope(pk: $projectId) {
+                updateQuestion (
+                    data: $input
+                    id: $questionId,
+                ) {
+                    ok
+                    errors
+                    result {
+                        ...QuestionResponse
+                    }
                 }
             }
         }
@@ -67,21 +110,76 @@ const schema: FormSchema = {
             required: true,
             requiredValidation: requiredStringCondition,
         },
+        group: {
+            required: true,
+            requiredValidation: requiredStringCondition,
+        },
     }),
 };
 
 interface Props {
     projectId: string;
     questionnaireId: string;
+    questionId?: string;
 }
 
 function NoteQuestionForm(props: Props) {
     const {
         projectId,
         questionnaireId,
+        questionId,
     } = props;
 
     const alert = useAlert();
+
+    const initialFormValue: FormType = {
+        type: 'NOTE' as QuestionTypeEnum,
+        questionnaire: questionnaireId,
+    };
+
+    const {
+        pristine,
+        validate,
+        value: formValue,
+        error: formError,
+        setFieldValue,
+        setValue,
+        setError,
+    } = useForm(schema, { value: initialFormValue });
+
+    const fieldError = getErrorObject(formError);
+
+    const questionInfoVariables = useMemo(() => {
+        if (isNotDefined(projectId) || isNotDefined(questionId)) {
+            return undefined;
+        }
+        return ({
+            projectId,
+            questionId,
+        });
+    }, [
+        projectId,
+        questionId,
+    ]);
+
+    useQuery<QuestionInfoQuery, QuestionInfoQueryVariables>(
+        QUESTION_INFO,
+        {
+            skip: isNotDefined(questionInfoVariables),
+            variables: questionInfoVariables,
+            onCompleted: (response) => {
+                const questionResponse = response.private.projectScope?.question;
+                setValue({
+                    name: questionResponse?.name,
+                    type: questionResponse?.type,
+                    questionnaire: questionResponse?.questionnaireId,
+                    label: questionResponse?.label,
+                    group: questionResponse?.groupId,
+                    hint: questionResponse?.hint,
+                });
+            },
+        },
+    );
 
     const [
         triggerQuestionCreate,
@@ -114,39 +212,67 @@ function NoteQuestionForm(props: Props) {
             },
         },
     );
-    const initialFormValue: FormType = {
-        type: 'NOTE' as QuestionTypeEnum,
-        questionnaire: questionnaireId,
-        name: randomString(),
-    };
 
-    const {
-        pristine,
-        validate,
-        value: formValue,
-        error: formError,
-        setFieldValue,
-        setError,
-    } = useForm(schema, { value: initialFormValue });
-
-    const fieldError = getErrorObject(formError);
+    const [
+        triggerQuestionUpdate,
+        { loading: updateQuestionPending },
+    ] = useMutation<UpdateNoteQuestionMutation, UpdateNoteQuestionMutationVariables>(
+        UPDATE_NOTE_QUESTION,
+        {
+            onCompleted: (questionResponse) => {
+                const response = questionResponse?.private?.projectScope?.updateQuestion;
+                if (!response) {
+                    return;
+                }
+                if (response.ok) {
+                    alert.show(
+                        'Question updated successfully.',
+                        { variant: 'success' },
+                    );
+                } else {
+                    alert.show(
+                        'Failed to update question.',
+                        { variant: 'error' },
+                    );
+                }
+            },
+            onError: () => {
+                alert.show(
+                    'Failed to update question.',
+                    { variant: 'error' },
+                );
+            },
+        },
+    );
 
     const handleQuestionSubmit = useCallback(() => {
         const handler = createSubmitHandler(
             validate,
             setError,
             (valueFromForm) => {
-                triggerQuestionCreate({
-                    variables: {
-                        projectId,
-                        input: valueFromForm as QuestionCreateInput,
-                    },
-                });
+                if (isDefined(questionId)) {
+                    triggerQuestionUpdate({
+                        variables: {
+                            projectId,
+                            questionId,
+                            input: valueFromForm as QuestionUpdateInput,
+                        },
+                    });
+                } else {
+                    triggerQuestionCreate({
+                        variables: {
+                            projectId,
+                            input: valueFromForm as QuestionCreateInput,
+                        },
+                    });
+                }
             },
         );
         handler();
     }, [
         triggerQuestionCreate,
+        triggerQuestionUpdate,
+        questionId,
         projectId,
         setError,
         validate,
@@ -166,12 +292,32 @@ function NoteQuestionForm(props: Props) {
                     error={fieldError?.label}
                     onChange={setFieldValue}
                 />
+                <TextInput
+                    name="name"
+                    label="Question name"
+                    value={formValue.name}
+                    error={fieldError?.name}
+                    onChange={setFieldValue}
+                />
+                <PillarSelectInput
+                    name="group"
+                    projectId={projectId}
+                    questionnaireId={questionnaireId}
+                    value={formValue.group}
+                    error={fieldError?.group}
+                    onChange={setFieldValue}
+                />
             </div>
             <Button
                 name={undefined}
                 className={styles.button}
                 onClick={handleQuestionSubmit}
-                disabled={pristine || createQuestionPending}
+                disabled={
+                    pristine
+                    || (isDefined(questionId)
+                        ? updateQuestionPending
+                        : createQuestionPending)
+                }
             >
                 Apply
             </Button>

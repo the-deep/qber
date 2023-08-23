@@ -57,9 +57,11 @@ import ImageQuestionForm from './ImageQuestionForm';
 import SelectOneQuestionForm from './SelectOneQuestionForm';
 import SelectMultipleQuestionForm from './SelectMultipleQuestionForm';
 
+import {
+    QUESTION_FRAGMENT,
+} from './queries.ts';
 import QuestionTypeItem, { QuestionType } from './QuestionTypeItem';
 import QuestionPreview from './QuestionPreview';
-import SelectMultipleQuestionForm from './SelectMultipleQuestionForm';
 
 import styles from './index.module.css';
 
@@ -99,10 +101,11 @@ const QUESTIONNAIRE = gql`
 `;
 
 const QUESTIONS_BY_GROUP = gql`
+    ${QUESTION_FRAGMENT}
     query QuestionsByGroup(
         $projectId: ID!,
         $questionnaireId: ID!,
-        $groupId: DjangoModelFilterInput,
+        $groupId: ID!,
     ) {
         private {
             projectScope(pk: $projectId) {
@@ -112,7 +115,9 @@ const QUESTIONS_BY_GROUP = gql`
                         questionnaire: {
                             pk: $questionnaireId,
                         },
-                        group: $groupId,
+                        group: {
+                            pk: $groupId,
+                        },
                         includeChildGroup: true,
                     }
                     order: {
@@ -123,14 +128,7 @@ const QUESTIONS_BY_GROUP = gql`
                     limit
                     offset
                     items {
-                        createdAt
-                        hint
-                        id
-                        groupId
-                        label
-                        name
-                        type
-                        questionnaireId
+                        ...QuestionResponse
                     }
                 }
             }
@@ -218,6 +216,11 @@ export function Component() {
     ] = useState<string | undefined>();
 
     const [
+        activeQuestionId,
+        setActiveQuestionId,
+    ] = useState<string | undefined>();
+
+    const [
         selectedGroups,
         setSelectedGroups,
     ] = useState<string[]>([]);
@@ -292,7 +295,7 @@ export function Component() {
         return ({
             projectId,
             questionnaireId,
-            activeGroupTab: finalSelectedTab,
+            groupId: finalSelectedTab,
         });
     }, [
         projectId,
@@ -319,7 +322,14 @@ export function Component() {
 
     const questionRendererParams = useCallback((_: string, data: Question) => ({
         question: data,
-    }), []);
+        showAddQuestionPane,
+        setSelectedQuestionType,
+        projectId,
+        setActiveQuestionId,
+    }), [
+        showAddQuestionPane,
+        projectId,
+    ]);
 
     const groupTabRenderParams = useCallback((_: string, datum: QuestionGroup) => ({
         children: datum.label,
@@ -438,18 +448,21 @@ export function Component() {
                                 <TextQuestionForm
                                     projectId={projectId}
                                     questionnaireId={questionnaireId}
+                                    questionId={activeQuestionId}
                                 />
                             )}
                             {(selectedQuestionType === 'INTEGER') && (
                                 <IntegerQuestionForm
                                     projectId={projectId}
                                     questionnaireId={questionnaireId}
+                                    questionId={activeQuestionId}
                                 />
                             )}
                             {(selectedQuestionType === 'RANK') && (
                                 <RankQuestionForm
                                     projectId={projectId}
                                     questionnaireId={questionnaireId}
+                                    questionId={activeQuestionId}
                                 />
                             )}
                             {(selectedQuestionType === 'SELECT_ONE') && (
@@ -468,30 +481,35 @@ export function Component() {
                                 <DateQuestionForm
                                     projectId={projectId}
                                     questionnaireId={questionnaireId}
+                                    questionId={activeQuestionId}
                                 />
                             )}
                             {(selectedQuestionType === 'TIME') && (
                                 <TimeQuestionForm
                                     projectId={projectId}
                                     questionnaireId={questionnaireId}
+                                    questionId={activeQuestionId}
                                 />
                             )}
                             {(selectedQuestionType === 'NOTE') && (
                                 <NoteQuestionForm
                                     projectId={projectId}
                                     questionnaireId={questionnaireId}
+                                    questionId={activeQuestionId}
                                 />
                             )}
                             {(selectedQuestionType === 'FILE') && (
                                 <FileQuestionForm
                                     projectId={projectId}
                                     questionnaireId={questionnaireId}
+                                    questionId={activeQuestionId}
                                 />
                             )}
                             {(selectedQuestionType === 'IMAGE') && (
                                 <ImageQuestionForm
                                     projectId={projectId}
                                     questionnaireId={questionnaireId}
+                                    questionId={activeQuestionId}
                                 />
                             )}
                         </div>

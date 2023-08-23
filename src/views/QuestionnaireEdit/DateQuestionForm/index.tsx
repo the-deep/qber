@@ -1,13 +1,18 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
-    randomString,
+    isDefined,
+    isNotDefined,
 } from '@togglecorp/fujs';
 import {
     Button,
     TextInput,
     useAlert,
 } from '@the-deep/deep-ui';
-import { gql, useMutation } from '@apollo/client';
+import {
+    gql,
+    useMutation,
+    useQuery,
+} from '@apollo/client';
 import {
     ObjectSchema,
     createSubmitHandler,
@@ -20,14 +25,25 @@ import {
 import {
     CreateDateQuestionMutation,
     CreateDateQuestionMutationVariables,
+    UpdateDateQuestionMutation,
+    UpdateDateQuestionMutationVariables,
+    QuestionInfoQuery,
+    QuestionInfoQueryVariables,
     QuestionCreateInput,
+    QuestionUpdateInput,
     QuestionTypeEnum,
 } from '#generated/types';
 import DateQuestionPreview from '#components/questionPreviews/DateQuestionPreview';
+import PillarSelectInput from '#components/PillarSelectInput';
 
+import {
+    QUESTION_FRAGMENT,
+    QUESTION_INFO,
+} from '../queries.ts';
 import styles from './index.module.css';
 
 const CREATE_DATE_QUESTION = gql`
+    ${QUESTION_FRAGMENT}
     mutation CreateDateQuestion(
         $projectId: ID!,
         $input: QuestionCreateInput!,
@@ -39,12 +55,38 @@ const CREATE_DATE_QUESTION = gql`
                 ) {
                     ok
                     errors
+                    result {
+                        ...QuestionResponse
+                    }
                 }
             }
         }
     }
 `;
 
+const UPDATE_DATE_QUESTION = gql`
+    ${QUESTION_FRAGMENT}
+    mutation UpdateDateQuestion(
+        $projectId: ID!,
+        $questionId: ID!,
+        $input: QuestionUpdateInput!,
+    ) {
+        private {
+            projectScope(pk: $projectId) {
+                updateQuestion (
+                    data: $input
+                    id: $questionId,
+                ) {
+                    ok
+                    errors
+                    result {
+                        ...QuestionResponse
+                    }
+                }
+            }
+        }
+    }
+`;
 type FormType = PartialForm<QuestionCreateInput>;
 type FormSchema = ObjectSchema<FormType>;
 type FormSchemaFields = ReturnType<FormSchema['fields']>;
@@ -67,6 +109,10 @@ const schema: FormSchema = {
             required: true,
             requiredValidation: requiredStringCondition,
         },
+        group: {
+            required: true,
+            requiredValidation: requiredStringCondition,
+        },
         hint: {},
     }),
 };
@@ -74,15 +120,66 @@ const schema: FormSchema = {
 interface Props {
     projectId: string;
     questionnaireId: string;
+    questionId?: string;
 }
 
 function DateQuestionForm(props: Props) {
     const {
         projectId,
         questionnaireId,
+        questionId,
     } = props;
 
     const alert = useAlert();
+
+    const initialFormValue: FormType = {
+        type: 'DATE' as QuestionTypeEnum,
+        questionnaire: questionnaireId,
+    };
+
+    const {
+        pristine,
+        validate,
+        value: formValue,
+        error: formError,
+        setFieldValue,
+        setValue,
+        setError,
+    } = useForm(schema, { value: initialFormValue });
+
+    const fieldError = getErrorObject(formError);
+
+    const questionInfoVariables = useMemo(() => {
+        if (isNotDefined(projectId) || isNotDefined(questionId)) {
+            return undefined;
+        }
+        return ({
+            projectId,
+            questionId,
+        });
+    }, [
+        projectId,
+        questionId,
+    ]);
+
+    useQuery<QuestionInfoQuery, QuestionInfoQueryVariables>(
+        QUESTION_INFO,
+        {
+            skip: isNotDefined(questionInfoVariables),
+            variables: questionInfoVariables,
+            onCompleted: (response) => {
+                const questionResponse = response.private.projectScope?.question;
+                setValue({
+                    name: questionResponse?.name,
+                    type: questionResponse?.type,
+                    questionnaire: questionResponse?.questionnaireId,
+                    label: questionResponse?.label,
+                    group: questionResponse?.groupId,
+                    hint: questionResponse?.hint,
+                });
+            },
+        },
+    );
 
     const [
         triggerQuestionCreate,
@@ -115,39 +212,67 @@ function DateQuestionForm(props: Props) {
             },
         },
     );
-    const initialFormValue: FormType = {
-        type: 'DATE' as QuestionTypeEnum,
-        questionnaire: questionnaireId,
-        name: randomString(),
-    };
 
-    const {
-        pristine,
-        validate,
-        value: formValue,
-        error: formError,
-        setFieldValue,
-        setError,
-    } = useForm(schema, { value: initialFormValue });
-
-    const fieldError = getErrorObject(formError);
+    const [
+        triggerQuestionUpdate,
+        { loading: updateQuestionPending },
+    ] = useMutation<UpdateDateQuestionMutation, UpdateDateQuestionMutationVariables>(
+        UPDATE_DATE_QUESTION,
+        {
+            onCompleted: (questionResponse) => {
+                const response = questionResponse?.private?.projectScope?.updateQuestion;
+                if (!response) {
+                    return;
+                }
+                if (response.ok) {
+                    alert.show(
+                        'Question updated successfully.',
+                        { variant: 'success' },
+                    );
+                } else {
+                    alert.show(
+                        'Failed to update question.',
+                        { variant: 'error' },
+                    );
+                }
+            },
+            onError: () => {
+                alert.show(
+                    'Failed to update question.',
+                    { variant: 'error' },
+                );
+            },
+        },
+    );
 
     const handleQuestionSubmit = useCallback(() => {
         const handler = createSubmitHandler(
             validate,
             setError,
             (valueFromForm) => {
-                triggerQuestionCreate({
-                    variables: {
-                        projectId,
-                        input: valueFromForm as QuestionCreateInput,
-                    },
-                });
+                if (isDefined(questionId)) {
+                    triggerQuestionUpdate({
+                        variables: {
+                            projectId,
+                            questionId,
+                            input: valueFromForm as QuestionUpdateInput,
+                        },
+                    });
+                } else {
+                    triggerQuestionCreate({
+                        variables: {
+                            projectId,
+                            input: valueFromForm as QuestionCreateInput,
+                        },
+                    });
+                }
             },
         );
         handler();
     }, [
         triggerQuestionCreate,
+        triggerQuestionUpdate,
+        questionId,
         projectId,
         setError,
         validate,
@@ -176,12 +301,32 @@ function DateQuestionForm(props: Props) {
                     error={fieldError?.hint}
                     onChange={setFieldValue}
                 />
+                <TextInput
+                    name="name"
+                    label="Question name"
+                    value={formValue.name}
+                    error={fieldError?.name}
+                    onChange={setFieldValue}
+                />
+                <PillarSelectInput
+                    name="group"
+                    projectId={projectId}
+                    questionnaireId={questionnaireId}
+                    value={formValue.group}
+                    error={fieldError?.group}
+                    onChange={setFieldValue}
+                />
             </div>
             <Button
                 name={undefined}
                 className={styles.button}
                 onClick={handleQuestionSubmit}
-                disabled={pristine || createQuestionPending}
+                disabled={
+                    pristine
+                    || (isDefined(questionId)
+                        ? updateQuestionPending
+                        : createQuestionPending)
+                }
             >
                 Apply
             </Button>

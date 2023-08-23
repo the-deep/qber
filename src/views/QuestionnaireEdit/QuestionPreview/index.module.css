@@ -1,9 +1,15 @@
 .preview {
     border: none !important;
     background-color: var(--dui-color-background);
+    overflow-y: auto;
     gap: var(--dui-spacing-large);
 
+    .question-wrapper {
+        padding: var(--dui-spacing-medium);
+    }
+
     .question-item {
+        flex-grow: 1;
         padding: var(--dui-spacing-extra-large);
     }
 }
