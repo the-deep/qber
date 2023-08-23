@@ -26,6 +26,11 @@ const PILLARS = gql`
     }
 `;
 
+type Pillar = NonNullable<PillarsQuery['private']['projectScope']>['groups']['items'][number];
+
+const pillarKeySelector = (data: Pillar) => data.id;
+const pillarLabelSelector = (data: Pillar) => data.label;
+
 interface PillarProps<T>{
     projectId: string;
     name: T;
@@ -34,11 +39,6 @@ interface PillarProps<T>{
     error: string | undefined;
     onChange: (value: string | undefined, name: T) => void;
 }
-
-type Pillar = NonNullable<PillarsQuery['private']['projectScope']>['groups']['items'][number];
-
-const pillarKeySelector = (data: Pillar) => data.id;
-const pillarLabelSelector = (data: Pillar) => data.label;
 
 function PillarSelectInput<T extends string>(props: PillarProps<T>) {
     const {

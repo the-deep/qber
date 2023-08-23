@@ -11,7 +11,6 @@ import {
 } from '@the-deep/deep-ui';
 
 import {
-    ChoiceCollectionsQuery,
     SingleOptionListQuery,
     SingleOptionListQueryVariables,
 } from '#generated/types';
@@ -22,7 +21,6 @@ const SINGLE_OPTION_LIST = gql`
     query SingleOptionList(
         $projectId: ID!,
         $choiceCollectionId: ID!,
-        $questionnaireId: ID!,
         ) {
         private {
             projectScope(pk: $projectId) {
@@ -36,10 +34,6 @@ const SINGLE_OPTION_LIST = gql`
                         name
                     }
                     id
-                }
-                choiceCollections(filters: {questionnaire: {pk: $questionnaireId}}) {
-                    limit
-                    offset
                 }
             }
         }
@@ -55,7 +49,6 @@ interface Props {
     hint?: string | null;
     choiceCollectionId: string | undefined | null;
     projectId: string;
-    questionnaireId: string;
 }
 
 function SelectOneQuestionPreview(props: Props) {
@@ -65,22 +58,19 @@ function SelectOneQuestionPreview(props: Props) {
         hint,
         choiceCollectionId,
         projectId,
-        questionnaireId,
     } = props;
 
     const optionListVariables = useMemo(() => {
-        if (isNotDefined(projectId) || isNotDefined(choiceCollectionId) || isNotDefined(questionnaireId)) {
+        if (isNotDefined(projectId) || isNotDefined(choiceCollectionId)) {
             return undefined;
         }
         return ({
             projectId,
             choiceCollectionId,
-            questionnaireId
         });
     }, [
         projectId,
         choiceCollectionId,
-        questionnaireId,
     ]);
 
     const {
