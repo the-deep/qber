@@ -39,8 +39,10 @@ const SINGLE_OPTION_LIST = gql`
     }
 `;
 
-const choiceCollectionKeySelector = (d: { id: string }) => d.id;
-const choiceCollectionLabelSelector = (d: { name: string }) => d.name;
+type ChoiceType = NonNullable<NonNullable<NonNullable<NonNullable<SingleOptionListQuery['private']>['projectScope']>['choiceCollection']>['choices']>[number];
+
+const choiceCollectionKeySelector = (d: ChoiceType) => d.id;
+const choiceCollectionLabelSelector = (d: ChoiceType) => d.label;
 
 interface Props {
     className?: string;
