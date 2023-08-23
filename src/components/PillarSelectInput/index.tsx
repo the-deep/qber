@@ -65,6 +65,7 @@ function PillarSelectInput<T extends string>(props: PillarProps<T>) {
 
     const {
         data: pillarsResponse,
+        loading: pillarsLoading,
     } = useQuery<PillarsQuery, PillarsQueryVariables>(
         PILLARS,
         {
@@ -73,7 +74,7 @@ function PillarSelectInput<T extends string>(props: PillarProps<T>) {
         },
     );
 
-    const pillarsOptions = pillarsResponse?.private?.projectScope?.groups.items || [];
+    const pillarsOptions = pillarsResponse?.private?.projectScope?.groups.items ?? [];
 
     return (
         <SelectInput
@@ -85,7 +86,7 @@ function PillarSelectInput<T extends string>(props: PillarProps<T>) {
             keySelector={pillarKeySelector}
             labelSelector={pillarLabelSelector}
             options={pillarsOptions}
-            disabled={false}
+            disabled={pillarsLoading}
         />
     );
 }

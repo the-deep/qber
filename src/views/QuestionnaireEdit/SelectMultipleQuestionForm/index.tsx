@@ -20,10 +20,10 @@ import {
     PartialForm,
 } from '@togglecorp/toggle-form';
 import {
-    CreateTextQuestionMutationVariables,
     QuestionCreateInput,
     QuestionTypeEnum,
     CreateMultipleSelectionQuestionMutation,
+    CreateMultipleSelectionQuestionMutationVariables,
 } from '#generated/types';
 import SelectMultipleQuestionPreview from '#components/questionPreviews/SelectMultipleQuestionPreview';
 import PillarSelectInput from '#components/PillarSelectInput';
@@ -99,7 +99,10 @@ function SelectMultipleQuestionForm(props: Props) {
     const [
         triggerQuestionCreate,
         { loading: createQuestionPending },
-    ] = useMutation<CreateMultipleSelectionQuestionMutation, CreateTextQuestionMutationVariables>(
+    ] = useMutation<
+        CreateMultipleSelectionQuestionMutation,
+        CreateMultipleSelectionQuestionMutationVariables,
+    >(
         CREATE_MULTIPLE_SELECTION_QUESTION,
         {
             onCompleted: (questionResponse) => {

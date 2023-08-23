@@ -33,7 +33,6 @@ const SINGLE_OPTION_LIST = gql`
                         label
                         name
                     }
-                    id
                 }
             }
         }
@@ -75,6 +74,7 @@ function SelectOneQuestionPreview(props: Props) {
 
     const {
         data: optionsListResponse,
+        loading: optionListLoading,
     } = useQuery<SingleOptionListQuery, SingleOptionListQueryVariables>(
         SINGLE_OPTION_LIST,
         {
@@ -103,7 +103,7 @@ function SelectOneQuestionPreview(props: Props) {
                 options={optionsList}
                 value={optionsListResponse?.private?.projectScope?.choiceCollection?.name}
                 readOnly
-                disabled={false}
+                disabled={optionListLoading}
             />
         </div>
     );

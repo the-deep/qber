@@ -23,7 +23,6 @@ const MULTIPLE_OPTION_LIST = gql`
         private {
             projectScope(pk: $projectId) {
                 choiceCollection(pk: $choiceCollectionId) {
-                    questionnaireId
                     id
                     label
                     name
@@ -32,7 +31,6 @@ const MULTIPLE_OPTION_LIST = gql`
                         label
                         name
                     }
-                    id
                 }
             }
         }
@@ -74,6 +72,7 @@ function SelectMultipleQuestionPreview(props: Props) {
 
     const {
         data: optionsListResponse,
+        loading: OptionsListLoading,
     } = useQuery<MultipleOptionListQuery, MultipleOptionListQueryVariables>(
         MULTIPLE_OPTION_LIST,
         {
@@ -99,14 +98,14 @@ function SelectMultipleQuestionPreview(props: Props) {
                 block
             />
             <ListView
-                className={styles.questionList}
+                className={styles.checkboxList}
                 data={optionsListResponse?.private?.projectScope?.choiceCollection?.choices}
                 keySelector={checkboxKeySelector}
                 renderer={Checkbox}
                 rendererParams={checkboxListRendererParams}
                 filtered={false}
                 errored={false}
-                pending={false}
+                pending={OptionsListLoading}
             />
         </div>
     );

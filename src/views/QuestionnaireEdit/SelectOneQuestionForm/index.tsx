@@ -21,10 +21,10 @@ import {
 } from '@togglecorp/toggle-form';
 
 import {
-    CreateTextQuestionMutationVariables,
     QuestionCreateInput,
     QuestionTypeEnum,
     CreateSingleSelectionQuestionMutation,
+    CreateSingleSelectionQuestionMutationVariables,
 } from '#generated/types';
 import SelectOneQuestionPreview from '#components/questionPreviews/SelectOneQuestionPreview';
 import PillarSelectInput from '#components/PillarSelectInput';
@@ -101,7 +101,7 @@ function SelectOneQuestionForm(props: Props) {
         { loading: createQuestionPending },
     ] = useMutation<
         CreateSingleSelectionQuestionMutation,
-        CreateTextQuestionMutationVariables
+        CreateSingleSelectionQuestionMutationVariables
     >(
         CREATE_SINGLE_SELECTION_QUESTION,
         {

@@ -20,7 +20,7 @@ const CHOICE_COLLECTIONS = gql`
             choiceCollections(
                 filters: {
                     questionnaire: {pk: $questionnaireId},
-                    name: {iContains: $search }
+                    label: {iContains: $search }
                     }
             ) {
                 count
@@ -88,6 +88,7 @@ function ChoiceCollectionSelectInput<T extends string>(props: Props<T>) {
 
     const {
         data: choiceCollectionsResponse,
+        loading: choiceCollectionLoading,
     } = useQuery<
         ChoiceCollectionsQuery,
         ChoiceCollectionsQueryVariables
@@ -100,17 +101,18 @@ function ChoiceCollectionSelectInput<T extends string>(props: Props<T>) {
     return (
         <SearchSelectInput
             name={name}
+            error={error}
+            disabled={choiceCollectionLoading}
             keySelector={choiceCollectionKeySelector}
             labelSelector={choiceCollectionLabelSelector}
             onChange={onChange}
             onSearchValueChange={setSearch}
             onOptionsChange={setChoiceCollectionOptions}
+            label={label}
             searchOptions={searchOption}
             options={choiceCollectionOptions}
             onShowDropdownChange={setOpened}
             value={value}
-            label={label}
-            error={error}
         />
     );
 }
