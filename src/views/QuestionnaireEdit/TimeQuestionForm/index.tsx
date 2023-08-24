@@ -1,14 +1,18 @@
 import { useCallback, useMemo } from 'react';
 import {
-    isNotDefined,
     isDefined,
+    isNotDefined,
 } from '@togglecorp/fujs';
 import {
-    TextInput,
     Button,
+    TextInput,
     useAlert,
 } from '@the-deep/deep-ui';
-import { gql, useMutation, useQuery } from '@apollo/client';
+import {
+    gql,
+    useMutation,
+    useQuery,
+} from '@apollo/client';
 import {
     ObjectSchema,
     createSubmitHandler,
@@ -19,28 +23,28 @@ import {
 } from '@togglecorp/toggle-form';
 
 import {
-    CreateTextQuestionMutation,
-    CreateTextQuestionMutationVariables,
-    UpdateTextQuestionMutation,
-    UpdateTextQuestionMutationVariables,
+    CreateTimeQuestionMutation,
+    CreateTimeQuestionMutationVariables,
+    UpdateTimeQuestionMutation,
+    UpdateTimeQuestionMutationVariables,
     QuestionInfoQuery,
     QuestionInfoQueryVariables,
     QuestionCreateInput,
     QuestionUpdateInput,
     QuestionTypeEnum,
 } from '#generated/types';
-import TextQuestionPreview from '#components/questionPreviews/TextQuestionPreview';
+import TimeQuestionPreview from '#components/questionPreviews/TimeQuestionPreview';
 import PillarSelectInput from '#components/PillarSelectInput';
+
 import {
     QUESTION_FRAGMENT,
     QUESTION_INFO,
 } from '../queries.ts';
-
 import styles from './index.module.css';
 
-const CREATE_TEXT_QUESTION = gql`
+const CREATE_TIME_QUESTION = gql`
     ${QUESTION_FRAGMENT}
-    mutation CreateTextQuestion(
+    mutation CreateTimeQuestion(
         $projectId: ID!,
         $input: QuestionCreateInput!,
     ){
@@ -60,9 +64,9 @@ const CREATE_TEXT_QUESTION = gql`
     }
 `;
 
-const UPDATE_TEXT_QUESTION = gql`
+const UPDATE_TIME_QUESTION = gql`
     ${QUESTION_FRAGMENT}
-    mutation UpdateTextQuestion(
+    mutation UpdateTimeQuestion(
         $projectId: ID!,
         $questionId: ID!,
         $input: QuestionUpdateInput!,
@@ -121,7 +125,7 @@ interface Props {
     onSuccess: (questionId: string | undefined) => void;
 }
 
-function TextQuestionForm(props: Props) {
+function TimeQuestionForm(props: Props) {
     const {
         projectId,
         questionnaireId,
@@ -132,7 +136,7 @@ function TextQuestionForm(props: Props) {
     const alert = useAlert();
 
     const initialFormValue: FormType = {
-        type: 'TEXT' as QuestionTypeEnum,
+        type: 'TIME' as QuestionTypeEnum,
         questionnaire: questionnaireId,
     };
 
@@ -183,8 +187,8 @@ function TextQuestionForm(props: Props) {
     const [
         triggerQuestionCreate,
         { loading: createQuestionPending },
-    ] = useMutation<CreateTextQuestionMutation, CreateTextQuestionMutationVariables>(
-        CREATE_TEXT_QUESTION,
+    ] = useMutation<CreateTimeQuestionMutation, CreateTimeQuestionMutationVariables>(
+        CREATE_TIME_QUESTION,
         {
             onCompleted: (questionResponse) => {
                 const response = questionResponse?.private?.projectScope?.createQuestion;
@@ -216,8 +220,8 @@ function TextQuestionForm(props: Props) {
     const [
         triggerQuestionUpdate,
         { loading: updateQuestionPending },
-    ] = useMutation<UpdateTextQuestionMutation, UpdateTextQuestionMutationVariables>(
-        UPDATE_TEXT_QUESTION,
+    ] = useMutation<UpdateTimeQuestionMutation, UpdateTimeQuestionMutationVariables>(
+        UPDATE_TIME_QUESTION,
         {
             onCompleted: (questionResponse) => {
                 const response = questionResponse?.private?.projectScope?.updateQuestion;
@@ -281,11 +285,12 @@ function TextQuestionForm(props: Props) {
 
     return (
         <form className={styles.question}>
-            <TextQuestionPreview
+            <TimeQuestionPreview
                 className={styles.preview}
                 label={formValue.label}
                 hint={formValue.hint}
             />
+            <div className={styles.separator} />
             <div className={styles.editSection}>
                 <TextInput
                     name="label"
@@ -334,4 +339,4 @@ function TextQuestionForm(props: Props) {
     );
 }
 
-export default TextQuestionForm;
+export default TimeQuestionForm;

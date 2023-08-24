@@ -29,9 +29,13 @@ import SelectMultipleQuestionPreview from '#components/questionPreviews/SelectMu
 import PillarSelectInput from '#components/PillarSelectInput';
 import ChoiceCollectionSelectInput from '#components/ChoiceCollectionSelectInput';
 
+import {
+    QUESTION_FRAGMENT,
+} from '../queries.ts';
 import styles from './index.module.css';
 
 const CREATE_MULTIPLE_SELECTION_QUESTION = gql`
+    ${QUESTION_FRAGMENT}
     mutation CreateMultipleSelectionQuestion(
         $projectId: ID!,
         $input: QuestionCreateInput!,
@@ -43,6 +47,9 @@ const CREATE_MULTIPLE_SELECTION_QUESTION = gql`
                 ) {
                     ok
                     errors
+                    result {
+                        ...QuestionResponse
+                    }
                 }
             }
         }
@@ -86,12 +93,14 @@ const schema: FormSchema = {
 interface Props {
     projectId: string;
     questionnaireId: string;
+    onSuccess: (questionId: string | undefined) => void;
 }
 
 function SelectMultipleQuestionForm(props: Props) {
     const {
         projectId,
         questionnaireId,
+        onSuccess,
     } = props;
 
     const alert = useAlert();
@@ -111,6 +120,7 @@ function SelectMultipleQuestionForm(props: Props) {
                     return;
                 }
                 if (response.ok) {
+                    onSuccess(response.result?.id);
                     alert.show(
                         'Question created successfully.',
                         { variant: 'success' },

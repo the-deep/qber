@@ -57,6 +57,7 @@
             flex-direction: column;
             flex-grow: 1;
             margin: 0 var(--dui-spacing-extra-large);
+            overflow-y: auto;
             gap: var(--dui-spacing-large);
 
             .header {

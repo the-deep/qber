@@ -1,14 +1,18 @@
 import { useCallback, useMemo } from 'react';
 import {
-    isNotDefined,
     isDefined,
+    isNotDefined,
 } from '@togglecorp/fujs';
 import {
-    TextInput,
     Button,
+    TextInput,
     useAlert,
 } from '@the-deep/deep-ui';
-import { gql, useMutation, useQuery } from '@apollo/client';
+import {
+    gql,
+    useMutation,
+    useQuery,
+} from '@apollo/client';
 import {
     ObjectSchema,
     createSubmitHandler,
@@ -19,28 +23,28 @@ import {
 } from '@togglecorp/toggle-form';
 
 import {
-    CreateTextQuestionMutation,
-    CreateTextQuestionMutationVariables,
-    UpdateTextQuestionMutation,
-    UpdateTextQuestionMutationVariables,
+    CreateDateQuestionMutation,
+    CreateDateQuestionMutationVariables,
+    UpdateDateQuestionMutation,
+    UpdateDateQuestionMutationVariables,
     QuestionInfoQuery,
     QuestionInfoQueryVariables,
     QuestionCreateInput,
     QuestionUpdateInput,
     QuestionTypeEnum,
 } from '#generated/types';
-import TextQuestionPreview from '#components/questionPreviews/TextQuestionPreview';
+import DateQuestionPreview from '#components/questionPreviews/DateQuestionPreview';
 import PillarSelectInput from '#components/PillarSelectInput';
+
 import {
     QUESTION_FRAGMENT,
     QUESTION_INFO,
 } from '../queries.ts';
-
 import styles from './index.module.css';
 
-const CREATE_TEXT_QUESTION = gql`
+const CREATE_DATE_QUESTION = gql`
     ${QUESTION_FRAGMENT}
-    mutation CreateTextQuestion(
+    mutation CreateDateQuestion(
         $projectId: ID!,
         $input: QuestionCreateInput!,
     ){
@@ -60,9 +64,9 @@ const CREATE_TEXT_QUESTION = gql`
     }
 `;
 
-const UPDATE_TEXT_QUESTION = gql`
+const UPDATE_DATE_QUESTION = gql`
     ${QUESTION_FRAGMENT}
-    mutation UpdateTextQuestion(
+    mutation UpdateDateQuestion(
         $projectId: ID!,
         $questionId: ID!,
         $input: QuestionUpdateInput!,
@@ -83,7 +87,6 @@ const UPDATE_TEXT_QUESTION = gql`
         }
     }
 `;
-
 type FormType = PartialForm<QuestionCreateInput>;
 type FormSchema = ObjectSchema<FormType>;
 type FormSchemaFields = ReturnType<FormSchema['fields']>;
@@ -121,7 +124,7 @@ interface Props {
     onSuccess: (questionId: string | undefined) => void;
 }
 
-function TextQuestionForm(props: Props) {
+function DateQuestionForm(props: Props) {
     const {
         projectId,
         questionnaireId,
@@ -132,7 +135,7 @@ function TextQuestionForm(props: Props) {
     const alert = useAlert();
 
     const initialFormValue: FormType = {
-        type: 'TEXT' as QuestionTypeEnum,
+        type: 'DATE' as QuestionTypeEnum,
         questionnaire: questionnaireId,
     };
 
@@ -183,8 +186,8 @@ function TextQuestionForm(props: Props) {
     const [
         triggerQuestionCreate,
         { loading: createQuestionPending },
-    ] = useMutation<CreateTextQuestionMutation, CreateTextQuestionMutationVariables>(
-        CREATE_TEXT_QUESTION,
+    ] = useMutation<CreateDateQuestionMutation, CreateDateQuestionMutationVariables>(
+        CREATE_DATE_QUESTION,
         {
             onCompleted: (questionResponse) => {
                 const response = questionResponse?.private?.projectScope?.createQuestion;
@@ -216,8 +219,8 @@ function TextQuestionForm(props: Props) {
     const [
         triggerQuestionUpdate,
         { loading: updateQuestionPending },
-    ] = useMutation<UpdateTextQuestionMutation, UpdateTextQuestionMutationVariables>(
-        UPDATE_TEXT_QUESTION,
+    ] = useMutation<UpdateDateQuestionMutation, UpdateDateQuestionMutationVariables>(
+        UPDATE_DATE_QUESTION,
         {
             onCompleted: (questionResponse) => {
                 const response = questionResponse?.private?.projectScope?.updateQuestion;
@@ -281,11 +284,12 @@ function TextQuestionForm(props: Props) {
 
     return (
         <form className={styles.question}>
-            <TextQuestionPreview
+            <DateQuestionPreview
                 className={styles.preview}
                 label={formValue.label}
                 hint={formValue.hint}
             />
+            <div className={styles.separator} />
             <div className={styles.editSection}>
                 <TextInput
                     name="label"
@@ -334,4 +338,4 @@ function TextQuestionForm(props: Props) {
     );
 }
 
-export default TextQuestionForm;
+export default DateQuestionForm;

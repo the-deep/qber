@@ -4,13 +4,18 @@ import {
 } from 'react-router-dom';
 import {
     IoAdd,
+    IoCameraOutline,
     IoCloseOutline,
+    IoDocumentTextOutline,
     IoRadioButtonOn,
 } from 'react-icons/io5';
 import {
     MdOutline123,
     MdOutlineAbc,
+    MdOutlineCalendarMonth,
     MdOutlineChecklist,
+    MdOutlineEditNote,
+    MdOutlineSchedule,
 } from 'react-icons/md';
 import {
     isNotDefined,
@@ -26,23 +31,37 @@ import {
     Header,
     ListView,
     QuickActionButton,
+    Tab,
+    Tabs,
     TextOutput,
     useModalState,
 } from '@the-deep/deep-ui';
 
 import SubNavbar from '#components/SubNavbar';
+import TocList from '#components/TocList';
 import {
     QuestionnaireQuery,
     QuestionnaireQueryVariables,
+    QuestionsByGroupQuery,
+    QuestionsByGroupQueryVariables,
 } from '#generated/types';
 
 import TextQuestionForm from './TextQuestionForm';
 import IntegerQuestionForm from './IntegerQuestionForm';
 import RankQuestionForm from './RankQuestionForm';
+import DateQuestionForm from './DateQuestionForm';
+import TimeQuestionForm from './TimeQuestionForm';
+import NoteQuestionForm from './NoteQuestionForm';
+import FileQuestionForm from './FileQuestionForm';
+import ImageQuestionForm from './ImageQuestionForm';
 import SelectOneQuestionForm from './SelectOneQuestionForm';
+import SelectMultipleQuestionForm from './SelectMultipleQuestionForm';
+
+import {
+    QUESTION_FRAGMENT,
+} from './queries.ts';
 import QuestionTypeItem, { QuestionType } from './QuestionTypeItem';
 import QuestionPreview from './QuestionPreview';
-import SelectMultipleQuestionForm from './SelectMultipleQuestionForm';
 
 import styles from './index.module.css';
 
@@ -50,8 +69,6 @@ const QUESTIONNAIRE = gql`
     query Questionnaire(
         $projectId: ID!,
         $questionnaireId: ID!,
-        $limit: Int,
-        $offset: Int,
     ) {
         private {
             projectScope(pk: $projectId) {
@@ -64,39 +81,65 @@ const QUESTIONNAIRE = gql`
                     id
                     title
                 }
-                questions(
-                    filters: {
-                        questionnaire: {
-                            pk: $questionnaireId,
-                        }
+                groups(filters: {
+                    questionnaire: {
+                        pk: $questionnaireId
                     }
-                    order: {
-                        createdAt: ASC
-                    }
-                    pagination: {
-                        limit: $limit,
-                        offset: $offset,
-                    }
-                ) {
-                    count
-                    limit
-                    offset
+                }) {
                     items {
-                        createdAt
-                        hint
                         id
+                        parentId
+                        relevant
+                        questionnaireId
                         label
                         name
-                        type
-                        questionnaireId
                     }
                 }
             }
         }
     }
 `;
-type Question = NonNullable<NonNullable<NonNullable<NonNullable<QuestionnaireQuery['private']>['projectScope']>['questions']>['items']>[number];
+
+const QUESTIONS_BY_GROUP = gql`
+    ${QUESTION_FRAGMENT}
+    query QuestionsByGroup(
+        $projectId: ID!,
+        $questionnaireId: ID!,
+        $groupId: ID!,
+    ) {
+        private {
+            projectScope(pk: $projectId) {
+                id
+                questions(
+                    filters: {
+                        questionnaire: {
+                            pk: $questionnaireId,
+                        },
+                        group: {
+                            pk: $groupId,
+                        },
+                        includeChildGroup: true,
+                    }
+                    order: {
+                        createdAt: ASC
+                    }
+                ) {
+                    count
+                    limit
+                    offset
+                    items {
+                        ...QuestionResponse
+                    }
+                }
+            }
+        }
+    }
+`;
+
+type Question = NonNullable<NonNullable<NonNullable<NonNullable<QuestionsByGroupQuery['private']>['projectScope']>['questions']>['items']>[number];
+type QuestionGroup = NonNullable<NonNullable<NonNullable<NonNullable<QuestionnaireQuery['private']>['projectScope']>['groups']>['items']>[number];
 const questionKeySelector = (q: Question) => q.id;
+const groupTabKeySelector = (g: QuestionGroup) => g.id;
 
 const questionTypes: QuestionType[] = [
     {
@@ -124,23 +167,42 @@ const questionTypes: QuestionType[] = [
         name: 'Rank',
         icon: <MdOutlineChecklist />,
     },
+    {
+        key: 'DATE',
+        name: 'Date',
+        icon: <MdOutlineCalendarMonth />,
+    },
+    {
+        key: 'TIME',
+        name: 'Time',
+        icon: <MdOutlineSchedule />,
+    },
+    {
+        key: 'IMAGE',
+        name: 'Image',
+        icon: <IoCameraOutline />,
+    },
+    {
+        key: 'FILE',
+        name: 'File',
+        icon: <IoDocumentTextOutline />,
+    },
+    {
+        key: 'NOTE',
+        name: 'Note',
+        icon: <MdOutlineEditNote />,
+    },
 ];
 
 const questionTypeKeySelector = (q: QuestionType) => q.key;
 const PAGE_SIZE = 15;
-
-// FIXME: The type is not right
-interface QuestionnaireParams {
-    projectId: string | undefined;
-    questionnaireId: string | undefined;
-}
 
 // eslint-disable-next-line import/prefer-default-export
 export function Component() {
     const {
         projectId,
         questionnaireId,
-    } = useParams<QuestionnaireParams>();
+    } = useParams<{projectId: string, questionnaireId: string}>();
 
     const [
         addQuestionPaneShown,
@@ -153,6 +215,16 @@ export function Component() {
         setSelectedQuestionType,
     ] = useState<string | undefined>();
 
+    const [
+        activeQuestionId,
+        setActiveQuestionId,
+    ] = useState<string | undefined>();
+
+    const [
+        selectedGroups,
+        setSelectedGroups,
+    ] = useState<string[]>([]);
+
     const handleRightPaneClose = useCallback(() => {
         hideAddQuestionPane();
         setSelectedQuestionType(undefined);
@@ -164,6 +236,7 @@ export function Component() {
         if (isNotDefined(projectId) || isNotDefined(questionnaireId)) {
             return undefined;
         }
+
         return ({
             projectId,
             questionnaireId,
@@ -175,6 +248,11 @@ export function Component() {
         questionnaireId,
     ]);
 
+    const [
+        orderedOptions,
+        setOrderedOptions,
+    ] = useState<QuestionGroup[]>([]);
+
     const {
         data: questionnaireResponse,
     } = useQuery<QuestionnaireQuery, QuestionnaireQueryVariables>(
@@ -182,13 +260,69 @@ export function Component() {
         {
             skip: isNotDefined(questionnaireVariables),
             variables: questionnaireVariables,
+            onCompleted: (response) => {
+                const questionGroups = response?.private.projectScope?.groups?.items;
+                setOrderedOptions(questionGroups ?? []);
+            },
         },
     );
 
     const questionnaireTitle = questionnaireResponse?.private.projectScope?.questionnaire?.title;
     const projectTitle = questionnaireResponse?.private.projectScope?.project.title;
-    const questionsData = questionnaireResponse?.private.projectScope?.questions?.items;
 
+    const parentQuestionGroups = orderedOptions?.filter(
+        (item) => item.parentId === null,
+    );
+
+    const selectedParentQuestionGroups = parentQuestionGroups?.filter(
+        (group) => selectedGroups.includes(group.id),
+    );
+
+    const [activeGroupTab, setActiveGroupTab] = useState<string | undefined>(
+        selectedParentQuestionGroups?.[0]?.name,
+    );
+
+    // NOTE: If none of the tabs are selected, 1st group should be selected
+    const finalSelectedTab = activeGroupTab ?? selectedGroups[0];
+
+    const questionsVariables = useMemo(() => {
+        if (isNotDefined(projectId)
+            || isNotDefined(questionnaireId)
+            || isNotDefined(finalSelectedTab)) {
+            return undefined;
+        }
+
+        return ({
+            projectId,
+            questionnaireId,
+            groupId: finalSelectedTab,
+        });
+    }, [
+        projectId,
+        questionnaireId,
+        finalSelectedTab,
+    ]);
+
+    const {
+        data: questionsResponse,
+        refetch: retriggerQuestions,
+    } = useQuery<QuestionsByGroupQuery, QuestionsByGroupQueryVariables>(
+        QUESTIONS_BY_GROUP,
+        {
+            skip: isNotDefined(questionsVariables),
+            variables: questionsVariables,
+        },
+    );
+
+    const handleQuestionCreateSuccess = useCallback(() => {
+        hideAddQuestionPane();
+        retriggerQuestions();
+    }, [
+        hideAddQuestionPane,
+        retriggerQuestions,
+    ]);
+
+    const questionsData = questionsResponse?.private.projectScope?.questions?.items;
     const questionTypeRendererParams = useCallback((key: string, data: QuestionType) => ({
         questionType: data,
         name: key,
@@ -197,11 +331,22 @@ export function Component() {
 
     const questionRendererParams = useCallback((_: string, data: Question) => ({
         question: data,
+        showAddQuestionPane,
+        setSelectedQuestionType,
+        projectId,
+        setActiveQuestionId,
     }), [
+        showAddQuestionPane,
+        projectId,
     ]);
 
+    const groupTabRenderParams = useCallback((_: string, datum: QuestionGroup) => ({
+        children: datum.label,
+        name: datum.id,
+    }), []);
+
     if (isNotDefined(projectId) || isNotDefined(questionnaireId)) {
-        return undefined;
+        return null;
     }
 
     return (
@@ -226,7 +371,14 @@ export function Component() {
                     heading="Select Questions"
                     contentClassName={styles.leftContent}
                 >
-                    Here will be the list of sections
+                    <TocList
+                        parentId={null}
+                        orderedOptions={orderedOptions}
+                        onOrderedOptionsChange={setOrderedOptions}
+                        onSelectedGroupsChange={setSelectedGroups}
+                        selectedGroups={selectedGroups}
+                        onActiveTabChange={setActiveGroupTab}
+                    />
                 </Container>
                 <div className={styles.content}>
                     <Header
@@ -243,19 +395,35 @@ export function Component() {
                             </Button>
                         )}
                     />
-                    <ListView
-                        className={styles.questionList}
-                        data={questionsData}
-                        keySelector={questionKeySelector}
-                        renderer={QuestionPreview}
-                        rendererParams={questionRendererParams}
-                        borderBetweenItem
-                        emptyMessage="There are no questions in this questionnaire yet."
-                        messageShown
-                        filtered={false}
-                        errored={false}
-                        pending={false}
-                    />
+                    <Tabs
+                        onChange={setActiveGroupTab}
+                        value={finalSelectedTab}
+                        variant="secondary"
+                    >
+                        <ListView
+                            className={styles.tabs}
+                            data={selectedParentQuestionGroups}
+                            keySelector={groupTabKeySelector}
+                            renderer={Tab}
+                            rendererParams={groupTabRenderParams}
+                            filtered={false}
+                            errored={false}
+                            pending={false}
+                        />
+                        <ListView
+                            className={styles.questionList}
+                            data={questionsData}
+                            keySelector={questionKeySelector}
+                            renderer={QuestionPreview}
+                            rendererParams={questionRendererParams}
+                            borderBetweenItem
+                            emptyMessage="There are no questions in this questionnaire yet."
+                            messageShown
+                            filtered={false}
+                            errored={false}
+                            pending={false}
+                        />
+                    </Tabs>
                 </div>
                 {addQuestionPaneShown && (
                     <div className={styles.rightPane}>
@@ -289,30 +457,78 @@ export function Component() {
                                 <TextQuestionForm
                                     projectId={projectId}
                                     questionnaireId={questionnaireId}
+                                    questionId={activeQuestionId}
+                                    onSuccess={handleQuestionCreateSuccess}
                                 />
                             )}
                             {(selectedQuestionType === 'INTEGER') && (
                                 <IntegerQuestionForm
                                     projectId={projectId}
                                     questionnaireId={questionnaireId}
+                                    questionId={activeQuestionId}
+                                    onSuccess={handleQuestionCreateSuccess}
                                 />
                             )}
                             {(selectedQuestionType === 'RANK') && (
                                 <RankQuestionForm
                                     projectId={projectId}
                                     questionnaireId={questionnaireId}
+                                    questionId={activeQuestionId}
+                                    onSuccess={handleQuestionCreateSuccess}
                                 />
                             )}
                             {(selectedQuestionType === 'SELECT_ONE') && (
                                 <SelectOneQuestionForm
                                     projectId={projectId}
                                     questionnaireId={questionnaireId}
+                                    onSuccess={handleQuestionCreateSuccess}
                                 />
                             )}
                             {(selectedQuestionType === 'SELECT_MULTIPLE') && (
                                 <SelectMultipleQuestionForm
                                     projectId={projectId}
                                     questionnaireId={questionnaireId}
+                                    onSuccess={handleQuestionCreateSuccess}
+                                />
+                            )}
+                            {(selectedQuestionType === 'DATE') && (
+                                <DateQuestionForm
+                                    projectId={projectId}
+                                    questionnaireId={questionnaireId}
+                                    questionId={activeQuestionId}
+                                    onSuccess={handleQuestionCreateSuccess}
+                                />
+                            )}
+                            {(selectedQuestionType === 'TIME') && (
+                                <TimeQuestionForm
+                                    projectId={projectId}
+                                    questionnaireId={questionnaireId}
+                                    questionId={activeQuestionId}
+                                    onSuccess={handleQuestionCreateSuccess}
+                                />
+                            )}
+                            {(selectedQuestionType === 'NOTE') && (
+                                <NoteQuestionForm
+                                    projectId={projectId}
+                                    questionnaireId={questionnaireId}
+                                    questionId={activeQuestionId}
+                                    onSuccess={handleQuestionCreateSuccess}
+                                />
+                            )}
+                            {(selectedQuestionType === 'FILE') && (
+                                <FileQuestionForm
+                                    projectId={projectId}
+                                    questionnaireId={questionnaireId}
+                                    questionId={activeQuestionId}
+                                    onSuccess={handleQuestionCreateSuccess}
+                                />
+                            )}
+                            {(selectedQuestionType === 'IMAGE') && (
+                                <ImageQuestionForm
+                                    projectId={projectId}
+                                    questionnaireId={questionnaireId}
+                                    questionId={activeQuestionId}
+                                    onSuccess={handleQuestionCreateSuccess}
                                 />
                             )}
                         </div>
