@@ -101,6 +101,18 @@ const resetPassword = myWrapRoute({
     },
 });
 
+const forgotPassword = myWrapRoute({
+    path: 'forgot-password',
+    component: {
+        render: () => import('#views/Login/ForgotPassword'),
+        props: {},
+    },
+    context: {
+        title: 'Forgot Password',
+        visibility: 'anything',
+    },
+});
+
 // FIXME: eager load this page
 const resetPasswordRedirect = myWrapRoute({
     path: '/permalink/password-reset/:uuid/:token',
@@ -162,6 +174,7 @@ export const wrappedRoutes = {
     login,
     register,
     resetPassword,
+    forgotPassword,
     resetPasswordRedirect,
     projectEdit,
     questionnaireEdit,

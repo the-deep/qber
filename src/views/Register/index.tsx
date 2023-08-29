@@ -153,11 +153,6 @@ export function Component() {
                     className={styles.logo}
                     alt="Questionnaire Builder Logo"
                 />
-                <div className={styles.tagline}>
-                    Lorem ipsum dolor sit amet consectetur.
-                    jahsdhjakasdbkjabd jkhdakjhasdkjbnajksd
-                    b
-                </div>
             </div>
             <div className={styles.fields}>
                 <NonFieldError error={formError} />

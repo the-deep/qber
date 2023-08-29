@@ -41,6 +41,7 @@ import {
 } from '@the-deep/deep-ui';
 
 import SubNavbar from '#components/SubNavbar';
+import SortableList from '#components/SortableList';
 import TocList from '#components/TocList';
 import { flatten } from '#utils/common';
 import {
@@ -423,14 +424,22 @@ export function Component() {
         finalSelectedTab,
     ]);
 
+    const [
+        orderedQuestions,
+        setOrderedQuestions,
+    ] = useState<Question[] | undefined>();
+
     const {
-        data: questionsResponse,
         refetch: retriggerQuestions,
     } = useQuery<QuestionsByGroupQuery, QuestionsByGroupQueryVariables>(
         QUESTIONS_BY_GROUP,
         {
             skip: isNotDefined(questionsVariables),
             variables: questionsVariables,
+            onCompleted: (response) => {
+                const questions = response?.private?.projectScope?.questions?.items;
+                setOrderedQuestions(questions);
+            },
         },
     );
 
@@ -442,7 +451,6 @@ export function Component() {
         retriggerQuestions,
     ]);
 
-    const questionsData = questionsResponse?.private.projectScope?.questions?.items;
     const questionTypeRendererParams = useCallback((key: string, data: QuestionType) => ({
         questionType: data,
         name: key,
@@ -536,12 +544,15 @@ export function Component() {
                             errored={false}
                             pending={false}
                         />
-                        <ListView
+                        <SortableList
                             className={styles.questionList}
-                            data={questionsData}
+                            data={orderedQuestions}
+                            direction="vertical"
                             keySelector={questionKeySelector}
+                            // TODO: check this error
                             renderer={QuestionPreview}
                             rendererParams={questionRendererParams}
+                            onChange={setOrderedQuestions}
                             borderBetweenItem
                             emptyMessage="There are no questions in this questionnaire yet."
                             messageShown

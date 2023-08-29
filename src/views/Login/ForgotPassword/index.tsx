@@ -1,37 +1,38 @@
-import { useCallback } from 'react';
+import { useRef, useCallback } from 'react';
 import { useMutation, gql } from '@apollo/client';
 import {
+    useAlert,
     TextInput,
-    PasswordInput,
     Header,
     Button,
-    ButtonLikeLink,
-    useAlert,
 } from '@the-deep/deep-ui';
 import {
     ObjectSchema,
     emailCondition,
     getErrorObject,
     requiredStringCondition,
-    lengthGreaterThanCondition,
-    lengthSmallerThanCondition,
     createSubmitHandler,
     useForm,
     PartialForm,
 } from '@togglecorp/toggle-form';
+import Captcha from '@hcaptcha/react-hcaptcha';
 
+import HCaptcha from '#components/HCaptcha';
+import { hCaptchaKey } from '#configs/hCaptcha';
 import {
-    LoginMutation,
-    LoginMutationVariables,
-    LoginInput,
+    PasswordResetTriggerInput,
+    ForgotPasswordMutation,
+    ForgotPasswordMutationVariables,
 } from '#generated/types';
 
 import styles from './index.module.css';
 
-const LOGIN = gql`
-    mutation Login($input: LoginInput!) {
+const FORGOT_PASSWORD = gql`
+    mutation ForgotPassword(
+        $input: PasswordResetTriggerInput!,
+    ) {
         public {
-            login(data: $input) {
+            passwordResetTrigger(data: $input) {
                 ok
                 errors
             }
@@ -39,7 +40,7 @@ const LOGIN = gql`
     }
 `;
 
-type FormType = PartialForm<LoginInput>;
+type FormType = PartialForm<PasswordResetTriggerInput>;
 type FormSchema = ObjectSchema<FormType>;
 type FormSchemaFields = ReturnType<FormSchema['fields']>;
 
@@ -52,12 +53,8 @@ const schema: FormSchema = {
             ],
             requiredValidation: requiredStringCondition,
         },
-        password: {
+        captcha: {
             required: true,
-            validations: [
-                lengthGreaterThanCondition(4),
-                lengthSmallerThanCondition(129),
-            ],
             requiredValidation: requiredStringCondition,
         },
     }),
@@ -67,60 +64,62 @@ const initialValue: FormType = {};
 
 // eslint-disable-next-line import/prefer-default-export
 export function Component() {
+    const elementRef = useRef<Captcha>(null);
     const alert = useAlert();
 
-    const {
-        pristine,
-        validate,
-        value: formValue,
-        error: formError,
-        setFieldValue,
-        setError,
-    } = useForm(schema, { value: initialValue });
-
-    const fieldError = getErrorObject(formError);
-
     const [
-        triggerLogin,
-        { loading: loginPending },
-    ] = useMutation<LoginMutation, LoginMutationVariables>(
-        LOGIN,
+        forgotPasswordTrigger,
+        { loading: forgotPasswordPending },
+    ] = useMutation<ForgotPasswordMutation, ForgotPasswordMutationVariables>(
+        FORGOT_PASSWORD,
         {
-            onCompleted: (loginResponse) => {
-                const response = loginResponse?.public?.login;
+            onCompleted: (resetResponse) => {
+                const response = resetResponse?.public?.passwordResetTrigger;
                 if (!response) {
                     return;
                 }
                 if (response.ok) {
                     alert.show(
-                        'Logged in successfully!',
+                        'Password changed successfully!',
                         { variant: 'success' },
                     );
-                    window.location.reload();
                 } else {
                     alert.show(
-                        'Failed to log in!',
+                        'Failed to change password!',
                         { variant: 'error' },
                     );
                 }
             },
             onError: () => {
                 alert.show(
-                    'Failed to log in!',
+                    'Failed to change password!',
                     { variant: 'error' },
                 );
             },
         },
     );
 
+    const {
+        // FIXME: use pristine on submit value
+        pristine,
+        validate,
+        value: formValue,
+        error,
+        setFieldValue,
+        setError,
+    } = useForm(schema, { value: initialValue });
+
     const handleSubmit = useCallback(() => {
         const handler = createSubmitHandler(
             validate,
             setError,
             (val) => {
-                triggerLogin({
+                elementRef.current?.resetCaptcha();
+                // eslint-disable-next-line no-console
+                console.log('submit value', val);
+                forgotPasswordTrigger({
                     variables: {
-                        input: val as LoginInput,
+                        input: val as PasswordResetTriggerInput,
                     },
                 });
             },
@@ -128,10 +127,12 @@ export function Component() {
 
         handler();
     }, [
-        setError,
-        triggerLogin,
+        forgotPasswordTrigger,
         validate,
+        setError,
     ]);
+
+    const safeError = getErrorObject(error);
 
     return (
         <div className={styles.login}>
@@ -144,8 +145,8 @@ export function Component() {
             </div>
             <div className={styles.loginForm}>
                 <Header
-                    heading="Login"
-                    description="Ready to create some questions? Get Started!"
+                    heading="Request for password reset"
+                    description="A reset password link will be sent to your mail."
                     headingSize="small"
                 />
                 <TextInput
@@ -153,47 +154,27 @@ export function Component() {
                     type="email"
                     placeholder="Email"
                     value={formValue?.email}
-                    error={fieldError?.email}
+                    error={safeError?.email}
                     onChange={setFieldValue}
                 />
-                <PasswordInput
-                    name="password"
-                    type="password"
-                    placeholder="Password"
-                    value={formValue?.password}
-                    error={fieldError?.password}
+                <HCaptcha
+                    name="captcha"
+                    elementRef={elementRef}
+                    siteKey={hCaptchaKey}
+                    // value={value.captcha}
                     onChange={setFieldValue}
                 />
-                <ButtonLikeLink
-                    variant="transparent"
-                    to="/forgot-password"
-                    spacing="none"
-                >
-                    forgot password?
-                </ButtonLikeLink>
                 <Button
                     name={undefined}
                     className={styles.button}
                     onClick={handleSubmit}
-                    disabled={pristine || loginPending}
+                    disabled={pristine || forgotPasswordPending}
                 >
-                    Login
+                    Submit
                 </Button>
-                <div className={styles.footnote}>
-                    Don&apos;t have an account?
-                    <ButtonLikeLink
-                        className={styles.footnoteButton}
-                        variant="transparent"
-                        to="/register"
-                        spacing="none"
-                    >
-                        Register
-                    </ButtonLikeLink>
-                    now
-                </div>
             </div>
         </div>
     );
 }
 
-Component.displayName = 'Login';
+Component.displayName = 'ForgotPassword';

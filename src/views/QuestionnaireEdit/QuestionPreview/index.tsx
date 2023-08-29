@@ -3,6 +3,9 @@ import {
     IoEllipsisVertical,
 } from 'react-icons/io5';
 import {
+    GrDrag,
+} from 'react-icons/gr';
+import {
     isNotDefined,
     isDefined,
     noOp,
@@ -12,6 +15,7 @@ import {
     Element,
     Checkbox,
     QuickActionDropdownMenu,
+    QuickActionButton,
     DropdownMenuItem,
 } from '@the-deep/deep-ui';
 
@@ -28,6 +32,7 @@ import ImageQuestionPreview from '#components/questionPreviews/ImageQuestionPrev
 import FileQuestionPreview from '#components/questionPreviews/FileQuestionPreview';
 import SelectOneQuestionPreview from '#components/questionPreviews/SelectOneQuestionPreview';
 import SelectMultipleQuestionPreview from '#components/questionPreviews/SelectMultipleQuestionPreview';
+import { Attributes, Listeners } from '#components/SortableList';
 
 import styles from './index.module.css';
 
@@ -39,6 +44,8 @@ interface QuestionProps {
     setSelectedQuestionType: React.Dispatch<React.SetStateAction<string | undefined>>;
     projectId: string | undefined;
     setActiveQuestionId: React.Dispatch<React.SetStateAction<string | undefined>>;
+    attributes?: Attributes;
+    listeners?: Listeners;
 }
 
 function QuestionPreview(props: QuestionProps) {
@@ -48,6 +55,8 @@ function QuestionPreview(props: QuestionProps) {
         setSelectedQuestionType,
         setActiveQuestionId,
         projectId,
+        attributes,
+        listeners,
     } = props;
 
     const handleEditQuestionClick = useCallback((val: string) => {
@@ -73,12 +82,26 @@ function QuestionPreview(props: QuestionProps) {
             <Element
                 className={styles.questionWrapper}
                 icons={(
-                    // TODO: Fix the selection behavior
-                    <Checkbox
-                        name={undefined}
-                        value={false}
-                        onChange={noOp}
-                    />
+                    <>
+                        <QuickActionButton
+                            name={question.id}
+                            className={styles.dragIcon}
+                            title="Drag"
+                            variant="transparent"
+                            // eslint-disable-next-line react/jsx-props-no-spreading
+                            {...attributes}
+                            // eslint-disable-next-line react/jsx-props-no-spreading
+                            {...listeners}
+                        >
+                            <GrDrag />
+                        </QuickActionButton>
+                        { /* TODO: Fix the selection behavior */ }
+                        <Checkbox
+                            name={undefined}
+                            value={false}
+                            onChange={noOp}
+                        />
+                    </>
                 )}
                 actions={(
                     <QuickActionDropdownMenu

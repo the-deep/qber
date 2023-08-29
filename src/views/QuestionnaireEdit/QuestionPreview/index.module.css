@@ -8,7 +8,14 @@
     .question-wrapper {
         align-items: flex-start;
         padding: var(--dui-spacing-extra-large);
-        gap: var(--dui-spacing-extra-large);
+        padding-left: var(--dui-spacing-medium);
+        gap: var(--dui-spacing-large);
+
+        .drag-icon {
+            > path {
+                stroke: var(--dui-color-label);
+            }
+        }
     }
 
     .question-item {
