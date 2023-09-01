@@ -1,12 +1,12 @@
 import {
-    MdOutlineAbc,
+    MdOutlineEditNote,
 } from 'react-icons/md';
 import {
     _cs,
 } from '@togglecorp/fujs';
 import {
+    Element,
     TextOutput,
-    TextInput,
 } from '@the-deep/deep-ui';
 
 import styles from './index.module.css';
@@ -24,18 +24,17 @@ function NoteQuestionPreview(props: Props) {
 
     return (
         <div className={_cs(styles.preview, className)}>
-            <TextOutput
-                value={label ?? 'This is a note. This field cannot return any response.'}
-                spacing="none"
-                block
-            />
-            <TextInput
-                name={undefined}
-                placeholder="Enter note"
-                value={undefined}
-                icons={<MdOutlineAbc />}
-                readOnly
-            />
+            <Element
+                icons={<MdOutlineEditNote />}
+                iconsContainerClassName={styles.icon}
+                childrenContainerClassName={styles.uploadPreview}
+            >
+                <TextOutput
+                    value={label ?? 'This is a note. This field cannot return any response.'}
+                    spacing="none"
+                    block
+                />
+            </Element>
         </div>
     );
 }

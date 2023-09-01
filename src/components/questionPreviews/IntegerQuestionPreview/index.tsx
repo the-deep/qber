@@ -7,6 +7,7 @@ import {
 import {
     TextOutput,
     NumberInput,
+    Element,
 } from '@the-deep/deep-ui';
 
 import styles from './index.module.css';
@@ -32,13 +33,18 @@ function IntegerQuestionPreview(props: Props) {
                 spacing="none"
                 block
             />
-            <NumberInput
-                name={undefined}
-                placeholder="Enter integer"
-                value={undefined}
+            <Element
                 icons={<MdOutline123 />}
-                readOnly
-            />
+                iconsContainerClassName={styles.icon}
+                childrenContainerClassName={styles.uploadPreview}
+            >
+                <NumberInput
+                    name={undefined}
+                    placeholder="Enter integer"
+                    value={undefined}
+                    readOnly
+                />
+            </Element>
         </div>
     );
 }

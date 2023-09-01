@@ -65,6 +65,18 @@
                 padding: var(--dui-spacing-large);
             }
 
+            .tabs {
+                display: flex;
+                border-bottom: var(--dui-width-separator-thin) solid var(--dui-color-separator);
+
+                .tab {
+                    &.active {
+                        background-color: var(--dui-color-secondary);
+                        border-bottom: var(--dui-width-separator-medium) solid var(--dui-color-accent);
+                    }
+                }
+            }
+
             .question-list {
                 display: flex;
                 flex-direction: column;

@@ -3,7 +3,6 @@
     border: unset;
     border-radius: 0;
     background-color: transparent;
-    padding: var(--dui-spacing-medium);
     width: 100%;
     text-align: left;
 
@@ -11,7 +10,18 @@
         background-color: var(--dui-color-secondary);
     }
 
-    .description {
-        display: flex;
+    .clickable {
+        flex-grow: 1;
+        cursor: pointer;
+        padding: var(--dui-spacing-medium);
+
+        .description {
+            display: flex;
+        }
+    }
+    .menu {
+        align-self: flex-start;
+        flex-shrink: 0;
+        margin: var(--dui-spacing-medium);
     }
 }

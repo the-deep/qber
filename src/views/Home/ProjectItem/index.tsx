@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import {
     IoEllipsisVerticalOutline,
 } from 'react-icons/io5';
@@ -8,7 +9,6 @@ import { _cs } from '@togglecorp/fujs';
 import {
     TextOutput,
     DateOutput,
-    Button,
     QuickActionDropdownMenu,
     DropdownMenuItem,
 } from '@the-deep/deep-ui';
@@ -39,38 +39,50 @@ function ProjectItem(props: Props) {
 
     const link = generatePath(wrappedRoutes.projectEdit.absolutePath, { projectId });
 
+    const handleProjectItemClick = useCallback(() => {
+        onProjectItemClick(projectId);
+    }, [
+        onProjectItemClick,
+        projectId,
+    ]);
+
     return (
-        <Button
-            name={projectItem.id}
+        <div
+            id={projectId}
             className={_cs(
                 styles.projectItem,
                 activeProject === projectItem.id && styles.active,
             )}
-            variant="general"
-            onClick={onProjectItemClick}
-            actions={(
-                <QuickActionDropdownMenu label={<IoEllipsisVerticalOutline />}>
-                    <DropdownMenuItem
-                        href={link}
-                    >
-                        Edit Project
-                    </DropdownMenuItem>
-                </QuickActionDropdownMenu>
-            )}
         >
-            <TextOutput
-                value={projectItem.title}
-                description={(
-                    <div className={styles.description}>
-                        Created on
-                        &thinsp;
-                        <DateOutput value={projectItem.createdAt} />
-                    </div>
-                )}
-                block
-                spacing="compact"
-            />
-        </Button>
+            <div
+                className={styles.clickable}
+                onClick={handleProjectItemClick}
+                role="presentation"
+            >
+                <TextOutput
+                    value={projectItem.title}
+                    description={(
+                        <div className={styles.description}>
+                            Created on
+                            &thinsp;
+                            <DateOutput value={projectItem.createdAt} />
+                        </div>
+                    )}
+                    block
+                    spacing="compact"
+                />
+            </div>
+            <QuickActionDropdownMenu
+                className={styles.menu}
+                label={<IoEllipsisVerticalOutline />}
+            >
+                <DropdownMenuItem
+                    href={link}
+                >
+                    Edit Project
+                </DropdownMenuItem>
+            </QuickActionDropdownMenu>
+        </div>
     );
 }
 

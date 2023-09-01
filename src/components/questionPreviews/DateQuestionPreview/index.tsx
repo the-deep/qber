@@ -7,6 +7,7 @@ import {
 import {
     TextOutput,
     DateInput,
+    Element,
 } from '@the-deep/deep-ui';
 
 import styles from './index.module.css';
@@ -32,13 +33,18 @@ function DateQuestionPreview(props: Props) {
                 spacing="none"
                 block
             />
-            <DateInput
-                name={undefined}
-                placeholder="Select Date"
-                value={undefined}
+            <Element
                 icons={<MdOutlineCalendarMonth />}
-                readOnly
-            />
+                iconsContainerClassName={styles.icon}
+                childrenContainerClassName={styles.uploadPreview}
+            >
+                <DateInput
+                    name={undefined}
+                    placeholder="Select Date"
+                    value={undefined}
+                    readOnly
+                />
+            </Element>
         </div>
     );
 }

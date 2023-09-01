@@ -1,7 +1,12 @@
 import { useMemo, useState } from 'react';
-import { isNotDefined } from '@togglecorp/fujs';
+import {
+    isNotDefined,
+} from '@togglecorp/fujs';
 import { gql, useQuery } from '@apollo/client';
-import { SearchSelectInput } from '@the-deep/deep-ui';
+import {
+    SearchSelectInput,
+    SearchSelectInputProps,
+} from '@the-deep/deep-ui';
 
 import {
     ChoiceCollectionsQuery,
@@ -36,12 +41,24 @@ const CHOICE_COLLECTIONS = gql`
 }
 `;
 
-type ChoiceCollection = NonNullable<ChoiceCollectionsQuery['private']['projectScope']>['choiceCollections']['items'][number];
+type ChoiceCollection = Omit<NonNullable<ChoiceCollectionsQuery['private']['projectScope']>['choiceCollections']['items'][number], '__typename'>;
 
 const choiceCollectionKeySelector = (d: ChoiceCollection) => d.id;
 const choiceCollectionLabelSelector = (d: ChoiceCollection) => d.label;
 
-interface Props<T> {
+type Def = { containerClassName?: string };
+type ChoiceCollectionSelectInputProps<
+    T,
+    K extends string,
+    GK extends string
+> = SearchSelectInputProps<
+    string,
+    K,
+    GK,
+    ChoiceCollection,
+    Def,
+    'onSearchValueChange' | 'searchOptions' | 'optionsPending' | 'keySelector' | 'labelSelector' | 'totalOptionsCount' | 'onShowDropdownChange'
+> & {
     projectId: string;
     questionnaireId: string | null;
     name: T;
@@ -49,9 +66,13 @@ interface Props<T> {
     onChange: (value: string | undefined, name: T) => void;
     value: string | null | undefined;
     error: string | undefined;
-}
+};
 
-function ChoiceCollectionSelectInput<T extends string>(props: Props<T>) {
+function ChoiceCollectionSelectInput<
+    T extends string,
+    K extends string,
+    GK extends string
+>(props: ChoiceCollectionSelectInputProps<T, K, GK>) {
     const {
         projectId,
         questionnaireId,
@@ -60,14 +81,10 @@ function ChoiceCollectionSelectInput<T extends string>(props: Props<T>) {
         label,
         onChange,
         error,
+        ...otherProps
     } = props;
 
-    const [
-        choiceCollectionOptions,
-        setChoiceCollectionOptions,
-    ] = useState<ChoiceCollection[] | undefined | null>();
-
-    const [search, setSearch] = useState<string>();
+    const [searchText, setSearchText] = useState<string>();
     const [opened, setOpened] = useState(false);
 
     const optionsVariables = useMemo(() => {
@@ -78,12 +95,12 @@ function ChoiceCollectionSelectInput<T extends string>(props: Props<T>) {
         return ({
             projectId,
             questionnaireId,
-            search,
+            search: searchText,
         });
     }, [
         projectId,
         questionnaireId,
-        search,
+        searchText,
     ]);
 
     const {
@@ -96,23 +113,24 @@ function ChoiceCollectionSelectInput<T extends string>(props: Props<T>) {
         skip: isNotDefined(optionsVariables) || !opened,
         variables: optionsVariables,
     });
-    const searchOption = choiceCollectionsResponse?.private.projectScope?.choiceCollections.items;
+
+    const options = choiceCollectionsResponse?.private.projectScope?.choiceCollections.items;
 
     return (
         <SearchSelectInput
+            // eslint-disable-next-line react/jsx-props-no-spreading
+            {...otherProps}
             name={name}
+            value={value}
+            searchOptions={options}
             error={error}
-            disabled={choiceCollectionLoading}
+            label={label}
             keySelector={choiceCollectionKeySelector}
             labelSelector={choiceCollectionLabelSelector}
+            onSearchValueChange={setSearchText}
             onChange={onChange}
-            onSearchValueChange={setSearch}
-            onOptionsChange={setChoiceCollectionOptions}
-            label={label}
-            searchOptions={searchOption}
-            options={choiceCollectionOptions}
             onShowDropdownChange={setOpened}
-            value={value}
+            optionsPending={choiceCollectionLoading}
         />
     );
 }

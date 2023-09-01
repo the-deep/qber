@@ -3,11 +3,20 @@
     flex-direction: column;
     gap: var(--dui-spacing-medium);
 
-    .question-list {
-        display: flex;
+    .choices-preview {
         align-items: flex-start;
-        flex-direction: column;
-        gap: var(--dui-spacing-small);
-        width: 10rem;
+        gap: var(--dui-spacing-large);
+
+        .icon {
+            color: var(--dui-color-primary);
+            font-size: var(--dui-font-size-extra-large);
+        }
+
+        .choices {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            gap: var(--dui-spacing-small);
+        }
     }
 }

@@ -14,8 +14,8 @@
 
         .choices {
             display: flex;
-            flex-grow: 1;
             flex-direction: column;
+            flex-grow: 1;
             gap: var(--dui-spacing-small);
         }
     }

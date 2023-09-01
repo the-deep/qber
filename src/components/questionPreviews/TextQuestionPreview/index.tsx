@@ -5,6 +5,7 @@ import {
     _cs,
 } from '@togglecorp/fujs';
 import {
+    Element,
     TextOutput,
     TextInput,
 } from '@the-deep/deep-ui';
@@ -32,13 +33,18 @@ function TextQuestionPreview(props: Props) {
                 spacing="none"
                 block
             />
-            <TextInput
-                name={undefined}
-                placeholder="Enter text"
-                value={undefined}
+            <Element
                 icons={<MdOutlineAbc />}
-                readOnly
-            />
+                iconsContainerClassName={styles.icon}
+                childrenContainerClassName={styles.uploadPreview}
+            >
+                <TextInput
+                    name={undefined}
+                    placeholder="Enter text"
+                    value={undefined}
+                    readOnly
+                />
+            </Element>
         </div>
     );
 }

@@ -478,6 +478,8 @@ export function Component() {
     const groupTabRenderParams = useCallback((_: string, datum: QuestionGroup) => ({
         children: datum.name,
         name: datum.id,
+        className: styles.tab,
+        activeClassName: styles.active,
     }), []);
 
     if (isNotDefined(projectId) || isNotDefined(questionnaireId)) {
