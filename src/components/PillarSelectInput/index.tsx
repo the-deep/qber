@@ -12,13 +12,16 @@ const PILLARS = gql`
     ) {
         private {
             projectScope(pk: $projectId) {
-                groups (filters: {questionnaire: {pk: $questionnaireId}}){
-                    items {
+                questionnaire(pk: $questionnaireId) {
+                    leafGroups {
                         id
                         name
-                        label
-                        parentId
-                        questionnaireId
+                        type
+                        category1
+                        category2
+                        category3
+                        category4
+                        order
                     }
                 }
             }
@@ -26,10 +29,10 @@ const PILLARS = gql`
     }
 `;
 
-type Pillar = NonNullable<PillarsQuery['private']['projectScope']>['groups']['items'][number];
+type Pillar = NonNullable<NonNullable<NonNullable<PillarsQuery['private']>['projectScope']>['questionnaire']>['leafGroups'][number];
 
 const pillarKeySelector = (data: Pillar) => data.id;
-const pillarLabelSelector = (data: Pillar) => data.label;
+const pillarLabelSelector = (data: Pillar) => data.name;
 
 interface PillarProps<T>{
     projectId: string;
@@ -74,7 +77,7 @@ function PillarSelectInput<T extends string>(props: PillarProps<T>) {
         },
     );
 
-    const pillarsOptions = pillarsResponse?.private?.projectScope?.groups.items ?? [];
+    const pillarsOptions = pillarsResponse?.private?.projectScope?.questionnaire?.leafGroups ?? [];
 
     return (
         <SelectInput

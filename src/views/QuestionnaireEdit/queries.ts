@@ -7,7 +7,7 @@ export const QUESTION_FRAGMENT = gql`
         name
         type
         hint
-        groupId
+        leafGroupId
         questionnaireId
         choiceCollection {
             id
@@ -34,7 +34,7 @@ export const QUESTION_INFO = gql`
                     name
                     type
                     hint
-                    groupId
+                    leafGroupId
                     questionnaireId
                     choiceCollection {
                         id

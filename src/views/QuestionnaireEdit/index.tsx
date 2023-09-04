@@ -20,6 +20,8 @@ import {
 import {
     isNotDefined,
     isDefined,
+    listToGroupList,
+    mapToList,
 } from '@togglecorp/fujs';
 import {
     gql,
@@ -39,11 +41,17 @@ import {
 
 import SubNavbar from '#components/SubNavbar';
 import TocList from '#components/TocList';
+import { flatten } from '#utils/common';
 import {
     QuestionnaireQuery,
     QuestionnaireQueryVariables,
     QuestionsByGroupQuery,
     QuestionsByGroupQueryVariables,
+    QuestionLeafGroupCategory1TypeEnum,
+    QuestionLeafGroupCategory2TypeEnum,
+    QuestionLeafGroupCategory3TypeEnum,
+    QuestionLeafGroupCategory4TypeEnum,
+    QuestionLeafGroupTypeEnum,
 } from '#generated/types';
 
 import TextQuestionForm from './TextQuestionForm';
@@ -80,19 +88,20 @@ const QUESTIONNAIRE = gql`
                 questionnaire(pk: $questionnaireId) {
                     id
                     title
-                }
-                groups(filters: {
-                    questionnaire: {
-                        pk: $questionnaireId
-                    }
-                }) {
-                    items {
+                    leafGroups {
                         id
-                        parentId
-                        relevant
-                        questionnaireId
-                        label
                         name
+                        order
+                        category1
+                        category1Display
+                        category2
+                        category2Display
+                        category3
+                        category3Display
+                        category4
+                        category4Display
+                        type
+                        typeDisplay
                     }
                 }
             }
@@ -105,7 +114,7 @@ const QUESTIONS_BY_GROUP = gql`
     query QuestionsByGroup(
         $projectId: ID!,
         $questionnaireId: ID!,
-        $groupId: ID!,
+        $leafGroupId: ID!,
     ) {
         private {
             projectScope(pk: $projectId) {
@@ -115,10 +124,9 @@ const QUESTIONS_BY_GROUP = gql`
                         questionnaire: {
                             pk: $questionnaireId,
                         },
-                        group: {
-                            pk: $groupId,
+                        leafGroup: {
+                            pk: $leafGroupId,
                         },
-                        includeChildGroup: true,
                     }
                     order: {
                         createdAt: ASC
@@ -137,7 +145,7 @@ const QUESTIONS_BY_GROUP = gql`
 `;
 
 type Question = NonNullable<NonNullable<NonNullable<NonNullable<QuestionsByGroupQuery['private']>['projectScope']>['questions']>['items']>[number];
-type QuestionGroup = NonNullable<NonNullable<NonNullable<NonNullable<QuestionnaireQuery['private']>['projectScope']>['groups']>['items']>[number];
+type QuestionGroup = NonNullable<NonNullable<NonNullable<NonNullable<QuestionnaireQuery['private']>['projectScope']>['questionnaire']>['leafGroups']>[number];
 const questionKeySelector = (q: Question) => q.id;
 const groupTabKeySelector = (g: QuestionGroup) => g.id;
 
@@ -193,6 +201,58 @@ const questionTypes: QuestionType[] = [
         icon: <MdOutlineEditNote />,
     },
 ];
+
+interface Node {
+    category: {
+        key: string;
+        label: string;
+    }[];
+    type?: string;
+}
+
+type TocItem = {
+    key: string;
+    parentKeys: string[];
+    label: string;
+    nodes: TocItem[];
+};
+
+function getNodes(input: Node[], parentKeys: string[]): TocItem[] {
+    if (input.length <= 1) {
+        return [];
+    }
+    const grouped = listToGroupList(
+        input,
+        (groupItem) => groupItem.category[0].key,
+        (groupItem) => ({
+            category: groupItem.category.slice(1),
+            parentLabel: groupItem.category[0].label,
+            parentKey: groupItem.category[0].key,
+            type: groupItem.type,
+        }),
+    );
+
+    return mapToList(
+        grouped,
+        (item, key) => ({
+            key,
+            label: item[0].parentLabel,
+            parentKeys: [...parentKeys, item[0].parentKey],
+            nodes: getNodes(item, [...parentKeys, item[0].parentKey]),
+        }),
+    );
+}
+
+interface TransformedGroupType {
+    category: {
+        key: QuestionLeafGroupCategory1TypeEnum
+        | QuestionLeafGroupCategory2TypeEnum
+        | QuestionLeafGroupCategory3TypeEnum
+        | QuestionLeafGroupCategory4TypeEnum;
+        label: string;
+    }[];
+    type: QuestionLeafGroupTypeEnum;
+}
 
 const questionTypeKeySelector = (q: QuestionType) => q.key;
 const PAGE_SIZE = 15;
@@ -261,7 +321,7 @@ export function Component() {
             skip: isNotDefined(questionnaireVariables),
             variables: questionnaireVariables,
             onCompleted: (response) => {
-                const questionGroups = response?.private.projectScope?.groups?.items;
+                const questionGroups = response?.private.projectScope?.questionnaire?.leafGroups;
                 setOrderedOptions(questionGroups ?? []);
             },
         },
@@ -270,13 +330,72 @@ export function Component() {
     const questionnaireTitle = questionnaireResponse?.private.projectScope?.questionnaire?.title;
     const projectTitle = questionnaireResponse?.private.projectScope?.project.title;
 
-    const parentQuestionGroups = orderedOptions?.filter(
-        (item) => item.parentId === null,
-    );
-
-    const selectedParentQuestionGroups = parentQuestionGroups?.filter(
+    const selectedParentQuestionGroups = orderedOptions?.filter(
         (group) => selectedGroups.includes(group.id),
     );
+
+    const transformedGroups: TransformedGroupType[] = useMemo(() => (
+        orderedOptions.map((g) => {
+            if (isDefined(g.category3) && isDefined(g.category4)) {
+                return ({
+                    category: [
+                        {
+                            key: g.category1,
+                            label: String(g.category1Display),
+                        },
+                        {
+                            key: g.category2,
+                            label: String(g.category2Display),
+                        },
+                        {
+                            key: g.category3,
+                            label: String(g.category3Display),
+                        },
+                        {
+                            key: g.category4,
+                            label: String(g.category4Display),
+                        },
+                    ],
+                    type: g.type,
+                });
+            }
+            return ({
+                category: [
+                    {
+                        key: g.category1,
+                        label: String(g.category1Display),
+                    },
+                    {
+                        key: g.category2,
+                        label: String(g.category2Display),
+                    },
+                ],
+                type: g.type,
+            });
+        })
+    ), [
+        orderedOptions,
+    ]);
+
+    const groupOptionsSafe = getNodes(transformedGroups, []);
+
+    const flatList = useMemo(() => {
+        const a = flatten(
+            groupOptionsSafe,
+            (item) => ({
+                key: item.parentKeys.join('-'),
+            }),
+            (item) => item.nodes,
+        );
+        return a;
+    }, [groupOptionsSafe]);
+
+    const handleGroupOptionsChange = useCallback((newVal: TocItem[] | undefined) => {
+        // FIXME: Add handler
+        console.log('aditya', newVal, flatList);
+    }, [
+        flatList,
+    ]);
 
     const [activeGroupTab, setActiveGroupTab] = useState<string | undefined>(
         selectedParentQuestionGroups?.[0]?.name,
@@ -295,7 +414,7 @@ export function Component() {
         return ({
             projectId,
             questionnaireId,
-            groupId: finalSelectedTab,
+            leafGroupId: finalSelectedTab,
         });
     }, [
         projectId,
@@ -341,7 +460,7 @@ export function Component() {
     ]);
 
     const groupTabRenderParams = useCallback((_: string, datum: QuestionGroup) => ({
-        children: datum.label,
+        children: datum.name,
         name: datum.id,
     }), []);
 
@@ -372,9 +491,8 @@ export function Component() {
                     contentClassName={styles.leftContent}
                 >
                     <TocList
-                        parentId={null}
-                        orderedOptions={orderedOptions}
-                        onOrderedOptionsChange={setOrderedOptions}
+                        orderedOptions={groupOptionsSafe}
+                        onOrderedOptionsChange={handleGroupOptionsChange}
                         onSelectedGroupsChange={setSelectedGroups}
                         selectedGroups={selectedGroups}
                         onActiveTabChange={setActiveGroupTab}

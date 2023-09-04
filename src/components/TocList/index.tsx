@@ -13,32 +13,33 @@ import {
     QuickActionButton,
 } from '@the-deep/deep-ui';
 import SortableList, { Attributes, Listeners } from '#components/SortableList';
-// import reorder from '#utils/common';
-import {
-    QuestionnaireQuery,
-} from '#generated/types';
 
 import styles from './index.module.css';
 
-type QuestionGroup = NonNullable<NonNullable<NonNullable<NonNullable<QuestionnaireQuery['private']>['projectScope']>['groups']>['items']>[number];
+type QuestionGroup = {
+    key: string;
+    parentKeys: string[];
+    label: string;
+    nodes: QuestionGroup[];
+};
 
 interface TocProps {
-    id: string;
+    key: string;
+    mainIndex: number;
     item: QuestionGroup;
     attributes?: Attributes;
     listeners?: Listeners;
     selectedGroups: string[];
-    orderedOptions: QuestionGroup[] | undefined;
-    onOrderedOptionsChange: React.Dispatch<React.SetStateAction<QuestionGroup[]>>;
+    onOrderedOptionsChange: (newVal: QuestionGroup[] | undefined, index: number) => void;
     onSelectedGroupsChange: React.Dispatch<React.SetStateAction<string[]>>;
     onActiveTabChange: React.Dispatch<React.SetStateAction<string | undefined>>;
 }
 
 function TocRenderer(props: TocProps) {
     const {
-        id,
+        key,
+        mainIndex,
         item,
-        orderedOptions,
         selectedGroups,
         onOrderedOptionsChange,
         onSelectedGroupsChange,
@@ -50,18 +51,18 @@ function TocRenderer(props: TocProps) {
     const handleGroupSelect = useCallback((val: boolean) => {
         onSelectedGroupsChange((oldVal) => {
             if (val) {
-                return ([...oldVal, id]);
+                return ([...oldVal, key]);
             }
             const newVal = [...oldVal];
-            newVal.splice(oldVal.indexOf(id), 1);
+            newVal.splice(oldVal.indexOf(key), 1);
 
             return newVal;
         });
         onActiveTabChange((oldActiveTab) => {
             if (isNotDefined(oldActiveTab) && val) {
-                return id;
+                return key;
             }
-            if (!val && oldActiveTab === id) {
+            if (!val && oldActiveTab === key) {
                 return undefined;
             }
             return oldActiveTab;
@@ -69,10 +70,17 @@ function TocRenderer(props: TocProps) {
     }, [
         onActiveTabChange,
         onSelectedGroupsChange,
-        id,
+        key,
     ]);
 
-    const filteredOptions = orderedOptions?.filter((group) => id === group.parentId);
+    const nodeList = item.nodes;
+
+    const handleListChange = useCallback((newVal: QuestionGroup[] | undefined) => {
+        onOrderedOptionsChange(newVal, mainIndex);
+    }, [
+        mainIndex,
+        onOrderedOptionsChange,
+    ]);
 
     return (
         <Container
@@ -80,7 +88,7 @@ function TocRenderer(props: TocProps) {
             headerIcons={(
                 <div className={styles.headerIcons}>
                     <QuickActionButton
-                        name={id}
+                        name={key}
                         // FIXME: use translation
                         title="Drag"
                         variant="transparent"
@@ -92,8 +100,8 @@ function TocRenderer(props: TocProps) {
                         <GrDrag />
                     </QuickActionButton>
                     <Checkbox
-                        name={item.id}
-                        value={selectedGroups.includes(id)}
+                        name={item.key}
+                        value={selectedGroups.includes(key)}
                         onChange={handleGroupSelect}
                     />
                 </div>
@@ -104,13 +112,12 @@ function TocRenderer(props: TocProps) {
             headingSize="extraSmall"
             spacing="none"
         >
-            {isDefined(filteredOptions) && filteredOptions.length > 0 && (
+            {isDefined(nodeList) && nodeList.length > 0 && (
                 // eslint-disable-next-line @typescript-eslint/no-use-before-define
                 <TocList
                     className={styles.nestedList}
-                    parentId={item.id}
-                    orderedOptions={orderedOptions}
-                    onOrderedOptionsChange={onOrderedOptionsChange}
+                    orderedOptions={nodeList}
+                    onOrderedOptionsChange={handleListChange}
                     selectedGroups={selectedGroups}
                     onSelectedGroupsChange={onSelectedGroupsChange}
                     onActiveTabChange={onActiveTabChange}
@@ -120,13 +127,12 @@ function TocRenderer(props: TocProps) {
     );
 }
 
-const keySelector = (g: QuestionGroup) => g.id;
+const keySelector = (g: QuestionGroup) => g.key;
 
 interface Props {
     className?: string;
-    parentId: string | null;
     orderedOptions: QuestionGroup[] | undefined;
-    onOrderedOptionsChange: React.Dispatch<React.SetStateAction<QuestionGroup[]>>
+    onOrderedOptionsChange: (newVal: QuestionGroup[] | undefined) => void;
     selectedGroups: string[];
     onSelectedGroupsChange: React.Dispatch<React.SetStateAction<string[]>>;
     onActiveTabChange: React.Dispatch<React.SetStateAction<string | undefined>>;
@@ -135,7 +141,6 @@ interface Props {
 function TocList(props: Props) {
     const {
         className,
-        parentId,
         orderedOptions,
         onOrderedOptionsChange,
         selectedGroups,
@@ -143,35 +148,41 @@ function TocList(props: Props) {
         onActiveTabChange,
     } = props;
 
-    const filteredOptions = orderedOptions?.filter(
-        (group: QuestionGroup) => group.parentId === parentId,
-    );
-
-    const tocRendererParams = useCallback((key: string, datum: QuestionGroup): TocProps => ({
+    const handleChildrenOrderChange = useCallback((
+        newValue: QuestionGroup[] | undefined,
+        parentIndex: number,
+    ) => {
+        if (!newValue) {
+            return;
+        }
+        const newList = [...orderedOptions ?? []];
+        newList[parentIndex] = {
+            ...newList[parentIndex],
+            nodes: newValue,
+        };
+        onOrderedOptionsChange(newList);
+    }, [
         orderedOptions,
         onOrderedOptionsChange,
-        onSelectedGroupsChange,
-        onActiveTabChange,
-        selectedGroups,
-        id: key,
-        item: datum,
-    }), [
-        orderedOptions,
-        selectedGroups,
-        onSelectedGroupsChange,
-        onOrderedOptionsChange,
-        onActiveTabChange,
     ]);
 
-    const handleGroupOrderChange = useCallback((oldValue: QuestionGroup[]) => {
-        const nonParentOptions = orderedOptions?.filter((group) => !oldValue.includes(group)) ?? [];
-        onOrderedOptionsChange([
-            ...nonParentOptions,
-            ...oldValue,
-        ]);
-    }, [
-        onOrderedOptionsChange,
-        orderedOptions,
+    const tocRendererParams = useCallback((
+        key: string,
+        datum: QuestionGroup,
+        mainIndex: number,
+    ): TocProps => ({
+        onOrderedOptionsChange: handleChildrenOrderChange,
+        onSelectedGroupsChange,
+        onActiveTabChange,
+        selectedGroups,
+        key,
+        mainIndex,
+        item: datum,
+    }), [
+        handleChildrenOrderChange,
+        selectedGroups,
+        onSelectedGroupsChange,
+        onActiveTabChange,
     ]);
 
     return (
@@ -179,8 +190,8 @@ function TocList(props: Props) {
             className={_cs(styles.sortableList, className)}
             direction="vertical"
             name="toc"
-            onChange={handleGroupOrderChange}
-            data={filteredOptions}
+            onChange={onOrderedOptionsChange}
+            data={orderedOptions}
             keySelector={keySelector}
             renderer={TocRenderer}
             rendererParams={tocRendererParams}
