@@ -59,13 +59,13 @@ function QuestionPreview(props: QuestionProps) {
         setActiveQuestionId,
     ]);
 
-    if (isNotDefined(question.groupId)) {
+    if (isNotDefined(question.leafGroupId)) {
         return null;
     }
 
     return (
         <TabPanel
-            name={question.groupId}
+            name={question.leafGroupId}
             className={styles.preview}
         >
             <Element

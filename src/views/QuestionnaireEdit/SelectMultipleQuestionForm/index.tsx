@@ -82,7 +82,7 @@ const schema: FormSchema = {
             required: true,
             requiredValidation: requiredStringCondition,
         },
-        group: {
+        leafGroup: {
             required: true,
             requiredValidation: requiredStringCondition,
         },
@@ -212,11 +212,11 @@ function SelectMultipleQuestionForm(props: Props) {
                     error={fieldError?.choiceCollection}
                 />
                 <PillarSelectInput
-                    name="group"
+                    name="leafGroup"
                     projectId={projectId}
                     questionnaireId={questionnaireId}
-                    value={formValue.group}
-                    error={fieldError?.group}
+                    value={formValue.leafGroup}
+                    error={fieldError?.leafGroup}
                     onChange={setFieldValue}
                 />
             </div>

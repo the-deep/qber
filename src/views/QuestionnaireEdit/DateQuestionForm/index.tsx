@@ -15,6 +15,7 @@ import {
 } from '@apollo/client';
 import {
     ObjectSchema,
+    removeNull,
     createSubmitHandler,
     requiredStringCondition,
     getErrorObject,
@@ -109,7 +110,7 @@ const schema: FormSchema = {
             required: true,
             requiredValidation: requiredStringCondition,
         },
-        group: {
+        leafGroup: {
             required: true,
             requiredValidation: requiredStringCondition,
         },
@@ -170,13 +171,13 @@ function DateQuestionForm(props: Props) {
             skip: isNotDefined(questionInfoVariables),
             variables: questionInfoVariables,
             onCompleted: (response) => {
-                const questionResponse = response.private.projectScope?.question;
+                const questionResponse = removeNull(response.private.projectScope?.question);
                 setValue({
                     name: questionResponse?.name,
                     type: questionResponse?.type,
                     questionnaire: questionResponse?.questionnaireId,
                     label: questionResponse?.label,
-                    group: questionResponse?.groupId,
+                    leafGroup: questionResponse?.leafGroupId,
                     hint: questionResponse?.hint,
                 });
             },
@@ -313,11 +314,11 @@ function DateQuestionForm(props: Props) {
                     onChange={setFieldValue}
                 />
                 <PillarSelectInput
-                    name="group"
+                    name="leafGroup"
                     projectId={projectId}
                     questionnaireId={questionnaireId}
-                    value={formValue.group}
-                    error={fieldError?.group}
+                    value={formValue.leafGroup}
+                    error={fieldError?.leafGroup}
                     onChange={setFieldValue}
                 />
             </div>
