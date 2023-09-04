@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
     isDefined,
     isNotDefined,
@@ -41,6 +41,7 @@ import ChoiceCollectionSelectInput from '#components/ChoiceCollectionSelectInput
 import {
     QUESTION_FRAGMENT,
     QUESTION_INFO,
+    ChoiceCollectionType,
 } from '../queries.ts';
 import styles from './index.module.css';
 
@@ -156,6 +157,11 @@ function RankQuestionForm(props: Props) {
         setError,
     } = useForm(schema, { value: initialFormValue });
 
+    const [
+        choiceCollectionOption,
+        setChoiceCollectionOption,
+    ] = useState<ChoiceCollectionType[] | null | undefined>();
+
     const fieldError = getErrorObject(formError);
 
     const questionInfoVariables = useMemo(() => {
@@ -187,6 +193,11 @@ function RankQuestionForm(props: Props) {
                     hint: questionResponse?.hint,
                     choiceCollection: questionResponse?.choiceCollection?.id,
                 });
+                const choiceCollection = questionResponse?.choiceCollection;
+                const choiceCollectionOptions = isDefined(choiceCollection)
+                    ? [choiceCollection]
+                    : [];
+                setChoiceCollectionOption(choiceCollectionOptions);
             },
         },
     );
@@ -324,6 +335,8 @@ function RankQuestionForm(props: Props) {
                     name="choiceCollection"
                     value={formValue.choiceCollection}
                     label="Options"
+                    options={choiceCollectionOption}
+                    onOptionsChange={setChoiceCollectionOption}
                     onChange={setFieldValue}
                     projectId={projectId}
                     questionnaireId={questionnaireId}

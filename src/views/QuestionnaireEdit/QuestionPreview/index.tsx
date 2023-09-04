@@ -71,7 +71,11 @@ function QuestionPreview(props: QuestionProps) {
     ]);
 
     if (isNotDefined(question.leafGroupId)) {
-        return null;
+        return (
+            <div>
+                Could not find leaf group id.
+            </div>
+        );
     }
 
     return (

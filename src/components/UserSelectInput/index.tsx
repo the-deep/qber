@@ -48,10 +48,14 @@ export type User = Omit<NonNullable<NonNullable<NonNullable<NonNullable<UsersQue
 
 const keySelector = (u: User) => u.id;
 const labelSelector = (u: User) => u.displayName;
+
 const PAGE_SIZE = 20;
 
 type Def = { containerClassName?: string };
-type UserSelectInputProps<K extends string, GK extends string> = SearchSelectInputProps<
+type UserSelectInputProps<
+    K extends string,
+    GK extends string
+> = SearchSelectInputProps<
     string,
     K,
     GK,

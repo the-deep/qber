@@ -48,7 +48,6 @@ const choiceCollectionLabelSelector = (d: ChoiceCollection) => d.label;
 
 type Def = { containerClassName?: string };
 type ChoiceCollectionSelectInputProps<
-    T,
     K extends string,
     GK extends string
 > = SearchSelectInputProps<
@@ -61,26 +60,17 @@ type ChoiceCollectionSelectInputProps<
 > & {
     projectId: string;
     questionnaireId: string | null;
-    name: T;
-    label: string;
-    onChange: (value: string | undefined, name: T) => void;
-    value: string | null | undefined;
-    error: string | undefined;
 };
 
+const PAGE_SIZE = 20;
+
 function ChoiceCollectionSelectInput<
-    T extends string,
     K extends string,
     GK extends string
->(props: ChoiceCollectionSelectInputProps<T, K, GK>) {
+>(props: ChoiceCollectionSelectInputProps<K, GK>) {
     const {
         projectId,
         questionnaireId,
-        name,
-        value,
-        label,
-        onChange,
-        error,
         ...otherProps
     } = props;
 
@@ -96,6 +86,8 @@ function ChoiceCollectionSelectInput<
             projectId,
             questionnaireId,
             search: searchText,
+            limit: PAGE_SIZE,
+            offset: 0,
         });
     }, [
         projectId,
@@ -120,15 +112,10 @@ function ChoiceCollectionSelectInput<
         <SearchSelectInput
             // eslint-disable-next-line react/jsx-props-no-spreading
             {...otherProps}
-            name={name}
-            value={value}
             searchOptions={options}
-            error={error}
-            label={label}
             keySelector={choiceCollectionKeySelector}
             labelSelector={choiceCollectionLabelSelector}
             onSearchValueChange={setSearchText}
-            onChange={onChange}
             onShowDropdownChange={setOpened}
             optionsPending={choiceCollectionLoading}
         />

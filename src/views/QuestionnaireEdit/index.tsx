@@ -547,6 +547,7 @@ export function Component() {
                             pending={false}
                         />
                         <SortableList
+                            name="questions"
                             className={styles.questionList}
                             data={orderedQuestions}
                             direction="vertical"

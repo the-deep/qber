@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
     isDefined,
     isNotDefined,
@@ -15,6 +15,7 @@ import {
 } from '@the-deep/deep-ui';
 import {
     ObjectSchema,
+    removeNull,
     createSubmitHandler,
     requiredStringCondition,
     getErrorObject,
@@ -40,6 +41,7 @@ import ChoiceCollectionSelectInput from '#components/ChoiceCollectionSelectInput
 import {
     QUESTION_FRAGMENT,
     QUESTION_INFO,
+    ChoiceCollectionType,
 } from '../queries.ts';
 import styles from './index.module.css';
 
@@ -155,6 +157,11 @@ function SelectOneQuestionForm(props: Props) {
         setError,
     } = useForm(schema, { value: initialFormValue });
 
+    const [
+        choiceCollectionOption,
+        setChoiceCollectionOption,
+    ] = useState<ChoiceCollectionType[] | null | undefined>();
+
     const fieldError = getErrorObject(formError);
 
     const questionInfoVariables = useMemo(() => {
@@ -176,16 +183,21 @@ function SelectOneQuestionForm(props: Props) {
             skip: isNotDefined(questionInfoVariables),
             variables: questionInfoVariables,
             onCompleted: (response) => {
-                const questionResponse = response.private.projectScope?.question;
+                const questionResponse = removeNull(response.private.projectScope?.question);
                 setValue({
                     name: questionResponse?.name,
                     type: questionResponse?.type,
                     questionnaire: questionResponse?.questionnaireId,
                     label: questionResponse?.label,
-                    group: questionResponse?.groupId,
+                    leafGroup: questionResponse?.leafGroupId,
                     hint: questionResponse?.hint,
                     choiceCollection: questionResponse?.choiceCollection?.id,
                 });
+                const choiceCollection = questionResponse?.choiceCollection;
+                const choiceCollectionOptions = isDefined(choiceCollection)
+                    ? [choiceCollection]
+                    : [];
+                setChoiceCollectionOption(choiceCollectionOptions);
             },
         },
     );
@@ -330,6 +342,8 @@ function SelectOneQuestionForm(props: Props) {
                     name="choiceCollection"
                     value={formValue.choiceCollection}
                     label="Options"
+                    options={choiceCollectionOption}
+                    onOptionsChange={setChoiceCollectionOption}
                     onChange={setFieldValue}
                     projectId={projectId}
                     questionnaireId={questionnaireId}
