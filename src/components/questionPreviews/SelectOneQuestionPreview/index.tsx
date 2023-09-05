@@ -107,7 +107,6 @@ function SelectOneQuestionPreview(props: Props) {
                 <RadioInput
                     listContainerClassName={styles.choices}
                     keySelector={choiceCollectionKeySelector}
-                    label="Options"
                     labelSelector={choiceCollectionLabelSelector}
                     name="options"
                     onChange={noOp}
