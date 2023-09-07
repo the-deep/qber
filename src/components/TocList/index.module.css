@@ -4,16 +4,27 @@
 
     .group-item {
         display: flex;
-        padding: var(--dui-spacing-small);
+        background-color: transparent;
+        padding: var(--dui-spacing-medium) var(--dui-spacing-small);
+        padding-right: 0;
 
+        .group-item {
+            border-left: var(--dui-width-separator-medium) solid var(--dui-color-separator);
+        }
+        .heading {
+            font-weight: var(--dui-font-weight-regular);
+        }
+
+        .header {
+            background-color: transparent;
+            .heading {
+                color: var(--text-color-dark);
+            }
+        }
         .header-icons {
             display: flex;
             align-items: center;
             padding-right: var(--dui-spacing-extra-small);
-        }
-
-        .heading {
-            font-weight: var(--dui-font-weight-regular);
         }
 
         .content {

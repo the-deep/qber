@@ -123,6 +123,7 @@ interface Props {
     questionnaireId: string;
     questionId?: string;
     onSuccess: (questionId: string | undefined) => void;
+    selectedLeafGroupId: string;
 }
 
 function NoteQuestionForm(props: Props) {
@@ -131,6 +132,7 @@ function NoteQuestionForm(props: Props) {
         questionnaireId,
         questionId,
         onSuccess,
+        selectedLeafGroupId,
     } = props;
 
     const alert = useAlert();
@@ -138,6 +140,7 @@ function NoteQuestionForm(props: Props) {
     const initialFormValue: FormType = {
         type: 'NOTE' as QuestionTypeEnum,
         questionnaire: questionnaireId,
+        leafGroup: selectedLeafGroupId,
     };
 
     const {
@@ -308,9 +311,10 @@ function NoteQuestionForm(props: Props) {
                     name="leafGroup"
                     projectId={projectId}
                     questionnaireId={questionnaireId}
-                    value={formValue.leafGroup}
+                    value={selectedLeafGroupId}
                     error={fieldError?.leafGroup}
                     onChange={setFieldValue}
+                    disabled
                 />
             </div>
             <Button

@@ -6,12 +6,9 @@ import {
     GrDrag,
 } from 'react-icons/gr';
 import {
-    isNotDefined,
     isDefined,
-    noOp,
 } from '@togglecorp/fujs';
 import {
-    TabPanel,
     Element,
     Checkbox,
     QuickActionDropdownMenu,
@@ -44,6 +41,8 @@ interface QuestionProps {
     setSelectedQuestionType: React.Dispatch<React.SetStateAction<string | undefined>>;
     projectId: string | undefined;
     setActiveQuestionId: React.Dispatch<React.SetStateAction<string | undefined>>;
+    selectedQuestions: string[] | undefined;
+    onSelectedQuestionsChange: (val: boolean, id: string) => void;
     attributes?: Attributes;
     listeners?: Listeners;
 }
@@ -54,6 +53,8 @@ function QuestionPreview(props: QuestionProps) {
         showAddQuestionPane,
         setSelectedQuestionType,
         setActiveQuestionId,
+        selectedQuestions,
+        onSelectedQuestionsChange,
         projectId,
         attributes,
         listeners,
@@ -70,134 +71,121 @@ function QuestionPreview(props: QuestionProps) {
         setActiveQuestionId,
     ]);
 
-    if (isNotDefined(question.leafGroupId)) {
-        return (
-            <div>
-                Could not find leaf group id.
-            </div>
-        );
-    }
-
     return (
-        <TabPanel
-            name={question.leafGroupId}
-            className={styles.preview}
-        >
-            <Element
-                className={styles.questionWrapper}
-                icons={(
-                    <>
-                        <QuickActionButton
-                            name={question.id}
-                            className={styles.dragIcon}
-                            title="Drag"
-                            variant="transparent"
-                            // eslint-disable-next-line react/jsx-props-no-spreading
-                            {...attributes}
-                            // eslint-disable-next-line react/jsx-props-no-spreading
-                            {...listeners}
-                        >
-                            <GrDrag />
-                        </QuickActionButton>
-                        { /* TODO: Fix the selection behavior */ }
-                        <Checkbox
-                            name={undefined}
-                            value={false}
-                            onChange={noOp}
-                        />
-                    </>
-                )}
-                actions={(
-                    <QuickActionDropdownMenu
-                        label={<IoEllipsisVertical />}
-                        variant="secondary"
+        <Element
+            className={styles.questionWrapper}
+            icons={(
+                <>
+                    <QuickActionButton
+                        name={question.id}
+                        className={styles.dragIcon}
+                        title="Drag"
+                        variant="transparent"
+                        // eslint-disable-next-line react/jsx-props-no-spreading
+                        {...attributes}
+                        // eslint-disable-next-line react/jsx-props-no-spreading
+                        {...listeners}
                     >
-                        <DropdownMenuItem
-                            name={question.id}
-                            onClick={handleEditQuestionClick}
-                        >
-                            Edit question
-                        </DropdownMenuItem>
-                    </QuickActionDropdownMenu>
-                )}
-            >
-                {(question.type === 'TEXT') && (
-                    <TextQuestionPreview
-                        className={styles.questionItem}
-                        label={question.label}
-                        hint={question.hint}
+                        <GrDrag />
+                    </QuickActionButton>
+                    { /* TODO: Fix the selection behavior */ }
+                    <Checkbox
+                        name={question.id}
+                        value={selectedQuestions?.includes(question.id)}
+                        onChange={onSelectedQuestionsChange}
                     />
-                )}
-                {(question.type === 'INTEGER') && (
-                    <IntegerQuestionPreview
-                        className={styles.questionItem}
-                        label={question.label}
-                        hint={question.hint}
-                    />
-                )}
-                {(question.type === 'RANK') && isDefined(projectId) && (
-                    <RankQuestionPreview
-                        className={styles.questionItem}
-                        label={question.label}
-                        hint={question.hint}
-                        projectId={projectId}
-                        choiceCollectionId={question.choiceCollection?.id}
-                    />
-                )}
-                {(question.type === 'DATE') && (
-                    <DateQuestionPreview
-                        className={styles.questionItem}
-                        label={question.label}
-                        hint={question.hint}
-                    />
-                )}
-                {(question.type === 'TIME') && (
-                    <TimeQuestionPreview
-                        className={styles.questionItem}
-                        label={question.label}
-                        hint={question.hint}
-                    />
-                )}
-                {(question.type === 'NOTE') && (
-                    <NoteQuestionPreview
-                        className={styles.questionItem}
-                        label={question.label}
-                    />
-                )}
-                {(question.type === 'FILE') && (
-                    <FileQuestionPreview
-                        className={styles.questionItem}
-                        label={question.label}
-                        hint={question.hint}
-                    />
-                )}
-                {(question.type === 'IMAGE') && (
-                    <ImageQuestionPreview
-                        className={styles.questionItem}
-                        label={question.label}
-                        hint={question.hint}
-                    />
-                )}
-                {(question.type === 'SELECT_ONE') && isDefined(projectId) && (
-                    <SelectOneQuestionPreview
-                        className={styles.questionItem}
-                        label={question.label}
-                        hint={question.hint}
-                        projectId={projectId}
-                        choiceCollectionId={question.choiceCollection?.id}
-                    />
-                )}
-                {(question.type === 'SELECT_MULTIPLE') && isDefined(projectId) && (
-                    <SelectMultipleQuestionPreview
-                        className={styles.questionItem}
-                        label={question.label}
-                        hint={question.hint}
-                        projectId={projectId}
-                        choiceCollectionId={question.choiceCollection?.id}
-                    />
-                )}
-            </Element>
-        </TabPanel>
+                </>
+            )}
+            actions={(
+                <QuickActionDropdownMenu
+                    label={<IoEllipsisVertical />}
+                    variant="secondary"
+                >
+                    <DropdownMenuItem
+                        name={question.id}
+                        onClick={handleEditQuestionClick}
+                    >
+                        Edit question
+                    </DropdownMenuItem>
+                </QuickActionDropdownMenu>
+            )}
+        >
+            {(question.type === 'TEXT') && (
+                <TextQuestionPreview
+                    className={styles.questionItem}
+                    label={question.label}
+                    hint={question.hint}
+                />
+            )}
+            {(question.type === 'INTEGER') && (
+                <IntegerQuestionPreview
+                    className={styles.questionItem}
+                    label={question.label}
+                    hint={question.hint}
+                />
+            )}
+            {(question.type === 'RANK') && isDefined(projectId) && (
+                <RankQuestionPreview
+                    className={styles.questionItem}
+                    label={question.label}
+                    hint={question.hint}
+                    projectId={projectId}
+                    choiceCollectionId={question.choiceCollection?.id}
+                />
+            )}
+            {(question.type === 'DATE') && (
+                <DateQuestionPreview
+                    className={styles.questionItem}
+                    label={question.label}
+                    hint={question.hint}
+                />
+            )}
+            {(question.type === 'TIME') && (
+                <TimeQuestionPreview
+                    className={styles.questionItem}
+                    label={question.label}
+                    hint={question.hint}
+                />
+            )}
+            {(question.type === 'NOTE') && (
+                <NoteQuestionPreview
+                    className={styles.questionItem}
+                    label={question.label}
+                />
+            )}
+            {(question.type === 'FILE') && (
+                <FileQuestionPreview
+                    className={styles.questionItem}
+                    label={question.label}
+                    hint={question.hint}
+                />
+            )}
+            {(question.type === 'IMAGE') && (
+                <ImageQuestionPreview
+                    className={styles.questionItem}
+                    label={question.label}
+                    hint={question.hint}
+                />
+            )}
+            {(question.type === 'SELECT_ONE') && isDefined(projectId) && (
+                <SelectOneQuestionPreview
+                    className={styles.questionItem}
+                    label={question.label}
+                    hint={question.hint}
+                    projectId={projectId}
+                    choiceCollectionId={question.choiceCollection?.id}
+                />
+            )}
+            {(question.type === 'SELECT_MULTIPLE') && isDefined(projectId) && (
+                <SelectMultipleQuestionPreview
+                    className={styles.questionItem}
+                    label={question.label}
+                    hint={question.hint}
+                    projectId={projectId}
+                    choiceCollectionId={question.choiceCollection?.id}
+                />
+            )}
+        </Element>
     );
 }
 

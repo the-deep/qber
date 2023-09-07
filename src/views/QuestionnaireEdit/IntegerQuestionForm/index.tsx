@@ -119,6 +119,7 @@ interface Props {
     questionnaireId: string;
     questionId?: string;
     onSuccess: (questionId: string | undefined) => void;
+    selectedLeafGroupId: string;
 }
 
 function IntegerQuestionForm(props: Props) {
@@ -127,6 +128,7 @@ function IntegerQuestionForm(props: Props) {
         questionnaireId,
         questionId,
         onSuccess,
+        selectedLeafGroupId,
     } = props;
 
     const alert = useAlert();
@@ -134,6 +136,7 @@ function IntegerQuestionForm(props: Props) {
     const initialFormValue: FormType = {
         type: 'INTEGER' as QuestionTypeEnum,
         questionnaire: questionnaireId,
+        leafGroup: selectedLeafGroupId,
     };
 
     const {
@@ -313,9 +316,10 @@ function IntegerQuestionForm(props: Props) {
                     name="leafGroup"
                     projectId={projectId}
                     questionnaireId={questionnaireId}
-                    value={formValue.leafGroup}
+                    value={selectedLeafGroupId}
                     error={fieldError?.leafGroup}
                     onChange={setFieldValue}
+                    disabled
                 />
             </div>
             <Button

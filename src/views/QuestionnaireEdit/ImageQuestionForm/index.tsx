@@ -122,6 +122,7 @@ interface Props {
     projectId: string;
     questionnaireId: string;
     questionId?: string;
+    selectedLeafGroupId: string;
     onSuccess: (questionId: string | undefined) => void;
 }
 
@@ -130,6 +131,7 @@ function ImageQuestionForm(props: Props) {
         projectId,
         questionnaireId,
         questionId,
+        selectedLeafGroupId,
         onSuccess,
     } = props;
 
@@ -138,6 +140,7 @@ function ImageQuestionForm(props: Props) {
     const initialFormValue: FormType = {
         type: 'IMAGE' as QuestionTypeEnum,
         questionnaire: questionnaireId,
+        leafGroup: selectedLeafGroupId,
     };
 
     const {
@@ -315,9 +318,10 @@ function ImageQuestionForm(props: Props) {
                     name="leafGroup"
                     projectId={projectId}
                     questionnaireId={questionnaireId}
-                    value={formValue.leafGroup}
+                    value={selectedLeafGroupId}
                     error={fieldError?.leafGroup}
                     onChange={setFieldValue}
+                    disabled
                 />
             </div>
             <Button

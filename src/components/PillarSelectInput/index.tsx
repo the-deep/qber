@@ -18,9 +18,13 @@ const PILLARS = gql`
                         name
                         type
                         category1
+                        category1Display
                         category2
+                        category2Display
                         category3
+                        category3Display
                         category4
+                        category4Display
                         order
                     }
                 }
@@ -32,7 +36,12 @@ const PILLARS = gql`
 type Pillar = NonNullable<NonNullable<NonNullable<PillarsQuery['private']>['projectScope']>['questionnaire']>['leafGroups'][number];
 
 const pillarKeySelector = (data: Pillar) => data.id;
-const pillarLabelSelector = (data: Pillar) => data.name;
+const pillarLabelSelector = (data: Pillar) => {
+    if (data.type === 'MATRIX_1D') {
+        return data.category2Display;
+    }
+    return data.category4Display ?? '??';
+};
 
 interface PillarProps<T>{
     projectId: string;
@@ -41,6 +50,7 @@ interface PillarProps<T>{
     value: string | null | undefined;
     error: string | undefined;
     onChange: (value: string | undefined, name: T) => void;
+    disabled?: boolean;
 }
 
 function PillarSelectInput<T extends string>(props: PillarProps<T>) {
@@ -51,6 +61,7 @@ function PillarSelectInput<T extends string>(props: PillarProps<T>) {
         error,
         onChange,
         name,
+        disabled,
     } = props;
 
     const pillarsVariables = useMemo(() => {
@@ -89,7 +100,7 @@ function PillarSelectInput<T extends string>(props: PillarProps<T>) {
             keySelector={pillarKeySelector}
             labelSelector={pillarLabelSelector}
             options={pillarsOptions}
-            disabled={pillarsLoading}
+            disabled={pillarsLoading || disabled}
         />
     );
 }
