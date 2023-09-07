@@ -3,7 +3,6 @@ import {
     useParams,
 } from 'react-router-dom';
 import {
-    IoAdd,
     IoCameraOutline,
     IoCloseOutline,
     IoDocumentTextOutline,
@@ -19,6 +18,7 @@ import {
     MdOutlineSchedule,
 } from 'react-icons/md';
 import {
+    compareNumber,
     isNotDefined,
     isDefined,
     listToGroupList,
@@ -27,9 +27,9 @@ import {
 import {
     gql,
     useQuery,
+    useMutation,
 } from '@apollo/client';
 import {
-    Button,
     Container,
     Header,
     ListView,
@@ -39,21 +39,22 @@ import {
     TextOutput,
     useModalState,
 } from '@the-deep/deep-ui';
+import { removeNull } from '@togglecorp/toggle-form';
 
 import SubNavbar from '#components/SubNavbar';
-import SortableList from '#components/SortableList';
 import TocList from '#components/TocList';
-import { flatten } from '#utils/common';
+import {
+    NonLeafTocItem,
+    LeafTocItem,
+    TocItem,
+    getChildren,
+    flatten,
+} from '#utils/common';
 import {
     QuestionnaireQuery,
     QuestionnaireQueryVariables,
     QuestionsByGroupQuery,
     QuestionsByGroupQueryVariables,
-    QuestionLeafGroupCategory1TypeEnum,
-    QuestionLeafGroupCategory2TypeEnum,
-    QuestionLeafGroupCategory3TypeEnum,
-    QuestionLeafGroupCategory4TypeEnum,
-    QuestionLeafGroupTypeEnum,
 } from '#generated/types';
 
 import TextQuestionForm from './TextQuestionForm';
@@ -67,15 +68,17 @@ import ImageQuestionForm from './ImageQuestionForm';
 import SelectOneQuestionForm from './SelectOneQuestionForm';
 import SelectMultipleQuestionForm from './SelectMultipleQuestionForm';
 
+import QuestionList from './QuestionList';
 import {
     QUESTION_FRAGMENT,
-} from './queries.ts';
+    LEAF_GROUPS_FRAGMENT,
+} from './queries';
 import QuestionTypeItem, { QuestionType } from './QuestionTypeItem';
-import QuestionPreview from './QuestionPreview';
 
 import styles from './index.module.css';
 
 const QUESTIONNAIRE = gql`
+    ${LEAF_GROUPS_FRAGMENT}
     query Questionnaire(
         $projectId: ID!,
         $questionnaireId: ID!,
@@ -91,19 +94,7 @@ const QUESTIONNAIRE = gql`
                     id
                     title
                     leafGroups {
-                        id
-                        name
-                        order
-                        category1
-                        category1Display
-                        category2
-                        category2Display
-                        category3
-                        category3Display
-                        category4
-                        category4Display
-                        type
-                        typeDisplay
+                        ...LeafGroups
                     }
                 }
             }
@@ -146,10 +137,55 @@ const QUESTIONS_BY_GROUP = gql`
     }
 `;
 
-type Question = NonNullable<NonNullable<NonNullable<NonNullable<QuestionsByGroupQuery['private']>['projectScope']>['questions']>['items']>[number];
+const ORDER_QUESTION_GROUP = gql`
+    ${LEAF_GROUPS_FRAGMENT}
+    mutation OrderQuestionGroup(
+        $projectId: ID!,
+        $groupList: [QuestionLeafGroupOrderInputType!]!,
+        $questionnaireId: ID!,
+    ){
+        private {
+            projectScope(pk: $projectId){
+                bulkUpdateQuestionnairQuestionGroupsLeafOrder(
+                data: $groupList
+                questionnaireId: $questionnaireId
+                ) {
+                    errors
+                    results {
+                        ...LeafGroups
+                    }
+                }
+            }
+        }
+    }
+`;
+
+const QUESTION_GROUP_VISIBILITY = gql`
+    ${LEAF_GROUPS_FRAGMENT}
+    mutation MyMutation(
+        $projectId: ID!,
+        $questionnaireId: ID!,
+        $groupIds: [ID!]!,
+        $visibility: VisibilityActionEnum!,
+    ) {
+        private {
+            projectScope(pk: $projectId) {
+                updateQuestionGroupsLeafVisibility(
+                    questionnaireId: $questionnaireId,
+                    ids: $groupIds,
+                    visibility: $visibility,
+                ) {
+                    results {
+                        ...LeafGroups
+                    }
+                }
+            }
+        }
+    }
+`;
+
 type QuestionGroup = NonNullable<NonNullable<NonNullable<NonNullable<QuestionnaireQuery['private']>['projectScope']>['questionnaire']>['leafGroups']>[number];
-const questionKeySelector = (q: Question) => q.id;
-const groupTabKeySelector = (g: QuestionGroup) => g.id;
+const groupTabKeySelector = (g: TocItem) => g.key;
 
 const questionTypes: QuestionType[] = [
     {
@@ -210,54 +246,88 @@ interface Node {
         label: string;
     }[];
     type?: string;
+    id: string;
+    isHidden: boolean;
 }
 
-type TocItem = {
-    key: string;
-    parentKeys: string[];
-    label: string;
-    nodes: TocItem[];
-};
-
-function getNodes(input: Node[], parentKeys: string[]): TocItem[] {
-    if (input.length <= 1) {
-        return [];
-    }
-    const grouped = listToGroupList(
-        input,
+function getNodes(
+    input: Node[],
+    parentKeys: string[],
+): TocItem[] {
+    const nonLeafNodes = input.filter((item) => item.category.length > 1);
+    const groupedNonLeafNodes = listToGroupList(
+        nonLeafNodes,
         (groupItem) => groupItem.category[0].key,
         (groupItem) => ({
             category: groupItem.category.slice(1),
             parentLabel: groupItem.category[0].label,
             parentKey: groupItem.category[0].key,
             type: groupItem.type,
+            id: groupItem.id,
+            isHidden: groupItem.isHidden,
         }),
     );
-
-    return mapToList(
-        grouped,
-        (item, key) => ({
+    const nonLeafNodesResponse = mapToList(
+        groupedNonLeafNodes,
+        (item, key): NonLeafTocItem => ({
             key,
+            // type: item[0].type,
             label: item[0].parentLabel,
             parentKeys: [...parentKeys, item[0].parentKey],
-            nodes: getNodes(item, [...parentKeys, item[0].parentKey]),
+            nodes: getNodes(
+                item,
+                [...parentKeys, item[0].parentKey],
+            ),
         }),
     );
-}
 
-interface TransformedGroupType {
-    category: {
-        key: QuestionLeafGroupCategory1TypeEnum
-        | QuestionLeafGroupCategory2TypeEnum
-        | QuestionLeafGroupCategory3TypeEnum
-        | QuestionLeafGroupCategory4TypeEnum;
-        label: string;
-    }[];
-    type: QuestionLeafGroupTypeEnum;
+    const leafNodes = input.filter((item) => item.category.length <= 1);
+    const leafNodesResponse = leafNodes.map((item): LeafTocItem => ({
+        key: item.category[0].key,
+        // type: item.type,
+        label: item.category[0].label,
+        parentKeys: [...parentKeys, item.category[0].key],
+        leafNode: true,
+        isHidden: item.isHidden,
+        id: item.id,
+    }));
+
+    return [
+        ...leafNodesResponse,
+        ...nonLeafNodesResponse,
+    ];
 }
 
 const questionTypeKeySelector = (q: QuestionType) => q.key;
 const PAGE_SIZE = 15;
+
+function transformOptionsByCategory(options: QuestionGroup[]): Node[] {
+    const result = options
+        .map((g) => ({
+            category: [
+                isDefined(g.category1) && isDefined(g.category1Display) ? {
+                    key: g.category1,
+                    label: g.category1Display,
+                } : undefined,
+                isDefined(g.category2) && isDefined(g.category2Display) ? {
+                    key: g.category2,
+                    label: g.category2Display,
+                } : undefined,
+                isDefined(g.category3) && isDefined(g.category3Display) ? {
+                    key: g.category3,
+                    label: g.category3Display,
+                } : undefined,
+                isDefined(g.category4) && isDefined(g.category4Display) ? {
+                    key: g.category4,
+                    label: g.category4Display,
+                } : undefined,
+            ].filter(isDefined),
+            type: g.type,
+            id: g.id,
+            isHidden: g.isHidden,
+        }));
+    return result;
+}
 
 // eslint-disable-next-line import/prefer-default-export
 export function Component() {
@@ -313,7 +383,7 @@ export function Component() {
     const [
         orderedOptions,
         setOrderedOptions,
-    ] = useState<QuestionGroup[]>([]);
+    ] = useState<TocItem[] | undefined>([]);
 
     const {
         data: questionnaireResponse,
@@ -323,85 +393,125 @@ export function Component() {
             skip: isNotDefined(questionnaireVariables),
             variables: questionnaireVariables,
             onCompleted: (response) => {
-                const questionGroups = response?.private.projectScope?.questionnaire?.leafGroups;
-                setOrderedOptions(questionGroups ?? []);
+                const questionGroups = removeNull(
+                    response?.private.projectScope?.questionnaire?.leafGroups,
+                );
+                if (!questionGroups) {
+                    return;
+                }
+                const items = [...questionGroups];
+                items.sort((a, b) => compareNumber(a.order, b.order));
+                const transformedQuestionGroups = transformOptionsByCategory(items);
+                const groupOptionsSafe = getNodes(transformedQuestionGroups, []);
+                setOrderedOptions(groupOptionsSafe ?? []);
             },
         },
     );
 
-    const questionnaireTitle = questionnaireResponse?.private.projectScope?.questionnaire?.title;
-    const projectTitle = questionnaireResponse?.private.projectScope?.project.title;
-
-    const selectedParentQuestionGroups = orderedOptions?.filter(
-        (group) => selectedGroups.includes(group.id),
-    );
-
-    const transformedGroups: TransformedGroupType[] = useMemo(() => (
-        orderedOptions.map((g) => {
+    const referenceList = useMemo(() => (
+        questionnaireResponse?.private?.projectScope?.questionnaire?.leafGroups.map((g) => {
             if (isDefined(g.category3) && isDefined(g.category4)) {
                 return ({
-                    category: [
-                        {
-                            key: g.category1,
-                            label: String(g.category1Display),
-                        },
-                        {
-                            key: g.category2,
-                            label: String(g.category2Display),
-                        },
-                        {
-                            key: g.category3,
-                            label: String(g.category3Display),
-                        },
-                        {
-                            key: g.category4,
-                            label: String(g.category4Display),
-                        },
-                    ],
-                    type: g.type,
+                    key: `${g.category1}-${g.category2}-${g.category3}-${g.category4}`,
+                    id: g.id,
                 });
             }
             return ({
-                category: [
-                    {
-                        key: g.category1,
-                        label: String(g.category1Display),
-                    },
-                    {
-                        key: g.category2,
-                        label: String(g.category2Display),
-                    },
-                ],
-                type: g.type,
+                key: `${g.category1}-${g.category2}`,
+                id: g.id,
             });
         })
     ), [
-        orderedOptions,
+        questionnaireResponse,
     ]);
 
-    const groupOptionsSafe = getNodes(transformedGroups, []);
+    const questionnaireTitle = questionnaireResponse?.private.projectScope?.questionnaire?.title;
+    const projectTitle = questionnaireResponse?.private.projectScope?.project.title;
 
-    const flatList = useMemo(() => {
-        const a = flatten(
-            groupOptionsSafe,
+    const [
+        triggerGroupOrderChange,
+    ] = useMutation(
+        ORDER_QUESTION_GROUP,
+        {
+            onCompleted: (response) => {
+                const leafGroupsResponse = response.results;
+                if (!leafGroupsResponse) {
+                    return;
+                }
+                const items = [...leafGroupsResponse];
+                items.sort((a, b) => compareNumber(a.order, b.order));
+
+                const transformedGroups = transformOptionsByCategory(items);
+                const groupOptionsSafe = getNodes(transformedGroups, []);
+                setOrderedOptions(groupOptionsSafe);
+            },
+        },
+    );
+
+    const handleGroupOptionsChange = useCallback((newVal: TocItem[] | undefined) => {
+        setOrderedOptions(newVal);
+
+        function getIdFromGroups(key: string) {
+            const foundGroup = referenceList?.find((g) => g.key === key);
+            if (isNotDefined(foundGroup)) {
+                return null;
+            }
+            return foundGroup.id;
+        }
+
+        const flattenedNewList = flatten(
+            newVal ?? [],
             (item) => ({
                 key: item.parentKeys.join('-'),
             }),
-            (item) => item.nodes,
+            (item) => (item.leafNode ? [] : item.nodes),
         );
-        return a;
-    }, [groupOptionsSafe]);
-
-    const handleGroupOptionsChange = useCallback((newVal: TocItem[] | undefined) => {
-        // FIXME: Add handler
-        console.log('aditya', newVal, flatList);
+        const listToSend = flattenedNewList.map((g, index) => ({
+            id: getIdFromGroups(g.key),
+            order: index + 1,
+        }));
+        triggerGroupOrderChange({
+            variables: {
+                projectId,
+                questionnaireId,
+                groupList: listToSend,
+            },
+        });
     }, [
-        flatList,
+        referenceList,
+        projectId,
+        questionnaireId,
+        triggerGroupOrderChange,
     ]);
 
-    const [activeGroupTab, setActiveGroupTab] = useState<string | undefined>(
-        selectedParentQuestionGroups?.[0]?.name,
+    const [
+        triggerQuestionGroupsVisibility,
+    ] = useMutation(
+        QUESTION_GROUP_VISIBILITY,
     );
+
+    const handleQuestionGroupSelect = useCallback((val: boolean, ids: string[]) => {
+        setSelectedGroups((prevValue) => {
+            if (val) {
+                return [...prevValue, ...ids];
+            }
+            return prevValue.filter((item) => !ids.includes(item));
+        });
+        triggerQuestionGroupsVisibility({
+            variables: {
+                projectId,
+                questionnaireId,
+                groupIds: ids,
+                visibility: val ? 'SHOW' : 'HIDE',
+            },
+        });
+    }, [
+        triggerQuestionGroupsVisibility,
+        projectId,
+        questionnaireId,
+    ]);
+
+    const [activeGroupTab, setActiveGroupTab] = useState<string | undefined>();
 
     // NOTE: If none of the tabs are selected, 1st group should be selected
     const finalSelectedTab = activeGroupTab ?? selectedGroups[0];
@@ -424,11 +534,6 @@ export function Component() {
         finalSelectedTab,
     ]);
 
-    const [
-        orderedQuestions,
-        setOrderedQuestions,
-    ] = useState<Question[] | undefined>();
-
     const {
         refetch: retriggerQuestions,
     } = useQuery<QuestionsByGroupQuery, QuestionsByGroupQueryVariables>(
@@ -436,10 +541,6 @@ export function Component() {
         {
             skip: isNotDefined(questionsVariables),
             variables: questionsVariables,
-            onCompleted: (response) => {
-                const questions = response?.private?.projectScope?.questions?.items;
-                setOrderedQuestions(questions);
-            },
         },
     );
 
@@ -451,36 +552,57 @@ export function Component() {
         retriggerQuestions,
     ]);
 
+    const [activeLeafGroupId, setActiveLeafGroupId] = useState<string | undefined>();
+
     const questionTypeRendererParams = useCallback((key: string, data: QuestionType) => ({
         questionType: data,
         name: key,
         onQuestionClick: setSelectedQuestionType,
     }), []);
 
-    const questionRendererParams = useCallback((_: string, data: Question) => ({
-        question: data,
-        showAddQuestionPane,
-        setSelectedQuestionType,
-        projectId,
-        setActiveQuestionId,
-    }), [
-        showAddQuestionPane,
-        projectId,
-    ]);
-
-    const handleQuestionAdd = useCallback(() => {
+    const handleQuestionAdd = useCallback((groupId: string) => {
         showAddQuestionPane();
         setActiveQuestionId(undefined);
+        setActiveLeafGroupId(groupId);
     }, [
         showAddQuestionPane,
     ]);
 
-    const groupTabRenderParams = useCallback((_: string, datum: QuestionGroup) => ({
-        children: datum.name,
-        name: datum.id,
+    const tabQuestions = useMemo(() => {
+        const val = orderedOptions?.find((g) => g.key === finalSelectedTab);
+        return val;
+    }, [
+        orderedOptions,
+        finalSelectedTab,
+    ]);
+
+    const groupTabRenderParams = useCallback((_: string, datum: TocItem) => ({
+        children: datum.label,
+        name: datum.key,
         className: styles.tab,
         activeClassName: styles.active,
     }), []);
+
+    const filtered1stLevel = useMemo(() => (
+        orderedOptions?.map((item) => {
+            const childIds = getChildren(item);
+            const inputValue = item.leafNode
+                ? selectedGroups.includes(item.id)
+                : childIds.every((g) => selectedGroups.includes(g));
+
+            const indeterminate = item.leafNode
+                ? false
+                : childIds.some((g) => selectedGroups.includes(g));
+
+            return ({
+                ...item,
+                isSelected: inputValue || indeterminate,
+            });
+        }).filter((item) => item.isSelected)
+    ), [
+        orderedOptions,
+        selectedGroups,
+    ]);
 
     if (isNotDefined(projectId) || isNotDefined(questionnaireId)) {
         return null;
@@ -509,27 +631,17 @@ export function Component() {
                     contentClassName={styles.leftContent}
                 >
                     <TocList
-                        orderedOptions={groupOptionsSafe}
+                        orderedOptions={orderedOptions}
                         onOrderedOptionsChange={handleGroupOptionsChange}
-                        onSelectedGroupsChange={setSelectedGroups}
+                        onSelectedGroupsChange={handleQuestionGroupSelect}
                         selectedGroups={selectedGroups}
-                        onActiveTabChange={setActiveGroupTab}
+                        // onActiveTabChange={setActiveGroupTab}
                     />
                 </Container>
                 <div className={styles.content}>
                     <Header
                         className={styles.header}
                         heading="My Questionnaire"
-                        actions={(
-                            <Button
-                                name={undefined}
-                                onClick={handleQuestionAdd}
-                                icons={<IoAdd />}
-                                disabled={addQuestionPaneShown}
-                            >
-                                Add Question
-                            </Button>
-                        )}
                     />
                     <Tabs
                         onChange={setActiveGroupTab}
@@ -538,7 +650,8 @@ export function Component() {
                     >
                         <ListView
                             className={styles.tabs}
-                            data={selectedParentQuestionGroups}
+                            // FIXME: pass filtered data here
+                            data={filtered1stLevel}
                             keySelector={groupTabKeySelector}
                             renderer={Tab}
                             rendererParams={groupTabRenderParams}
@@ -546,22 +659,17 @@ export function Component() {
                             errored={false}
                             pending={false}
                         />
-                        <SortableList
-                            name="questions"
-                            className={styles.questionList}
-                            data={orderedQuestions}
-                            direction="vertical"
-                            keySelector={questionKeySelector}
-                            // TODO: check this error
-                            renderer={QuestionPreview}
-                            rendererParams={questionRendererParams}
-                            onChange={setOrderedQuestions}
-                            borderBetweenItem
-                            emptyMessage="There are no questions in this questionnaire yet."
-                            messageShown
-                            filtered={false}
-                            errored={false}
-                            pending={false}
+                        <QuestionList
+                            data={tabQuestions}
+                            projectId={projectId}
+                            selectedGroups={selectedGroups}
+                            questionnaireId={questionnaireId}
+                            onEditQuestionClick={showAddQuestionPane}
+                            setActiveQuestionId={setActiveQuestionId}
+                            setSelectedQuestionType={setSelectedQuestionType}
+                            level={2}
+                            handleQuestionAdd={handleQuestionAdd}
+                            addQuestionPaneShown={addQuestionPaneShown}
                         />
                     </Tabs>
                 </div>
@@ -592,88 +700,100 @@ export function Component() {
                                 pending={false}
                             />
                         )}
-                        <div className={styles.question}>
-                            {(selectedQuestionType === 'TEXT') && (
-                                <TextQuestionForm
-                                    projectId={projectId}
-                                    questionnaireId={questionnaireId}
-                                    questionId={activeQuestionId}
-                                    onSuccess={handleQuestionCreateSuccess}
-                                />
-                            )}
-                            {(selectedQuestionType === 'INTEGER') && (
-                                <IntegerQuestionForm
-                                    projectId={projectId}
-                                    questionnaireId={questionnaireId}
-                                    questionId={activeQuestionId}
-                                    onSuccess={handleQuestionCreateSuccess}
-                                />
-                            )}
-                            {(selectedQuestionType === 'RANK') && (
-                                <RankQuestionForm
-                                    projectId={projectId}
-                                    questionnaireId={questionnaireId}
-                                    questionId={activeQuestionId}
-                                    onSuccess={handleQuestionCreateSuccess}
-                                />
-                            )}
-                            {(selectedQuestionType === 'SELECT_ONE') && (
-                                <SelectOneQuestionForm
-                                    projectId={projectId}
-                                    questionnaireId={questionnaireId}
-                                    questionId={activeQuestionId}
-                                    onSuccess={handleQuestionCreateSuccess}
-                                />
-                            )}
-                            {(selectedQuestionType === 'SELECT_MULTIPLE') && (
-                                <SelectMultipleQuestionForm
-                                    projectId={projectId}
-                                    questionnaireId={questionnaireId}
-                                    questionId={activeQuestionId}
-                                    onSuccess={handleQuestionCreateSuccess}
-                                />
-                            )}
-                            {(selectedQuestionType === 'DATE') && (
-                                <DateQuestionForm
-                                    projectId={projectId}
-                                    questionnaireId={questionnaireId}
-                                    questionId={activeQuestionId}
-                                    onSuccess={handleQuestionCreateSuccess}
-                                />
-                            )}
-                            {(selectedQuestionType === 'TIME') && (
-                                <TimeQuestionForm
-                                    projectId={projectId}
-                                    questionnaireId={questionnaireId}
-                                    questionId={activeQuestionId}
-                                    onSuccess={handleQuestionCreateSuccess}
-                                />
-                            )}
-                            {(selectedQuestionType === 'NOTE') && (
-                                <NoteQuestionForm
-                                    projectId={projectId}
-                                    questionnaireId={questionnaireId}
-                                    questionId={activeQuestionId}
-                                    onSuccess={handleQuestionCreateSuccess}
-                                />
-                            )}
-                            {(selectedQuestionType === 'FILE') && (
-                                <FileQuestionForm
-                                    projectId={projectId}
-                                    questionnaireId={questionnaireId}
-                                    questionId={activeQuestionId}
-                                    onSuccess={handleQuestionCreateSuccess}
-                                />
-                            )}
-                            {(selectedQuestionType === 'IMAGE') && (
-                                <ImageQuestionForm
-                                    projectId={projectId}
-                                    questionnaireId={questionnaireId}
-                                    questionId={activeQuestionId}
-                                    onSuccess={handleQuestionCreateSuccess}
-                                />
-                            )}
-                        </div>
+                        {activeLeafGroupId && (
+                            <div className={styles.question}>
+                                {(selectedQuestionType === 'TEXT') && (
+                                    <TextQuestionForm
+                                        projectId={projectId}
+                                        questionnaireId={questionnaireId}
+                                        questionId={activeQuestionId}
+                                        onSuccess={handleQuestionCreateSuccess}
+                                        selectedLeafGroupId={activeLeafGroupId}
+                                    />
+                                )}
+                                {(selectedQuestionType === 'INTEGER') && (
+                                    <IntegerQuestionForm
+                                        projectId={projectId}
+                                        questionnaireId={questionnaireId}
+                                        questionId={activeQuestionId}
+                                        onSuccess={handleQuestionCreateSuccess}
+                                        selectedLeafGroupId={activeLeafGroupId}
+                                    />
+                                )}
+                                {(selectedQuestionType === 'RANK') && (
+                                    <RankQuestionForm
+                                        projectId={projectId}
+                                        questionnaireId={questionnaireId}
+                                        questionId={activeQuestionId}
+                                        onSuccess={handleQuestionCreateSuccess}
+                                        selectedLeafGroupId={activeLeafGroupId}
+                                    />
+                                )}
+                                {(selectedQuestionType === 'SELECT_ONE') && (
+                                    <SelectOneQuestionForm
+                                        projectId={projectId}
+                                        questionnaireId={questionnaireId}
+                                        questionId={activeQuestionId}
+                                        onSuccess={handleQuestionCreateSuccess}
+                                        selectedLeafGroupId={activeLeafGroupId}
+                                    />
+                                )}
+                                {(selectedQuestionType === 'SELECT_MULTIPLE') && (
+                                    <SelectMultipleQuestionForm
+                                        projectId={projectId}
+                                        questionnaireId={questionnaireId}
+                                        questionId={activeQuestionId}
+                                        onSuccess={handleQuestionCreateSuccess}
+                                        selectedLeafGroupId={activeLeafGroupId}
+                                    />
+                                )}
+                                {(selectedQuestionType === 'DATE') && (
+                                    <DateQuestionForm
+                                        projectId={projectId}
+                                        questionnaireId={questionnaireId}
+                                        questionId={activeQuestionId}
+                                        onSuccess={handleQuestionCreateSuccess}
+                                        selectedLeafGroupId={activeLeafGroupId}
+                                    />
+                                )}
+                                {(selectedQuestionType === 'TIME') && (
+                                    <TimeQuestionForm
+                                        projectId={projectId}
+                                        questionnaireId={questionnaireId}
+                                        questionId={activeQuestionId}
+                                        onSuccess={handleQuestionCreateSuccess}
+                                        selectedLeafGroupId={activeLeafGroupId}
+                                    />
+                                )}
+                                {(selectedQuestionType === 'NOTE') && (
+                                    <NoteQuestionForm
+                                        projectId={projectId}
+                                        questionnaireId={questionnaireId}
+                                        questionId={activeQuestionId}
+                                        onSuccess={handleQuestionCreateSuccess}
+                                        selectedLeafGroupId={activeLeafGroupId}
+                                    />
+                                )}
+                                {(selectedQuestionType === 'FILE') && (
+                                    <FileQuestionForm
+                                        projectId={projectId}
+                                        questionnaireId={questionnaireId}
+                                        questionId={activeQuestionId}
+                                        onSuccess={handleQuestionCreateSuccess}
+                                        selectedLeafGroupId={activeLeafGroupId}
+                                    />
+                                )}
+                                {(selectedQuestionType === 'IMAGE') && (
+                                    <ImageQuestionForm
+                                        projectId={projectId}
+                                        questionnaireId={questionnaireId}
+                                        questionId={activeQuestionId}
+                                        onSuccess={handleQuestionCreateSuccess}
+                                        selectedLeafGroupId={activeLeafGroupId}
+                                    />
+                                )}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

@@ -130,6 +130,7 @@ interface Props {
     questionnaireId: string;
     questionId?: string;
     onSuccess: (questionId: string | undefined) => void;
+    selectedLeafGroupId: string;
 }
 
 function SelectMultipleQuestionForm(props: Props) {
@@ -138,6 +139,7 @@ function SelectMultipleQuestionForm(props: Props) {
         questionnaireId,
         questionId,
         onSuccess,
+        selectedLeafGroupId,
     } = props;
 
     const alert = useAlert();
@@ -145,6 +147,7 @@ function SelectMultipleQuestionForm(props: Props) {
     const initialFormValue: FormType = {
         type: 'SELECT_MULTIPLE' as QuestionTypeEnum,
         questionnaire: questionnaireId,
+        leafGroup: selectedLeafGroupId,
     };
 
     const {
@@ -353,9 +356,10 @@ function SelectMultipleQuestionForm(props: Props) {
                     name="leafGroup"
                     projectId={projectId}
                     questionnaireId={questionnaireId}
-                    value={formValue.leafGroup}
+                    value={selectedLeafGroupId}
                     error={fieldError?.leafGroup}
                     onChange={setFieldValue}
+                    disabled
                 />
             </div>
             <Button

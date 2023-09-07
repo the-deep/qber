@@ -18,6 +18,25 @@ export const QUESTION_FRAGMENT = gql`
     }
 `;
 
+export const LEAF_GROUPS_FRAGMENT = gql`
+    fragment LeafGroups on QuestionLeafGroupType {
+        id
+        name
+        order
+        category1
+        category1Display
+        category2
+        category2Display
+        category3
+        category3Display
+        category4
+        category4Display
+        type
+        typeDisplay
+        isHidden
+    }
+`;
+
 export const QUESTION_INFO = gql`
     query QuestionInfo (
         $projectId: ID!,
