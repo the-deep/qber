@@ -72,8 +72,8 @@
                 .tab {
                     font-size: var(--dui-font-size-large);
                     &.active {
-                        background-color: var(--dui-color-secondary);
                         border-bottom: var(--dui-width-separator-medium) solid var(--dui-color-accent);
+                        background-color: var(--dui-color-secondary);
                     }
                 }
             }

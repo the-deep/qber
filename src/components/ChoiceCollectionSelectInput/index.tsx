@@ -9,7 +9,7 @@ import {
 import { IoAdd, IoPencil } from 'react-icons/io5';
 import { isNotDefined, isDefined } from '@togglecorp/fujs';
 
-import AddOptionsModal from '#components/AddOptionsModal';
+import AddChoiceCollectionModal from '#components/AddChoiceCollectionModal';
 import {
     ChoiceCollectionsQuery,
     ChoiceCollectionsQueryVariables,
@@ -172,7 +172,7 @@ function ChoiceCollectionSelectInput<
                 )}
             />
             {editOptionsModalShown && isDefined(value) && (
-                <AddOptionsModal
+                <AddChoiceCollectionModal
                     onClose={hideEditOptionsModal}
                     projectId={projectId}
                     questionnaire={questionnaireId}
@@ -181,7 +181,7 @@ function ChoiceCollectionSelectInput<
                 />
             )}
             {addOptionsModalShown && (
-                <AddOptionsModal
+                <AddChoiceCollectionModal
                     onClose={hideAddOptionsModal}
                     projectId={projectId}
                     questionnaire={questionnaireId}

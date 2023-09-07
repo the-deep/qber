@@ -16,6 +16,7 @@ import {
     useAlert,
     Container,
     TextInput,
+    useConfirmation,
 } from '@the-deep/deep-ui';
 import {
     ObjectSchema,
@@ -44,7 +45,7 @@ import {
 } from '#generated/types';
 import { DeepReplace } from '#utils/common';
 
-import AdditionalOptionInput from './AdditionalOption';
+import AddChoicesInput from './AddChoices';
 
 import styles from './index.module.css';
 
@@ -207,7 +208,7 @@ interface Props {
     questionnaire: string;
 }
 
-function AddOptionsModal(props: Props) {
+function AddChoiceCollectionModal(props: Props) {
     const {
         choiceCollectionId,
         onClose,
@@ -239,6 +240,15 @@ function AddOptionsModal(props: Props) {
     } = useForm(schema, { value: initialFormValue });
 
     const fieldError = getErrorObject(error);
+
+    const [
+        modal,
+        onDeleteChoiceClick,
+    ] = useConfirmation<undefined>({
+        showConfirmationInitially: false,
+        onConfirm: onClose,
+        message: 'Are you sure you want to cancel? Progress will be lost.',
+    });
 
     const optionsVariables = useMemo(() => {
         if (isNotDefined(projectId) || isNotDefined(choiceCollectionId)
@@ -413,7 +423,7 @@ function AddOptionsModal(props: Props) {
 
     return (
         <Modal
-            onCloseButtonClick={onClose}
+            onCloseButtonClick={onDeleteChoiceClick}
             heading="Add/Edit Choice Collection"
             headingSize="extraSmall"
             headingDescription={formValue?.label}
@@ -470,8 +480,9 @@ function AddOptionsModal(props: Props) {
                     )}
                     contentClassName={styles.optionsList}
                 >
+                    {modal}
                     {formValue?.choices?.map((customOption, index) => (
-                        <AdditionalOptionInput
+                        <AddChoicesInput
                             key={customOption.clientId}
                             index={index}
                             value={customOption}
@@ -486,4 +497,4 @@ function AddOptionsModal(props: Props) {
     );
 }
 
-export default AddOptionsModal;
+export default AddChoiceCollectionModal;
