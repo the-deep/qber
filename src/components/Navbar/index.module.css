@@ -43,6 +43,10 @@
                 color: var(--dui-color-primary);
                 font-size: var(--dui-font-size-small);
                 font-weight: var(--dui-font-weight-bold);
+
+                &.active {
+                    border-color: var(--dui-color-primary);
+                }
             }
         }
 

@@ -24,6 +24,7 @@ import {
     PartialForm,
     createSubmitHandler,
     getErrorObject,
+    undefinedValue,
 } from '@togglecorp/toggle-form';
 import Captcha from '@hcaptcha/react-hcaptcha';
 
@@ -109,6 +110,7 @@ const schema: FormSchema = {
                 samePasswordCondition,
             ],
             requiredValidation: requiredStringCondition,
+            forceValue: undefinedValue,
         },
     }),
 };
@@ -220,11 +222,6 @@ export function Component() {
                     className={styles.logo}
                     alt="Questionnaire Builder Logo"
                 />
-                <div className={styles.tagline}>
-                    Lorem ipsum dolor sit amet consectetur.
-                    jahsdhjakasdbkjabd jkhdakjhasdkjbnajksd
-                    b
-                </div>
             </div>
             <form className={styles.fields}>
                 <NonFieldError error={error} />

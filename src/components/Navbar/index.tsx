@@ -1,6 +1,13 @@
 import { useContext, useMemo, useCallback } from 'react';
-import { NavLink, Link } from 'react-router-dom';
+import {
+    NavLink,
+    Link,
+    useLocation,
+} from 'react-router-dom';
 import { IoLogOutOutline } from 'react-icons/io5';
+import {
+    _cs,
+} from '@togglecorp/fujs';
 import { gql, useMutation } from '@apollo/client';
 import {
     DropdownMenu,
@@ -35,6 +42,8 @@ function Navbar(props: Props) {
     const {
         header,
     } = props;
+
+    const location = useLocation();
 
     const { userDetails } = useContext(UserContext);
     const alert = useAlert();
@@ -104,7 +113,10 @@ function Navbar(props: Props) {
             <div className={styles.right}>
                 <div className={styles.navLinks}>
                     <NavLink
-                        className={styles.navItem}
+                        className={_cs(
+                            styles.navItem,
+                            location.pathname === '/' && styles.active,
+                        )}
                         to="/"
                     >
                         My Projects
@@ -135,7 +147,6 @@ function Navbar(props: Props) {
                             Profile
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                            // FIXME: Fix routes
                             className={styles.dropDownMenuItem}
                             name={undefined}
                             actions={<IoLogOutOutline />}

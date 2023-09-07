@@ -1,13 +1,23 @@
 .preview {
     display: flex;
     flex-direction: column;
-    padding: var(--dui-spacing-extra-large) var(--dui-spacing-large);
     gap: var(--dui-spacing-medium);
 
-    .checkbox-list {
-        display: flex;
-        flex-direction: column;
-        gap: var(--dui-spacing-small);
-        width: 10rem;
+    .choices-preview {
+        align-items: flex-start;
+        gap: var(--dui-spacing-large);
+
+        .icon {
+            color: var(--dui-color-primary);
+            font-size: var(--dui-font-size-extra-large);
+        }
+
+        .choices {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            border: none;
+            gap: var(--dui-spacing-small);
+        }
     }
 }

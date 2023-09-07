@@ -1,6 +1,10 @@
 .preview {
     display: flex;
     flex-direction: column;
-    padding: var(--dui-spacing-extra-large) var(--dui-spacing-large);
     gap: var(--dui-spacing-medium);
+
+    .icon {
+        color: var(--dui-color-primary);
+        font-size: var(--dui-font-size-extra-large);
+    }
 }

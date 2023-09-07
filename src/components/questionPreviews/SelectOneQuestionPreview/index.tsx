@@ -1,11 +1,15 @@
 import { useMemo } from 'react';
 import {
+    IoRadioButtonOn,
+} from 'react-icons/io5';
+import {
     _cs,
     isNotDefined,
     noOp,
 } from '@togglecorp/fujs';
 import { gql, useQuery } from '@apollo/client';
 import {
+    Element,
     RadioInput,
     TextOutput,
 } from '@the-deep/deep-ui';
@@ -95,18 +99,24 @@ function SelectOneQuestionPreview(props: Props) {
                 spacing="none"
                 block
             />
-            <RadioInput
-                className={styles.questionList}
-                keySelector={choiceCollectionKeySelector}
-                label="Options"
-                labelSelector={choiceCollectionLabelSelector}
-                name="options"
-                onChange={noOp}
-                options={optionsList}
-                value={optionsListResponse?.private?.projectScope?.choiceCollection?.name}
-                readOnly
-                disabled={optionListLoading}
-            />
+            <Element
+                className={styles.choicesPreview}
+                icons={<IoRadioButtonOn />}
+                iconsContainerClassName={styles.icon}
+            >
+                <RadioInput
+                    listContainerClassName={styles.choices}
+                    keySelector={choiceCollectionKeySelector}
+                    label="Options"
+                    labelSelector={choiceCollectionLabelSelector}
+                    name="options"
+                    onChange={noOp}
+                    options={optionsList}
+                    value={optionsListResponse?.private?.projectScope?.choiceCollection?.name}
+                    readOnly
+                    disabled={optionListLoading}
+                />
+            </Element>
         </div>
     );
 }

@@ -1,4 +1,7 @@
 import { useCallback, useMemo } from 'react';
+import {
+    MdOutlineChecklist,
+} from 'react-icons/md';
 import { gql, useQuery } from '@apollo/client';
 import {
     _cs,
@@ -7,6 +10,7 @@ import {
 } from '@togglecorp/fujs';
 import {
     Checkbox,
+    Element,
     ListView,
     TextOutput,
 } from '@the-deep/deep-ui';
@@ -97,16 +101,22 @@ function SelectMultipleQuestionPreview(props: Props) {
                 spacing="none"
                 block
             />
-            <ListView
-                className={styles.checkboxList}
-                data={optionsListResponse?.private?.projectScope?.choiceCollection?.choices}
-                keySelector={checkboxKeySelector}
-                renderer={Checkbox}
-                rendererParams={checkboxListRendererParams}
-                filtered={false}
-                errored={false}
-                pending={OptionsListLoading}
-            />
+            <Element
+                className={styles.choicesPreview}
+                icons={<MdOutlineChecklist />}
+                iconsContainerClassName={styles.icon}
+            >
+                <ListView
+                    className={styles.choices}
+                    data={optionsListResponse?.private?.projectScope?.choiceCollection?.choices}
+                    keySelector={checkboxKeySelector}
+                    renderer={Checkbox}
+                    rendererParams={checkboxListRendererParams}
+                    filtered={false}
+                    errored={false}
+                    pending={OptionsListLoading}
+                />
+            </Element>
         </div>
     );
 }

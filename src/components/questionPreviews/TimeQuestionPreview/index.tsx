@@ -5,6 +5,7 @@ import {
     _cs,
 } from '@togglecorp/fujs';
 import {
+    Element,
     TextOutput,
     TimeInput,
 } from '@the-deep/deep-ui';
@@ -32,13 +33,18 @@ function DateQuestionPreview(props: Props) {
                 spacing="none"
                 block
             />
-            <TimeInput
-                name={undefined}
-                placeholder="Select Date"
-                value={undefined}
+            <Element
                 icons={<MdOutlineSchedule />}
-                readOnly
-            />
+                iconsContainerClassName={styles.icon}
+                childrenContainerClassName={styles.uploadPreview}
+            >
+                <TimeInput
+                    name={undefined}
+                    placeholder="Select Date"
+                    value={undefined}
+                    readOnly
+                />
+            </Element>
         </div>
     );
 }

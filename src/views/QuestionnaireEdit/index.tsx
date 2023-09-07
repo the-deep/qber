@@ -8,6 +8,7 @@ import {
     IoCloseOutline,
     IoDocumentTextOutline,
     IoRadioButtonOn,
+    IoSwapVertical,
 } from 'react-icons/io5';
 import {
     MdOutline123,
@@ -40,6 +41,7 @@ import {
 } from '@the-deep/deep-ui';
 
 import SubNavbar from '#components/SubNavbar';
+import SortableList from '#components/SortableList';
 import TocList from '#components/TocList';
 import { flatten } from '#utils/common';
 import {
@@ -173,7 +175,7 @@ const questionTypes: QuestionType[] = [
     {
         key: 'RANK',
         name: 'Rank',
-        icon: <MdOutlineChecklist />,
+        icon: <IoSwapVertical />,
     },
     {
         key: 'DATE',
@@ -422,14 +424,22 @@ export function Component() {
         finalSelectedTab,
     ]);
 
+    const [
+        orderedQuestions,
+        setOrderedQuestions,
+    ] = useState<Question[] | undefined>();
+
     const {
-        data: questionsResponse,
         refetch: retriggerQuestions,
     } = useQuery<QuestionsByGroupQuery, QuestionsByGroupQueryVariables>(
         QUESTIONS_BY_GROUP,
         {
             skip: isNotDefined(questionsVariables),
             variables: questionsVariables,
+            onCompleted: (response) => {
+                const questions = response?.private?.projectScope?.questions?.items;
+                setOrderedQuestions(questions);
+            },
         },
     );
 
@@ -441,7 +451,6 @@ export function Component() {
         retriggerQuestions,
     ]);
 
-    const questionsData = questionsResponse?.private.projectScope?.questions?.items;
     const questionTypeRendererParams = useCallback((key: string, data: QuestionType) => ({
         questionType: data,
         name: key,
@@ -459,9 +468,18 @@ export function Component() {
         projectId,
     ]);
 
+    const handleQuestionAdd = useCallback(() => {
+        showAddQuestionPane();
+        setActiveQuestionId(undefined);
+    }, [
+        showAddQuestionPane,
+    ]);
+
     const groupTabRenderParams = useCallback((_: string, datum: QuestionGroup) => ({
         children: datum.name,
         name: datum.id,
+        className: styles.tab,
+        activeClassName: styles.active,
     }), []);
 
     if (isNotDefined(projectId) || isNotDefined(questionnaireId)) {
@@ -505,7 +523,7 @@ export function Component() {
                         actions={(
                             <Button
                                 name={undefined}
-                                onClick={showAddQuestionPane}
+                                onClick={handleQuestionAdd}
                                 icons={<IoAdd />}
                                 disabled={addQuestionPaneShown}
                             >
@@ -528,12 +546,16 @@ export function Component() {
                             errored={false}
                             pending={false}
                         />
-                        <ListView
+                        <SortableList
+                            name="questions"
                             className={styles.questionList}
-                            data={questionsData}
+                            data={orderedQuestions}
+                            direction="vertical"
                             keySelector={questionKeySelector}
+                            // TODO: check this error
                             renderer={QuestionPreview}
                             rendererParams={questionRendererParams}
+                            onChange={setOrderedQuestions}
                             borderBetweenItem
                             emptyMessage="There are no questions in this questionnaire yet."
                             messageShown
@@ -599,6 +621,7 @@ export function Component() {
                                 <SelectOneQuestionForm
                                     projectId={projectId}
                                     questionnaireId={questionnaireId}
+                                    questionId={activeQuestionId}
                                     onSuccess={handleQuestionCreateSuccess}
                                 />
                             )}
@@ -606,6 +629,7 @@ export function Component() {
                                 <SelectMultipleQuestionForm
                                     projectId={projectId}
                                     questionnaireId={questionnaireId}
+                                    questionId={activeQuestionId}
                                     onSuccess={handleQuestionCreateSuccess}
                                 />
                             )}

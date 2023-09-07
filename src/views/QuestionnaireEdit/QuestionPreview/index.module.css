@@ -1,15 +1,25 @@
 .preview {
+    --input-width: 35rem;
     border: none !important;
     background-color: var(--dui-color-background);
     overflow-y: auto;
     gap: var(--dui-spacing-large);
 
     .question-wrapper {
-        padding: var(--dui-spacing-medium);
+        align-items: flex-start;
+        padding: var(--dui-spacing-extra-large);
+        padding-left: var(--dui-spacing-medium);
+        gap: var(--dui-spacing-large);
+
+        .drag-icon {
+            > path {
+                stroke: var(--dui-color-label);
+            }
+        }
     }
 
     .question-item {
         flex-grow: 1;
-        padding: var(--dui-spacing-extra-large);
+        max-width: var(--input-width);
     }
 }

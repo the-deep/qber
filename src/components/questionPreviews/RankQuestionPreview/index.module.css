@@ -1,6 +1,22 @@
 .preview {
     display: flex;
     flex-direction: column;
-    padding: var(--dui-spacing-extra-large) var(--dui-spacing-large);
     gap: var(--dui-spacing-medium);
+
+    .choices-preview {
+        align-items: flex-start;
+        gap: var(--dui-spacing-large);
+
+        .icon {
+            color: var(--dui-color-primary);
+            font-size: var(--dui-font-size-extra-large);
+        }
+
+        .choices {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            gap: var(--dui-spacing-small);
+        }
+    }
 }
