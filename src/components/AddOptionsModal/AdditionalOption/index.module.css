@@ -1,0 +1,8 @@
+.option-list {
+    display: flex;
+
+    .option {
+        display: flex;
+        gap: var(--dui-spacing-extra-large);
+    }
+}

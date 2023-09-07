@@ -1,11 +1,5 @@
 import { gql } from '@apollo/client';
 
-import {
-    QuestionInfoQuery,
-} from '#generated/types';
-
-export type ChoiceCollectionType = NonNullable<NonNullable<NonNullable<NonNullable<QuestionInfoQuery['private']>['projectScope']>['question']>['choiceCollection']>;
-
 export const QUESTION_FRAGMENT = gql`
     fragment QuestionResponse on QuestionType {
         id

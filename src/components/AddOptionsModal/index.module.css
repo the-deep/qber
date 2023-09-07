@@ -1,0 +1,21 @@
+.options {
+    display: flex;
+    flex-direction: column;
+    gap: var(--dui-spacing-medium);
+
+    .option-detail {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .modal-content {
+        background-color: transparent;
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--dui-spacing-extra-large);
+            background-color: none;
+        }
+    }
+}

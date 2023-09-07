@@ -35,12 +35,13 @@ import {
 } from '#generated/types';
 import SelectMultipleQuestionPreview from '#components/questionPreviews/SelectMultipleQuestionPreview';
 import PillarSelectInput from '#components/PillarSelectInput';
-import ChoiceCollectionSelectInput from '#components/ChoiceCollectionSelectInput';
+import ChoiceCollectionSelectInput, {
+    type ChoiceCollectionType,
+} from '#components/ChoiceCollectionSelectInput';
 
 import {
     QUESTION_FRAGMENT,
     QUESTION_INFO,
-    ChoiceCollectionType,
 } from '../queries.ts';
 import styles from './index.module.css';
 
