@@ -100,7 +100,6 @@ export function Component() {
     );
 
     const {
-        // FIXME: use pristine on submit value
         pristine,
         validate,
         value: formValue,
@@ -115,8 +114,6 @@ export function Component() {
             setError,
             (val) => {
                 elementRef.current?.resetCaptcha();
-                // eslint-disable-next-line no-console
-                console.log('submit value', val);
                 forgotPasswordTrigger({
                     variables: {
                         input: val as PasswordResetTriggerInput,
@@ -135,7 +132,7 @@ export function Component() {
     const safeError = getErrorObject(error);
 
     return (
-        <div className={styles.login}>
+        <div className={styles.forgotPassword}>
             <div className={styles.logoContainer}>
                 <img
                     src="/logo.png"
@@ -143,7 +140,7 @@ export function Component() {
                     alt="Questionnaire Builder Logo"
                 />
             </div>
-            <div className={styles.loginForm}>
+            <div className={styles.forgotPasswordForm}>
                 <Header
                     heading="Request for password reset"
                     description="A reset password link will be sent to your mail."
