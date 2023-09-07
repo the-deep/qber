@@ -5,6 +5,7 @@ import {
 } from '@togglecorp/fujs';
 import {
     Button,
+    Checkbox,
     TextInput,
     useAlert,
 } from '@the-deep/deep-ui';
@@ -89,7 +90,7 @@ type FormSchema = ObjectSchema<FormType>;
 type FormSchemaFields = ReturnType<FormSchema['fields']>;
 
 const schema: FormSchema = {
-    fields: () : FormSchemaFields => ({
+    fields: (): FormSchemaFields => ({
         name: {
             required: true,
             requiredValidation: requiredStringCondition,
@@ -111,6 +112,9 @@ const schema: FormSchema = {
             requiredValidation: requiredStringCondition,
         },
         hint: {},
+        required: {
+            defaultValue: false,
+        },
     }),
 };
 
@@ -322,6 +326,12 @@ function IntegerQuestionForm(props: Props) {
                     disabled
                 />
             </div>
+            <Checkbox
+                name="required"
+                label="Make question mandatory"
+                onChange={setFieldValue}
+                value={formValue?.required}
+            />
             <Button
                 name={undefined}
                 className={styles.button}
