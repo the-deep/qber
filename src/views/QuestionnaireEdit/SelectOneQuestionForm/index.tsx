@@ -199,6 +199,7 @@ function SelectOneQuestionForm(props: Props) {
                     label: questionResponse?.label,
                     leafGroup: questionResponse?.leafGroupId,
                     hint: questionResponse?.hint,
+                    required: questionResponse?.required,
                     choiceCollection: questionResponse?.choiceCollection?.id,
                 });
                 const choiceCollection = questionResponse?.choiceCollection;
@@ -371,7 +372,7 @@ function SelectOneQuestionForm(props: Props) {
                 name="required"
                 label="Make question mandatory"
                 onChange={setFieldValue}
-                value={formValue?.required}
+                value={formValue.required}
             />
             <Button
                 name={undefined}

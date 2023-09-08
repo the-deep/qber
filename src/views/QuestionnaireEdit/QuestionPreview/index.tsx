@@ -6,6 +6,7 @@ import {
     GrDrag,
 } from 'react-icons/gr';
 import {
+    isNotDefined,
     isDefined,
 } from '@togglecorp/fujs';
 import {
@@ -43,6 +44,7 @@ interface QuestionProps {
     setActiveQuestionId: React.Dispatch<React.SetStateAction<string | undefined>>;
     selectedQuestions: string[] | undefined;
     onSelectedQuestionsChange: (val: boolean, id: string) => void;
+    setSelectedLeafGroupId : React.Dispatch<React.SetStateAction<string | undefined>>;
     attributes?: Attributes;
     listeners?: Listeners;
 }
@@ -55,20 +57,26 @@ function QuestionPreview(props: QuestionProps) {
         setActiveQuestionId,
         selectedQuestions,
         onSelectedQuestionsChange,
+        setSelectedLeafGroupId,
         projectId,
         attributes,
         listeners,
     } = props;
 
     const handleEditQuestionClick = useCallback((val: string) => {
+        if (isNotDefined(question.leafGroupId)) {
+            return;
+        }
         showAddQuestionPane();
         setSelectedQuestionType(question.type);
         setActiveQuestionId(val);
+        setSelectedLeafGroupId(question.leafGroupId);
     }, [
         showAddQuestionPane,
         setSelectedQuestionType,
-        question.type,
         setActiveQuestionId,
+        setSelectedLeafGroupId,
+        question,
     ]);
 
     return (

@@ -83,6 +83,7 @@ interface QuestionRendererProps {
     handleQuestionAdd: (groupId: string) => void;
     addQuestionPaneShown: boolean;
     selectedGroups: string[];
+    setSelectedLeafGroupId: React.Dispatch<React.SetStateAction<string | undefined>>;
 }
 
 function QuestionListRenderer(props: QuestionRendererProps) {
@@ -97,6 +98,7 @@ function QuestionListRenderer(props: QuestionRendererProps) {
         level,
         handleQuestionAdd,
         addQuestionPaneShown,
+        setSelectedLeafGroupId,
     } = props;
 
     const questionsVariables = useMemo(() => {
@@ -158,6 +160,7 @@ function QuestionListRenderer(props: QuestionRendererProps) {
         setActiveQuestionId,
         selectedQuestions,
         onSelectedQuestionsChange: handleSelectedQuestionsChange,
+        setSelectedLeafGroupId,
     }), [
         onEditQuestionClick,
         projectId,
@@ -165,6 +168,7 @@ function QuestionListRenderer(props: QuestionRendererProps) {
         setSelectedQuestionType,
         selectedQuestions,
         handleSelectedQuestionsChange,
+        setSelectedLeafGroupId,
     ]);
 
     return (
@@ -230,6 +234,7 @@ function QuestionListRenderer(props: QuestionRendererProps) {
                         level={level + 1}
                         handleQuestionAdd={handleQuestionAdd}
                         addQuestionPaneShown={addQuestionPaneShown}
+                        setSelectedLeafGroupId={setSelectedLeafGroupId}
                     />
                 )}
         </ExpandableContainer>
@@ -249,6 +254,7 @@ interface Props{
     handleQuestionAdd: (groupId: string) => void;
     addQuestionPaneShown: boolean;
     selectedGroups: string[];
+    setSelectedLeafGroupId: React.Dispatch<React.SetStateAction<string | undefined>>;
 }
 
 function QuestionList(props: Props) {
@@ -263,6 +269,7 @@ function QuestionList(props: Props) {
         level,
         handleQuestionAdd,
         addQuestionPaneShown,
+        setSelectedLeafGroupId,
     } = props;
 
     const questionListRendererParams = useCallback((_: string, datum: TocItem) => ({
@@ -276,6 +283,7 @@ function QuestionList(props: Props) {
         level,
         handleQuestionAdd,
         addQuestionPaneShown,
+        setSelectedLeafGroupId,
     }), [
         projectId,
         questionnaireId,
@@ -286,6 +294,7 @@ function QuestionList(props: Props) {
         level,
         addQuestionPaneShown,
         handleQuestionAdd,
+        setSelectedLeafGroupId,
     ]);
 
     const finalNodes = useMemo(() => (
@@ -324,6 +333,7 @@ function QuestionList(props: Props) {
                 handleQuestionAdd={handleQuestionAdd}
                 addQuestionPaneShown={addQuestionPaneShown}
                 selectedGroups={selectedGroups}
+                setSelectedLeafGroupId={setSelectedLeafGroupId}
             />
         );
     }

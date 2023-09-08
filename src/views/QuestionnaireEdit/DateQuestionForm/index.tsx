@@ -186,6 +186,7 @@ function DateQuestionForm(props: Props) {
                     label: questionResponse?.label,
                     leafGroup: questionResponse?.leafGroupId,
                     hint: questionResponse?.hint,
+                    required: questionResponse?.required,
                 });
             },
         },
@@ -334,7 +335,7 @@ function DateQuestionForm(props: Props) {
                 name="required"
                 label="Make question mandatory"
                 onChange={setFieldValue}
-                value={formValue?.required}
+                value={formValue.required}
             />
             <Button
                 name={undefined}
