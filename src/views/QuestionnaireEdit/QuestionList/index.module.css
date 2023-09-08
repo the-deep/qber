@@ -16,7 +16,7 @@
             padding: var(--dui-spacing-medium);
 
             .heading {
-                color: var(--dui-color-dark);
+                color: var(--text-color-dark);
                 font-weight: var(--dui-font-weight-bold);
             }
             .header-actions {

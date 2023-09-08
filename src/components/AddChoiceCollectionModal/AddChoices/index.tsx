@@ -12,7 +12,7 @@ import {
     getErrorObject,
 } from '@togglecorp/toggle-form';
 
-import { type ChoiceType } from '#components/AddOptionsModal';
+import { type ChoiceType } from '#components/AddChoiceCollectionModal';
 
 import styles from './index.module.css';
 
@@ -26,7 +26,7 @@ interface Props {
     error: Error<Value> | undefined;
 }
 
-function AdditionalOptionInput(props: Props) {
+function AddChoicesInput(props: Props) {
     const {
         onChange,
         index,
@@ -78,4 +78,4 @@ function AdditionalOptionInput(props: Props) {
     );
 }
 
-export default AdditionalOptionInput;
+export default AddChoicesInput;
