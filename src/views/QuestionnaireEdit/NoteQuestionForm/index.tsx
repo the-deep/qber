@@ -7,6 +7,7 @@ import {
     TextInput,
     Button,
     useAlert,
+    Checkbox,
 } from '@the-deep/deep-ui';
 import {
     gql,
@@ -114,6 +115,9 @@ const schema: FormSchema = {
         leafGroup: {
             required: true,
             requiredValidation: requiredStringCondition,
+        },
+        required: {
+            defaultValue: false,
         },
     }),
 };
@@ -317,6 +321,12 @@ function NoteQuestionForm(props: Props) {
                     disabled
                 />
             </div>
+            <Checkbox
+                name="required"
+                label="Make question mandatory"
+                onChange={setFieldValue}
+                value={formValue?.required}
+            />
             <Button
                 name={undefined}
                 className={styles.button}

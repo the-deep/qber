@@ -10,6 +10,7 @@ import {
 } from '@apollo/client';
 import {
     Button,
+    Checkbox,
     TextInput,
     useAlert,
 } from '@the-deep/deep-ui';
@@ -122,6 +123,9 @@ const schema: FormSchema = {
             requiredValidation: requiredStringCondition,
         },
         hint: {},
+        required: {
+            defaultValue: false,
+        },
     }),
 };
 
@@ -245,8 +249,8 @@ function SelectMultipleQuestionForm(props: Props) {
         triggerQuestionUpdate,
         { loading: updateQuestionPending },
     ] = useMutation<
-    UpdateMultipleSelectionQuestionMutation,
-    UpdateMultipleSelectionQuestionMutationVariables
+        UpdateMultipleSelectionQuestionMutation,
+        UpdateMultipleSelectionQuestionMutationVariables
     >(
         UPDATE_MULTIPLE_SELECTION_QUESTION,
         {
@@ -362,6 +366,12 @@ function SelectMultipleQuestionForm(props: Props) {
                     disabled
                 />
             </div>
+            <Checkbox
+                name="required"
+                label="Make question mandatory"
+                onChange={setFieldValue}
+                value={formValue?.required}
+            />
             <Button
                 name={undefined}
                 className={styles.button}

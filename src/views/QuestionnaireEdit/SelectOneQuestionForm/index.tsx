@@ -10,6 +10,7 @@ import {
 } from '@apollo/client';
 import {
     Button,
+    Checkbox,
     TextInput,
     useAlert,
 } from '@the-deep/deep-ui';
@@ -55,7 +56,7 @@ const CREATE_SINGLE_SELECTION_QUESTION = gql`
         private {
             projectScope(pk: $projectId) {
                 createQuestion(
-                    data: $input,
+                    data: $input,2323
                 ) {
                     ok
                     errors
@@ -123,6 +124,9 @@ const schema: FormSchema = {
             requiredValidation: requiredStringCondition,
         },
         hint: {},
+        required: {
+            defaultValue: false,
+        },
     }),
 };
 
@@ -363,6 +367,12 @@ function SelectOneQuestionForm(props: Props) {
                     disabled
                 />
             </div>
+            <Checkbox
+                name="required"
+                label="Make question mandatory"
+                onChange={setFieldValue}
+                value={formValue?.required}
+            />
             <Button
                 name={undefined}
                 className={styles.button}
