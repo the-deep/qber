@@ -195,8 +195,6 @@ export function Component() {
             setError,
             (val) => {
                 elementRef.current?.resetCaptcha();
-                // eslint-disable-next-line no-console
-                console.log('submit value', val);
                 resetPasswordTrigger({
                     variables: {
                         input: val as PasswordResetConfirmInput,

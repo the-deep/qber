@@ -516,22 +516,24 @@ export function Component() {
     // NOTE: If none of the tabs are selected, 1st group should be selected
     const finalSelectedTab = activeGroupTab ?? selectedGroups[0];
 
+    const [activeLeafGroupId, setActiveLeafGroupId] = useState<string | undefined>();
+
     const questionsVariables = useMemo(() => {
         if (isNotDefined(projectId)
             || isNotDefined(questionnaireId)
-            || isNotDefined(finalSelectedTab)) {
+            || isNotDefined(activeLeafGroupId)) {
             return undefined;
         }
 
         return ({
             projectId,
             questionnaireId,
-            leafGroupId: finalSelectedTab,
+            leafGroupId: activeLeafGroupId,
         });
     }, [
         projectId,
         questionnaireId,
-        finalSelectedTab,
+        activeLeafGroupId,
     ]);
 
     const {
@@ -551,8 +553,6 @@ export function Component() {
         hideAddQuestionPane,
         retriggerQuestions,
     ]);
-
-    const [activeLeafGroupId, setActiveLeafGroupId] = useState<string | undefined>();
 
     const questionTypeRendererParams = useCallback((key: string, data: QuestionType) => ({
         questionType: data,
@@ -670,6 +670,7 @@ export function Component() {
                             level={2}
                             handleQuestionAdd={handleQuestionAdd}
                             addQuestionPaneShown={addQuestionPaneShown}
+                            setSelectedLeafGroupId={setActiveLeafGroupId}
                         />
                     </Tabs>
                 </div>

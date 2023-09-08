@@ -7,6 +7,7 @@ import {
     TextInput,
     Button,
     useAlert,
+    Checkbox,
 } from '@the-deep/deep-ui';
 import {
     gql,
@@ -41,6 +42,7 @@ import {
     QUESTION_FRAGMENT,
     QUESTION_INFO,
 } from '../queries.ts';
+
 import styles from './index.module.css';
 
 const CREATE_FILE_QUESTION = gql`
@@ -182,6 +184,7 @@ function FileQuestionForm(props: Props) {
                     label: questionResponse?.label,
                     leafGroup: questionResponse?.leafGroupId,
                     hint: questionResponse?.hint,
+                    required: questionResponse?.required,
                 });
             },
         },
@@ -325,6 +328,12 @@ function FileQuestionForm(props: Props) {
                     disabled
                 />
             </div>
+            <Checkbox
+                name="required"
+                label="Make question mandatory"
+                onChange={setFieldValue}
+                value={formValue.required}
+            />
             <Button
                 name={undefined}
                 className={styles.button}

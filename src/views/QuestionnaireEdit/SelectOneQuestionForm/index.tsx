@@ -10,6 +10,7 @@ import {
 } from '@apollo/client';
 import {
     Button,
+    Checkbox,
     TextInput,
     useAlert,
 } from '@the-deep/deep-ui';
@@ -123,6 +124,9 @@ const schema: FormSchema = {
             requiredValidation: requiredStringCondition,
         },
         hint: {},
+        required: {
+            defaultValue: false,
+        },
     }),
 };
 
@@ -195,6 +199,7 @@ function SelectOneQuestionForm(props: Props) {
                     label: questionResponse?.label,
                     leafGroup: questionResponse?.leafGroupId,
                     hint: questionResponse?.hint,
+                    required: questionResponse?.required,
                     choiceCollection: questionResponse?.choiceCollection?.id,
                 });
                 const choiceCollection = questionResponse?.choiceCollection;
@@ -363,6 +368,12 @@ function SelectOneQuestionForm(props: Props) {
                     disabled
                 />
             </div>
+            <Checkbox
+                name="required"
+                label="Make question mandatory"
+                onChange={setFieldValue}
+                value={formValue.required}
+            />
             <Button
                 name={undefined}
                 className={styles.button}

@@ -5,6 +5,7 @@ import {
 } from '@togglecorp/fujs';
 import {
     Button,
+    Checkbox,
     TextInput,
     useAlert,
 } from '@the-deep/deep-ui';
@@ -116,6 +117,9 @@ const schema: FormSchema = {
             requiredValidation: requiredStringCondition,
         },
         hint: {},
+        required: {
+            defaultValue: false,
+        },
     }),
 };
 
@@ -183,6 +187,7 @@ function TimeQuestionForm(props: Props) {
                     label: questionResponse?.label,
                     leafGroup: questionResponse?.leafGroupId,
                     hint: questionResponse?.hint,
+                    required: questionResponse?.required,
                 });
             },
         },
@@ -327,6 +332,12 @@ function TimeQuestionForm(props: Props) {
                     disabled
                 />
             </div>
+            <Checkbox
+                name="required"
+                label="Make question mandatory"
+                onChange={setFieldValue}
+                value={formValue.required}
+            />
             <Button
                 name={undefined}
                 className={styles.button}
