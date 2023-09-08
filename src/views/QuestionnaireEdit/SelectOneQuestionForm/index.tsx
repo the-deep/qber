@@ -56,7 +56,7 @@ const CREATE_SINGLE_SELECTION_QUESTION = gql`
         private {
             projectScope(pk: $projectId) {
                 createQuestion(
-                    data: $input,2323
+                    data: $input,
                 ) {
                     ok
                     errors
