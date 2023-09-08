@@ -1,0 +1,74 @@
+.about {
+    display: flex;
+    flex-direction: column;
+
+    .content {
+        display: flex;
+        gap: var(--dui-spacing-medium);
+
+        .viz {
+            display: flex;
+            flex-direction:column;
+            flex-grow: 1;
+            padding: var(--dui-spacing-large) var(--dui-spacing-extra-large);
+
+            .pillars {
+                display: flex;
+                flex-direction: column;
+                max-width: 70vw;
+                gap: var(--dui-spacing-medium);
+
+                .pillar-item {
+                    display: flex;
+                    flex-direction: column;
+                    gap: var(--dui-spacing-small);
+
+                    .parent {
+                        background-color: var(--dui-color-secondary);
+                        padding: var(--dui-spacing-medium);
+                        width: 100%;
+                        text-align: center;
+                    }
+                    .sub-pillars{
+                        display: flex;
+                        gap: var(--dui-spacing-small);
+                        justify-content: space-between;
+                    }
+                }
+            }
+            .two-d-table {
+                max-width: 70vw;
+                table-layout: fixed;
+            }
+            .leaf {
+                flex-grow: 1;
+                border-radius: 0;
+                text-align: center;
+                >* {
+                    justify-content: center;
+                }
+            }
+        }
+
+        .right-pane {
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            padding: var(--dui-spacing-large) var(--dui-spacing-extra-large);
+            width: 30vw;
+            max-width: 30rem;
+            gap: var(--dui-spacing-large);
+
+            .question-groups {
+                display: flex;
+                flex-direction: column;
+                gap: var(--dui-spacing-medium);
+
+                .heading {
+                    background-color: var(--dui-color-secondary);
+                    padding: var(--dui-spacing-medium) var(--dui-spacing-small);
+                }
+            }
+        }
+    }
+}

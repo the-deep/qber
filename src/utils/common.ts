@@ -33,6 +33,16 @@ export type NonLeafTocItem = {
     nodes: TocItem[];
 }
 
+export interface Node {
+    category: {
+        key: string;
+        label: string;
+    }[];
+    type?: string;
+    id: string;
+    isHidden: boolean;
+}
+
 export type TocItem = LeafTocItem | NonLeafTocItem;
 
 export function getChildren(item: TocItem): string[] {
