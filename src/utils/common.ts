@@ -77,3 +77,7 @@ export const enumKeySelector = <T>(d: EnumEntity<T>) => (
 export const enumLabelSelector = <T extends string | number>(d: EnumEntity<T>) => (
     d.description ?? capitalize(String(d.name))
 );
+
+export type ProjectScope<T> = T extends {
+    private ?: { projectScope?: infer X }
+} ? NonNullable<X> : never;

@@ -31,6 +31,7 @@ import {
 import {
     TocItem,
     getChildren,
+    type ProjectScope,
 } from '#utils/common';
 
 import QuestionPreview from '../QuestionPreview';
@@ -125,7 +126,7 @@ const UPDATE_QUESTIONS_VISIBILITY = gql`
     }
 `;
 
-type Question = NonNullable<NonNullable<NonNullable<NonNullable<QuestionsForLeafGroupQuery['private']>['projectScope']>['questions']>['items']>[number];
+type Question = NonNullable<NonNullable<ProjectScope<QuestionsForLeafGroupQuery>['questions']>['items']>[number];
 
 const questionKeySelector = (q: Question) => q.id;
 
@@ -185,6 +186,7 @@ function QuestionListRenderer(props: QuestionRendererProps) {
 
     const {
         loading: questionsPending,
+        refetch: retriggerQuestionsFetch,
     } = useQuery<QuestionsForLeafGroupQuery, QuestionsForLeafGroupQueryVariables>(
         QUESTIONS_FOR_LEAF_GROUP,
         {
@@ -308,6 +310,7 @@ function QuestionListRenderer(props: QuestionRendererProps) {
         selectedQuestions,
         onSelectedQuestionsChange: handleSelectedQuestionsChange,
         setSelectedLeafGroupId,
+        refetchQuestionList: retriggerQuestionsFetch,
     }), [
         onEditQuestionClick,
         projectId,
@@ -316,6 +319,7 @@ function QuestionListRenderer(props: QuestionRendererProps) {
         selectedQuestions,
         handleSelectedQuestionsChange,
         setSelectedLeafGroupId,
+        retriggerQuestionsFetch,
     ]);
 
     return (

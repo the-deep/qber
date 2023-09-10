@@ -18,6 +18,9 @@ import {
     SingleOptionListQuery,
     SingleOptionListQueryVariables,
 } from '#generated/types';
+import {
+    type ProjectScope,
+} from '#utils/common';
 
 import styles from './index.module.css';
 
@@ -43,7 +46,7 @@ const SINGLE_OPTION_LIST = gql`
     }
 `;
 
-type ChoiceType = NonNullable<NonNullable<NonNullable<NonNullable<SingleOptionListQuery['private']>['projectScope']>['choiceCollection']>['choices']>[number];
+type ChoiceType = NonNullable<NonNullable<ProjectScope<SingleOptionListQuery>['choiceCollection']>['choices']>[number];
 
 const choiceCollectionKeySelector = (d: ChoiceType) => d.id;
 const choiceCollectionLabelSelector = (d: ChoiceType) => d.label;

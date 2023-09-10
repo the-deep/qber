@@ -6,6 +6,10 @@ import {
     GrDrag,
 } from 'react-icons/gr';
 import {
+    gql,
+    useMutation,
+} from '@apollo/client';
+import {
     isNotDefined,
     isDefined,
 } from '@togglecorp/fujs';
@@ -15,11 +19,10 @@ import {
     QuickActionDropdownMenu,
     QuickActionButton,
     DropdownMenuItem,
+    useAlert,
+    useConfirmation,
 } from '@the-deep/deep-ui';
 
-import {
-    QuestionsByGroupQuery,
-} from '#generated/types';
 import TextQuestionPreview from '#components/questionPreviews/TextQuestionPreview';
 import IntegerQuestionPreview from '#components/questionPreviews/IntegerQuestionPreview';
 import RankQuestionPreview from '#components/questionPreviews/RankQuestionPreview';
@@ -31,10 +34,39 @@ import FileQuestionPreview from '#components/questionPreviews/FileQuestionPrevie
 import SelectOneQuestionPreview from '#components/questionPreviews/SelectOneQuestionPreview';
 import SelectMultipleQuestionPreview from '#components/questionPreviews/SelectMultipleQuestionPreview';
 import { Attributes, Listeners } from '#components/SortableList';
+import {
+    QuestionsByGroupQuery,
+    DeleteQuestionMutation,
+    DeleteQuestionMutationVariables,
+} from '#generated/types';
+
+import {
+    QUESTION_FRAGMENT,
+} from '../queries';
 
 import styles from './index.module.css';
 
 type Question = NonNullable<NonNullable<NonNullable<NonNullable<QuestionsByGroupQuery['private']>['projectScope']>['questions']>['items']>[number];
+
+const DELETE_QUESTION = gql`
+    ${QUESTION_FRAGMENT}
+    mutation DeleteQuestion (
+        $projectId: ID!,
+        $questionId: ID!,
+    ) {
+        private {
+            projectScope(pk: $projectId) {
+                deleteQuestion(id: $questionId) {
+                    errors
+                    ok
+                    result {
+                        ...QuestionResponse
+                    }
+                }
+            }
+        }
+    }
+`;
 
 interface QuestionProps {
     question: Question;
@@ -45,6 +77,7 @@ interface QuestionProps {
     selectedQuestions: string[] | undefined;
     onSelectedQuestionsChange: (val: boolean, id: string) => void;
     setSelectedLeafGroupId : React.Dispatch<React.SetStateAction<string | undefined>>;
+    refetchQuestionList: () => void;
     attributes?: Attributes;
     listeners?: Listeners;
 }
@@ -59,9 +92,39 @@ function QuestionPreview(props: QuestionProps) {
         onSelectedQuestionsChange,
         setSelectedLeafGroupId,
         projectId,
+        refetchQuestionList,
         attributes,
         listeners,
     } = props;
+
+    const alert = useAlert();
+
+    const [
+        triggerQuestionDelete,
+    ] = useMutation<DeleteQuestionMutation, DeleteQuestionMutationVariables>(
+        DELETE_QUESTION,
+        {
+            onCompleted: (res) => {
+                const questionResponse = res.private.projectScope?.deleteQuestion;
+                if (!questionResponse?.ok) {
+                    alert.show(
+                        'Failed to delete question.',
+                        { variant: 'error' },
+                    );
+                }
+                alert.show(
+                    'Successfully deleted question.',
+                    { variant: 'success' },
+                );
+            },
+            onError: () => {
+                alert.show(
+                    'Failed to delete question.',
+                    { variant: 'error' },
+                );
+            },
+        },
+    );
 
     const handleEditQuestionClick = useCallback((val: string) => {
         if (isNotDefined(question.leafGroupId)) {
@@ -78,6 +141,33 @@ function QuestionPreview(props: QuestionProps) {
         setSelectedLeafGroupId,
         question,
     ]);
+
+    const handleDeleteQuestionClick = useCallback(() => {
+        if (isNotDefined(projectId)) {
+            return;
+        }
+        triggerQuestionDelete({
+            variables: {
+                projectId,
+                questionId: question.id,
+            },
+        });
+        refetchQuestionList();
+    }, [
+        triggerQuestionDelete,
+        projectId,
+        question,
+        refetchQuestionList,
+    ]);
+
+    const [
+        modal,
+        onDeleteQuestionClick,
+    ] = useConfirmation({
+        showConfirmationInitially: false,
+        onConfirm: handleDeleteQuestionClick,
+        message: 'Are you sure you wish to delete the question from this questionnaire? This cannot be undone.',
+    });
 
     return (
         <Element
@@ -114,6 +204,12 @@ function QuestionPreview(props: QuestionProps) {
                         onClick={handleEditQuestionClick}
                     >
                         Edit question
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                        name={question.id}
+                        onClick={onDeleteQuestionClick}
+                    >
+                        Delete Question
                     </DropdownMenuItem>
                 </QuickActionDropdownMenu>
             )}
@@ -193,6 +289,7 @@ function QuestionPreview(props: QuestionProps) {
                     choiceCollectionId={question.choiceCollection?.id}
                 />
             )}
+            {modal}
         </Element>
     );
 }
