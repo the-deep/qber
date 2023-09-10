@@ -10,16 +10,23 @@ import {
     ListView,
     ExpandableContainer,
     QuickActionButton,
+    useAlert,
 } from '@the-deep/deep-ui';
 import {
     useQuery,
+    useMutation,
     gql,
 } from '@apollo/client';
 
 import SortableList from '#components/SortableList';
 import {
-    QuestionsByGroupQuery,
-    QuestionsByGroupQueryVariables,
+    QuestionsForLeafGroupQuery,
+    QuestionsForLeafGroupQueryVariables,
+    UpdateQuestionsVisibilityMutation,
+    UpdateQuestionsVisibilityMutationVariables,
+    UpdateQuestionsOrderMutation,
+    UpdateQuestionsOrderMutationVariables,
+    VisibilityActionEnum,
 } from '#generated/types';
 import {
     TocItem,
@@ -33,9 +40,9 @@ import {
 
 import styles from './index.module.css';
 
-const QUESTIONS_BY_GROUP = gql`
+const QUESTIONS_FOR_LEAF_GROUP = gql`
     ${QUESTION_FRAGMENT}
-    query QuestionsByGroup(
+    query QuestionsForLeafGroup(
         $projectId: ID!,
         $questionnaireId: ID!,
         $leafGroupId: ID!,
@@ -53,7 +60,7 @@ const QUESTIONS_BY_GROUP = gql`
                         },
                     }
                     order: {
-                        createdAt: ASC
+                        order: ASC
                     }
                 ) {
                     count
@@ -68,7 +75,57 @@ const QUESTIONS_BY_GROUP = gql`
     }
 `;
 
-type Question = NonNullable<NonNullable<NonNullable<NonNullable<QuestionsByGroupQuery['private']>['projectScope']>['questions']>['items']>[number];
+const UPDATE_QUESTIONS_ORDER = gql`
+    ${QUESTION_FRAGMENT}
+    mutation UpdateQuestionsOrder(
+        $projectId: ID!,
+        $questionnaireId: ID!,
+        $leafGroupId: ID!,
+        $data: [QuestionOrderInputType!]!
+    ) {
+        private {
+            projectScope(pk: $projectId) {
+                bulkUpdateQuestionsOrder(
+                data: $data
+                leafGroupId: $leafGroupId
+                questionnaireId: $questionnaireId
+                ) {
+                    errors
+                    results {
+                        ...QuestionResponse
+                    }
+                }
+            }
+        }
+    }
+`;
+
+const UPDATE_QUESTIONS_VISIBILITY = gql`
+    ${QUESTION_FRAGMENT}
+    mutation UpdateQuestionsVisibility(
+    $projectId: ID!,
+    $questionIds: [ID!]!,
+    $questionnaireId: ID!,
+    $visibility: VisibilityActionEnum!,
+    ){
+        private {
+            projectScope(pk: $projectId) {
+                updateQuestionsVisibility(
+                ids: $questionIds,
+                questionnaireId: $questionnaireId,
+                visibility: $visibility,
+                ) {
+                    errors
+                    results {
+                        ...QuestionResponse
+                    }
+                }
+            }
+        }
+    }
+`;
+
+type Question = NonNullable<NonNullable<NonNullable<NonNullable<QuestionsForLeafGroupQuery['private']>['projectScope']>['questions']>['items']>[number];
 
 const questionKeySelector = (q: Question) => q.id;
 
@@ -101,6 +158,8 @@ function QuestionListRenderer(props: QuestionRendererProps) {
         setSelectedLeafGroupId,
     } = props;
 
+    const alert = useAlert();
+
     const questionsVariables = useMemo(() => {
         if (isNotDefined(projectId)
             || isNotDefined(questionnaireId)
@@ -126,8 +185,8 @@ function QuestionListRenderer(props: QuestionRendererProps) {
 
     const {
         loading: questionsPending,
-    } = useQuery<QuestionsByGroupQuery, QuestionsByGroupQueryVariables>(
-        QUESTIONS_BY_GROUP,
+    } = useQuery<QuestionsForLeafGroupQuery, QuestionsForLeafGroupQueryVariables>(
+        QUESTIONS_FOR_LEAF_GROUP,
         {
             skip: isNotDefined(questionsVariables),
             variables: questionsVariables,
@@ -139,18 +198,106 @@ function QuestionListRenderer(props: QuestionRendererProps) {
     );
 
     const [
+        triggerQuestionsOrderUpdate,
+        { loading: questionsOrderUpdatePending },
+    ] = useMutation<UpdateQuestionsOrderMutation, UpdateQuestionsOrderMutationVariables>(
+        UPDATE_QUESTIONS_ORDER,
+        {
+            onCompleted: (response) => {
+                const questionOrderResponse = response?.private
+                    ?.projectScope?.bulkUpdateQuestionsOrder;
+                if (questionOrderResponse?.errors) {
+                    alert.show(
+                        'Failed to update questions order',
+                        { variant: 'error' },
+                    );
+                }
+            },
+            onError: () => {
+                alert.show(
+                    'Failed to update questions order',
+                    { variant: 'error' },
+                );
+            },
+        },
+    );
+
+    const [
+        triggerQuestionsVisibilityUpdate,
+    ] = useMutation<UpdateQuestionsVisibilityMutation, UpdateQuestionsVisibilityMutationVariables>(
+        UPDATE_QUESTIONS_VISIBILITY,
+        {
+            onCompleted: (response) => {
+                const questionsResponse = response?.private
+                    ?.projectScope?.updateQuestionsVisibility;
+                if (questionsResponse?.errors) {
+                    alert.show(
+                        'Failed to update questions visibility',
+                    );
+                }
+            },
+            onError: () => {
+                alert.show(
+                    'Failed to update questions visibility',
+                );
+            },
+        },
+    );
+
+    const handleQuestionOrderChange = useCallback((val: Question[]) => {
+        if (!val || !item.leafNode) {
+            return;
+        }
+        const orderedQuestionsToSend = val.map(
+            (question, index) => ({
+                id: question.id,
+                order: index + 1,
+            }),
+        );
+
+        triggerQuestionsOrderUpdate({
+            variables: {
+                projectId,
+                questionnaireId,
+                leafGroupId: item.id,
+                data: orderedQuestionsToSend,
+            },
+        });
+        setOrderedQuestions(val);
+    }, [
+        item,
+        projectId,
+        questionnaireId,
+        triggerQuestionsOrderUpdate,
+    ]);
+
+    const [
         selectedQuestions,
         setSelectedQuestions,
     ] = useState<string[]>([]);
 
     const handleSelectedQuestionsChange = useCallback((val: boolean, id: string) => {
+        triggerQuestionsVisibilityUpdate({
+            variables: {
+                projectId,
+                questionnaireId,
+                questionIds: [id],
+                visibility: val
+                    ? 'SHOW' as VisibilityActionEnum
+                    : 'HIDE' as VisibilityActionEnum,
+            },
+        });
         setSelectedQuestions((prevVal: string[]) => {
             if (val) {
                 return [...prevVal, id];
             }
             return prevVal.filter((question) => id !== question);
         });
-    }, []);
+    }, [
+        triggerQuestionsVisibilityUpdate,
+        projectId,
+        questionnaireId,
+    ]);
 
     const questionRendererParams = useCallback((_: string, datum: Question) => ({
         question: datum,
@@ -212,10 +359,10 @@ function QuestionListRenderer(props: QuestionRendererProps) {
                         keySelector={questionKeySelector}
                         renderer={QuestionPreview}
                         rendererParams={questionRendererParams}
-                        onChange={setOrderedQuestions}
+                        onChange={handleQuestionOrderChange}
                         borderBetweenItem
                         emptyMessage="There are no questions in this questionnaire yet."
-                        pending={questionsPending}
+                        pending={questionsPending || questionsOrderUpdatePending}
                         messageShown
                         filtered={false}
                         errored={false}
