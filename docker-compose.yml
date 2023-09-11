@@ -24,6 +24,8 @@ x-server: &base_server_setup
     DJANGO_DB_HOST: ${DJANGO_DB_HOST:-db}
     # EMAIL
     EMAIL_FROM: ${EMAIL_FROM:-dev@example.com}
+    # Enketo
+    ENKETO_DOMAIN: ${ENKETO_DOMAIN:-http://localhost:8005}
     # Redis
     CELERY_REDIS_URL: ${CELERY_REDIS_URL:-redis://redis:6379/1}
     DJANGO_CACHE_REDIS_URL: ${DJANGO_CACHE_REDIS_URL:-redis://redis:6379/2}
@@ -91,8 +93,41 @@ services:
       APP_TYPE: worker
     command: ./manage.py run_celery_dev
 
+  enketo_redis_main:
+    image: redis:7.0
+    volumes:
+      - enketo_redis_main-data:/data
+    restart: unless-stopped
+
+  enketo_redis_cache:
+    image: redis:7.0
+    volumes:
+      - enketo_redis_cache-data:/data
+    restart: unless-stopped
+
+  # TODO: Basic
+  enketo:
+    image: ghcr.io/enketo/enketo-express:6.2.2
+    depends_on:
+      - enketo_redis_main
+      - enketo_redis_cache
+    environment:
+      ENKETO_PORT: 8005
+      SUPPORT_EMAIL: ${SUPPORT_EMAIL:-dev@thedeep.io}
+      ENKETO_REDIS_MAIN_URL: redis://redis:redis@enketo_redis_main:6379
+      ENKETO_REDIS_CACHE_URL: redis://redis:redis@enketo_redis_cache:6379
+      ENKETO_API_KEY: ${ENKETO_API_KEY?err}
+      ENKETO_ENCRYPTION_KEY: ${ENKETO_API_KEY?err}
+    command: bash -c "cd $${ENKETO_SRC_DIR}/ && pm2-runtime app.js -n enketo"
+    restart: unless-stopped
+    ports:
+      - '8005:8005'
+
+
 volumes:
   media:
   postgres-data15:
   redis-data:
   ipython_data_local:
+  enketo_redis_main-data:
+  enketo_redis_cache-data:
