@@ -1,5 +1,45 @@
 version: '3.2'
 
+
+x-server: &base_server_setup
+  image: ghcr.io/the-deep/qber-backend:${DOCKER_BACKEND_TAG:-latest}
+  build:
+    context: ./backend/
+  tty: true
+  environment: &base_server_environment
+    APP_ENVIRONMENT: development
+    DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY?err}
+    # To overwrite this values. set the values in .env
+    DJANGO_DEBUG: ${DJANGO_DEBUG:-True}
+    APP_DOMAIN: localhost:8311
+    APP_HTTP_PROTOCOL: http
+    APP_FRONTEND_HOST: localhost:3000
+    SESSION_COOKIE_DOMAIN: ${SESSION_COOKIE_DOMAIN:-localhost}
+    CSRF_COOKIE_DOMAIN: ${CSRF_COOKIE_DOMAIN:-localhost}
+    DJANGO_ALLOWED_HOST: ${DJANGO_ALLOWED_HOST:-*}
+    DJANGO_DB_NAME: ${DJANGO_DB_NAME:-qber}
+    DJANGO_DB_USER: ${DJANGO_DB_USER:-postgres}
+    DJANGO_DB_PASSWORD: ${DJANGO_DB_PASSWORD:-postgres}
+    DJANGO_DB_PORT: ${DJANGO_DB_PORT:-5432}
+    DJANGO_DB_HOST: ${DJANGO_DB_HOST:-db}
+    # EMAIL
+    EMAIL_FROM: ${EMAIL_FROM:-dev@example.com}
+    # Redis
+    CELERY_REDIS_URL: ${CELERY_REDIS_URL:-redis://redis:6379/1}
+    DJANGO_CACHE_REDIS_URL: ${DJANGO_CACHE_REDIS_URL:-redis://redis:6379/2}
+    TEST_DJANGO_CACHE_REDIS_URL: ${TEST_DJANGO_CACHE_REDIS_URL:-redis://redis:6379/12}
+  env_file:
+    # Provide additional environment variables using .env file
+    - .env
+  volumes:
+    - ./backend/:/code
+    - media:/media
+    - ipython_data_local:/root/.ipython/profile_default   # persist ipython data, including ipython history
+  depends_on:
+      - db
+      - redis
+
+
 services:
   react:
     tty: true
@@ -21,48 +61,38 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: questionnaire_builder
+      POSTGRES_DB: qber
     volumes:
       - postgres-data15:/var/lib/postgresql/data
 
-  api:
-    image: ghcr.io/the-deep/questionnaire-builder-backend:${DOCKER_BACKEND_TAG:-latest}
-    build:
-      context: ./backend/
-    environment:
-      APP_ENVIRONMENT: development
-      APP_TYPE: web
-      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY?err}
-      # To overwrite this values. set the values in .env
-      DJANGO_DEBUG: ${DJANGO_DEBUG:-True}
-      APP_DOMAIN: localhost:8311
-      APP_HTTP_PROTOCOL: http
-      APP_FRONTEND_HOST: localhost:3000
-      SESSION_COOKIE_DOMAIN: ${SESSION_COOKIE_DOMAIN:-localhost}
-      CSRF_COOKIE_DOMAIN: ${CSRF_COOKIE_DOMAIN:-localhost}
-      DJANGO_ALLOWED_HOST: ${DJANGO_ALLOWED_HOST:-*}
-      DJANGO_DB_NAME: ${DJANGO_DB_NAME:-questionnaire_builder}
-      DJANGO_DB_USER: ${DJANGO_DB_USER:-postgres}
-      DJANGO_DB_PASSWORD: ${DJANGO_DB_PASSWORD:-postgres}
-      DJANGO_DB_PORT: ${DJANGO_DB_PORT:-5432}
-      DJANGO_DB_HOST: ${DJANGO_DB_HOST:-db}
-      # EMAIL
-      EMAIL_FROM: ${EMAIL_FROM:-dev@example.com}
-    command: ./scripts/run_develop.sh
-    env_file:
-      # Provide additional environment variables using .env file
-      - .env
+  redis:
+    image: redis:latest
     volumes:
-      - ./backend/:/code
-      - media:/media
-      - ipython_data_local:/root/.ipython/profile_default   # persist ipython data, including ipython history
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    <<: *base_server_setup
+    environment:
+      <<: *base_server_environment
+      APP_TYPE: web
+    command: ./scripts/run_develop.sh
     ports:
       - 8311:8000
-    depends_on:
-        - db
 
+  worker:
+    <<: *base_server_setup
+    environment:
+      <<: *base_server_environment
+      APP_TYPE: worker
+    command: ./manage.py run_celery_dev
 
 volumes:
   media:
   postgres-data15:
+  redis-data:
   ipython_data_local:
