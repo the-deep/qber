@@ -8,6 +8,8 @@ export const QUESTION_FRAGMENT = gql`
         type
         hint
         required
+        order
+        isHidden
         leafGroupId
         questionnaireId
         choiceCollection {

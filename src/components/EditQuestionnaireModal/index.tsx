@@ -5,6 +5,8 @@ import {
     Modal,
     Button,
     TextInput,
+    SelectInput,
+    NumberInput,
     useAlert,
 } from '@the-deep/deep-ui';
 import {
@@ -24,7 +26,20 @@ import {
     QuestionnaireDetailQuery,
     QuestionnaireDetailQueryVariables,
     QuestionnaireCreateInput,
+    QuestionnaireMetadataQuery,
+    QuestionnaireMetadataQueryVariables,
+    QuestionnarePriorityLevelTypeEnum,
+    QuestionnareEnumeratorSkillTypeEnum,
+    QuestionnareDataCollectionMethodTypeEnum,
 } from '#generated/types';
+
+import {
+    EnumOptions,
+    enumKeySelector,
+    enumLabelSelector,
+} from '#utils/common';
+
+import styles from './index.module.css';
 
 const CREATE_QUESTIONNAIRE = gql`
     mutation CreateQuestionnaire(
@@ -71,11 +86,41 @@ const QUESTIONNAIRE_DETAIL = gql`
         private {
             projectScope(pk: $projectId) {
                 questionnaire(pk: $questionnaireId) {
-                    createdAt
                     id
                     title
                     projectId
+                    createdAt
+                    dataCollectionMethod
+                    dataCollectionMethodDisplay
+                    enumeratorSkill
+                    enumeratorSkillDisplay
+                    priorityLevelDisplay
+                    priorityLevel
+                    requiredDuration
                 }
+            }
+        }
+    }
+`;
+
+const QUESTIONNAIRE_METADATA = gql`
+    query QuestionnaireMetadata {
+        questionnarePriorityLevelTypeOptions: __type(name: "QuestionnarePriorityLevelTypeEnum") {
+            enumValues {
+                name
+                description
+            }
+        }
+        questionnareEnumeratorSkillTypeOptions: __type(name: "QuestionnareEnumeratorSkillTypeEnum") {
+            enumValues {
+                name
+                description
+            }
+        }
+        questionnareDataCollectionMethodTypeOptions: __type(name: "QuestionnareDataCollectionMethodTypeEnum") {
+            enumValues {
+                name
+                description
             }
         }
     }
@@ -91,6 +136,10 @@ const schema: FormSchema = {
             required: true,
             requiredValidation: requiredStringCondition,
         },
+        dataCollectionMethod: {},
+        enumeratorSkill: {},
+        priorityLevel: {},
+        requiredDuration: {},
     }),
 };
 
@@ -149,10 +198,26 @@ function EditQuestionnaireModal(props: Props) {
                 const questionnaireDetails = response?.private?.projectScope?.questionnaire;
                 setValue({
                     title: questionnaireDetails?.title,
+                    priorityLevel: questionnaireDetails?.priorityLevel,
+                    enumeratorSkill: questionnaireDetails?.enumeratorSkill,
+                    dataCollectionMethod: questionnaireDetails?.dataCollectionMethod,
+                    requiredDuration: questionnaireDetails?.requiredDuration,
                 });
             },
         },
     );
+
+    const {
+        data: metadataResponse,
+    } = useQuery<QuestionnaireMetadataQuery, QuestionnaireMetadataQueryVariables>(
+        QUESTIONNAIRE_METADATA,
+    );
+
+    const priorityLevelOptions = metadataResponse?.questionnarePriorityLevelTypeOptions?.enumValues;
+    const enumeratorSkillOptions = metadataResponse
+        ?.questionnareEnumeratorSkillTypeOptions?.enumValues;
+    const dataCollectionMethods = metadataResponse
+        ?.questionnareDataCollectionMethodTypeOptions?.enumValues;
 
     const [
         triggerQuestionnaireCreate,
@@ -160,8 +225,8 @@ function EditQuestionnaireModal(props: Props) {
     ] = useMutation<CreateQuestionnaireMutation, CreateQuestionnaireMutationVariables>(
         CREATE_QUESTIONNAIRE,
         {
-            onCompleted: (questionnaireResponse) => {
-                const response = questionnaireResponse?.private?.projectScope?.createQuestionnaire;
+            onCompleted: (res) => {
+                const response = res?.private?.projectScope?.createQuestionnaire;
                 if (!response) {
                     return;
                 }
@@ -264,6 +329,7 @@ function EditQuestionnaireModal(props: Props) {
         <Modal
             onCloseButtonClick={onClose}
             heading="Create Questionnaire"
+            bodyClassName={styles.modalBody}
             freeHeight
             size="small"
             footerActions={(
@@ -281,11 +347,51 @@ function EditQuestionnaireModal(props: Props) {
         >
             <TextInput
                 name="title"
+                label="Title"
                 placeholder="Questionnaire Title"
                 value={formValue?.title}
                 error={fieldError?.title}
                 onChange={setFieldValue}
                 autoFocus
+            />
+            <SelectInput
+                name="priorityLevel"
+                label="Priority Level"
+                onChange={setFieldValue}
+                value={formValue?.priorityLevel}
+                error={fieldError?.priorityLevel}
+                options={priorityLevelOptions as EnumOptions<QuestionnarePriorityLevelTypeEnum>}
+                keySelector={enumKeySelector}
+                labelSelector={enumLabelSelector}
+            />
+            <SelectInput
+                name="enumeratorSkill"
+                label="Enumerator Skill"
+                onChange={setFieldValue}
+                value={formValue?.enumeratorSkill}
+                error={fieldError?.enumeratorSkill}
+                options={enumeratorSkillOptions as EnumOptions<QuestionnareEnumeratorSkillTypeEnum>}
+                keySelector={enumKeySelector}
+                labelSelector={enumLabelSelector}
+            />
+            <SelectInput
+                name="dataCollectionMethod"
+                label="Data Collection Method"
+                onChange={setFieldValue}
+                value={formValue?.dataCollectionMethod}
+                error={fieldError?.dataCollectionMethod}
+                options={
+                    dataCollectionMethods as EnumOptions<QuestionnareDataCollectionMethodTypeEnum>
+                }
+                keySelector={enumKeySelector}
+                labelSelector={enumLabelSelector}
+            />
+            <NumberInput
+                name="requiredDuration"
+                label="Maximum Duration (in minutes)"
+                onChange={setFieldValue}
+                value={formValue?.requiredDuration}
+                error={fieldError?.requiredDuration}
             />
         </Modal>
     );
