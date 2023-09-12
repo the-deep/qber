@@ -73,8 +73,8 @@
 
                 .tab {
                     flex-grow: 1;
-                    font-size: var(--dui-font-size-large);
                     border-bottom: var(--dui-width-separator-medium) solid var(--color-gray2);
+                    font-size: var(--dui-font-size-large);
 
                     &.active {
                         border-bottom-color: var(--dui-color-accent);
@@ -92,7 +92,7 @@
         }
 
         .right-pane {
-            --width-right-pane: 33rem;
+            --width-right-pane: 30rem;
             display: flex;
             flex-direction: column;
             flex-shrink: 0;

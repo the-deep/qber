@@ -1,12 +1,10 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { isDefined, isNotDefined } from '@togglecorp/fujs';
 import { gql, useMutation, useQuery } from '@apollo/client';
 import {
     Modal,
     Button,
     TextInput,
-    SelectInput,
-    NumberInput,
     useAlert,
 } from '@the-deep/deep-ui';
 import {
@@ -26,20 +24,8 @@ import {
     QuestionnaireDetailQuery,
     QuestionnaireDetailQueryVariables,
     QuestionnaireCreateInput,
-    QuestionnaireMetadataQuery,
-    QuestionnaireMetadataQueryVariables,
-    QuestionnairePriorityLevelTypeEnum,
-    QuestionnaireEnumeratorSkillTypeEnum,
-    QuestionnaireDataCollectionMethodTypeEnum,
 } from '#generated/types';
-import PriorityLevelSelectInput from '#components/PriorityLevelSelectInput';
-
-import {
-    EnumOptions,
-    EnumEntity,
-    enumKeySelector,
-    enumLabelSelector,
-} from '#utils/common';
+import MetaDataInputs from '#components/MetaDataInputs';
 
 import styles from './index.module.css';
 
@@ -105,29 +91,6 @@ const QUESTIONNAIRE_DETAIL = gql`
     }
 `;
 
-const QUESTIONNAIRE_METADATA = gql`
-    query QuestionnaireMetadata {
-        questionnairePriorityLevelTypeOptions: __type(name: "QuestionnairePriorityLevelTypeEnum") {
-            enumValues {
-                name
-                description
-            }
-        }
-        questionnaireEnumeratorSkillTypeOptions: __type(name: "QuestionnaireEnumeratorSkillTypeEnum") {
-            enumValues {
-                name
-                description
-            }
-        }
-        questionnaireDataCollectionMethodTypeOptions: __type(name: "QuestionnaireDataCollectionMethodTypeEnum") {
-            enumValues {
-                name
-                description
-            }
-        }
-    }
-`;
-
 type FormType = PartialForm<QuestionnaireCreateInput>;
 type FormSchema = ObjectSchema<FormType>;
 type FormSchemaFields = ReturnType<FormSchema['fields']>;
@@ -163,11 +126,6 @@ function EditQuestionnaireModal(props: Props) {
     const alert = useAlert();
 
     const editMode = isDefined(questionnaireId);
-
-    const [
-        priorityLevelOptions,
-        setPriorityLevelOptions,
-    ] = useState<EnumOptions<QuestionnarePriorityLevelTypeEnum> | undefined | null>();
 
     const questionnaireVariables = useMemo(() => {
         if (isNotDefined(projectId) || isNotDefined(questionnaireId)) {
@@ -213,19 +171,6 @@ function EditQuestionnaireModal(props: Props) {
             },
         },
     );
-
-    const {
-        data: metadataResponse,
-    } = useQuery<QuestionnaireMetadataQuery, QuestionnaireMetadataQueryVariables>(
-        QUESTIONNAIRE_METADATA,
-    );
-
-    const priorityLevelOptions = metadataResponse
-        ?.questionnairePriorityLevelTypeOptions?.enumValues;
-    const enumeratorSkillOptions = metadataResponse
-        ?.questionnaireEnumeratorSkillTypeOptions?.enumValues;
-    const dataCollectionMethods = metadataResponse
-        ?.questionnaireDataCollectionMethodTypeOptions?.enumValues;
 
     const [
         triggerQuestionnaireCreate,
@@ -362,44 +307,11 @@ function EditQuestionnaireModal(props: Props) {
                 onChange={setFieldValue}
                 autoFocus
             />
-            <SelectInput
-                name="enumeratorSkill"
-                label="Enumerator Skill"
+
+            <MetaDataInputs
                 onChange={setFieldValue}
-                value={formValue?.enumeratorSkill}
-                error={fieldError?.enumeratorSkill}
-                options={
-                    enumeratorSkillOptions as EnumOptions<QuestionnaireEnumeratorSkillTypeEnum>
-                }
-                keySelector={enumKeySelector}
-                labelSelector={enumLabelSelector}
-            />
-            <SelectInput
-                name="dataCollectionMethod"
-                label="Data Collection Method"
-                onChange={setFieldValue}
-                value={formValue?.dataCollectionMethod}
-                error={fieldError?.dataCollectionMethod}
-                options={
-                    dataCollectionMethods as EnumOptions<QuestionnaireDataCollectionMethodTypeEnum>
-                }
-                keySelector={enumKeySelector}
-                labelSelector={enumLabelSelector}
-            />
-            <PriorityLevelSelectInput
-                name="priorityLevel"
-                onChange={setFieldValue}
-                options={priorityLevelOptions}
-                onOptionsChange={setPriorityLevelOptions}
-                value={formValue?.priorityLevel}
-                error={fieldError?.priorityLevel}
-            />
-            <NumberInput
-                name="requiredDuration"
-                label="Maximum Duration (in minutes)"
-                onChange={setFieldValue}
-                value={formValue?.requiredDuration}
-                error={fieldError?.requiredDuration}
+                value={formValue}
+                error={fieldError}
             />
         </Modal>
     );

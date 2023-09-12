@@ -178,10 +178,6 @@ function QuestionnaireItem(props: Props) {
         },
     );
 
-    const handleQuestionnaireExport = useCallback(() => {
-        console.log('handle export here');
-    }, []);
-
     const [
         triggerQuestionnaireExport,
     ] = useMutation<ExportQuestionnaireMutation, ExportQuestionnaireMutationVariables>(

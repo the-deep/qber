@@ -1,19 +1,30 @@
-import { useCallback, useMemo, useState } from 'react';
+import {
+    useCallback,
+    useMemo,
+    useState,
+} from 'react';
 import {
     isDefined,
     isNotDefined,
+    _cs,
 } from '@togglecorp/fujs';
+import {
+    Button,
+    Checkbox,
+    Footer,
+    Tab,
+    TabList,
+    TabPanel,
+    Tabs,
+    TextArea,
+    TextInput,
+    useAlert,
+} from '@the-deep/deep-ui';
 import {
     gql,
     useMutation,
     useQuery,
 } from '@apollo/client';
-import {
-    Button,
-    Checkbox,
-    TextInput,
-    useAlert,
-} from '@the-deep/deep-ui';
 import {
     ObjectSchema,
     removeNull,
@@ -23,6 +34,7 @@ import {
     useForm,
     PartialForm,
 } from '@togglecorp/toggle-form';
+
 import {
     CreateMultipleSelectionQuestionMutation,
     CreateMultipleSelectionQuestionMutationVariables,
@@ -39,11 +51,15 @@ import PillarSelectInput from '#components/PillarSelectInput';
 import ChoiceCollectionSelectInput, {
     type ChoiceCollectionType,
 } from '#components/ChoiceCollectionSelectInput';
+import MetaDataInputs from '#components/MetaDataInputs';
 
 import {
     QUESTION_FRAGMENT,
     QUESTION_INFO,
 } from '../queries.ts';
+import { type QuestionTabType } from '..';
+import checkTabErrors from '../utils';
+
 import styles from './index.module.css';
 
 const CREATE_MULTIPLE_SELECTION_QUESTION = gql`
@@ -126,6 +142,11 @@ const schema: FormSchema = {
         required: {
             defaultValue: false,
         },
+        enumeratorSkill: {},
+        dataCollectionMethod: {},
+        priorityLevel: {},
+        requiredDuration: {},
+        constraint: {},
     }),
 };
 
@@ -147,6 +168,11 @@ function SelectMultipleQuestionForm(props: Props) {
     } = props;
 
     const alert = useAlert();
+
+    const [
+        activeQuestionTab,
+        setActiveQuestionTab,
+    ] = useState<QuestionTabType | undefined>('general');
 
     const initialFormValue: FormType = {
         type: 'SELECT_MULTIPLE' as QuestionTypeEnum,
@@ -199,7 +225,12 @@ function SelectMultipleQuestionForm(props: Props) {
                     leafGroup: questionResponse?.leafGroupId,
                     hint: questionResponse?.hint,
                     required: questionResponse?.required,
+                    requiredDuration: questionResponse?.requiredDuration,
                     choiceCollection: questionResponse?.choiceCollection?.id,
+                    priorityLevel: questionResponse?.priorityLevel,
+                    dataCollectionMethod: questionResponse?.dataCollectionMethod,
+                    enumeratorSkill: questionResponse?.enumeratorSkill,
+                    constraint: questionResponse?.constraint,
                 });
                 const choiceCollection = questionResponse?.choiceCollection;
                 const choiceCollectionOptions = isDefined(choiceCollection)
@@ -325,47 +356,101 @@ function SelectMultipleQuestionForm(props: Props) {
                 projectId={projectId}
             />
             <div className={styles.editSection}>
-                <TextInput
-                    name="label"
-                    label="Question label"
-                    value={formValue.label}
-                    error={fieldError?.label}
-                    onChange={setFieldValue}
-                />
-                <TextInput
-                    name="hint"
-                    label="Hint"
-                    value={formValue.hint}
-                    error={fieldError?.hint}
-                    onChange={setFieldValue}
-                />
-                <TextInput
-                    name="name"
-                    label="Question name"
-                    value={formValue.name}
-                    error={fieldError?.name}
-                    onChange={setFieldValue}
-                />
-                <ChoiceCollectionSelectInput
-                    name="choiceCollection"
-                    value={formValue.choiceCollection}
-                    label="Options"
-                    options={choiceCollectionOption}
-                    onOptionsChange={setChoiceCollectionOption}
-                    onChange={setFieldValue}
-                    projectId={projectId}
-                    questionnaireId={questionnaireId}
-                    error={fieldError?.choiceCollection}
-                />
-                <PillarSelectInput
-                    name="leafGroup"
-                    projectId={projectId}
-                    questionnaireId={questionnaireId}
-                    value={selectedLeafGroupId}
-                    error={fieldError?.leafGroup}
-                    onChange={setFieldValue}
-                    disabled
-                />
+                <Tabs
+                    value={activeQuestionTab}
+                    onChange={setActiveQuestionTab}
+                    variant="secondary"
+                >
+                    <TabList className={styles.tabs}>
+                        <Tab
+                            activeClassName={styles.active}
+                            className={_cs(
+                                styles.tabItem,
+                                checkTabErrors(formError, 'general') && styles.errored,
+                            )}
+                            name="general"
+                        >
+                            {checkTabErrors(formError, 'general')
+                                ? 'General Information*'
+                                : 'General Information'}
+                        </Tab>
+                        <Tab
+                            activeClassName={styles.active}
+                            className={_cs(
+                                styles.tabItem,
+                                checkTabErrors(formError, 'metadata') && styles.errored,
+                            )}
+                            name="metadata"
+                        >
+                            {checkTabErrors(formError, 'metadata')
+                                ? 'Metadata*'
+                                : 'Metadata'}
+                        </Tab>
+                    </TabList>
+                    <TabPanel
+                        className={styles.fields}
+                        name="general"
+                    >
+                        <TextInput
+                            name="label"
+                            label="Label"
+                            value={formValue.label}
+                            error={fieldError?.label}
+                            onChange={setFieldValue}
+                        />
+                        <TextInput
+                            name="hint"
+                            label="Hint"
+                            value={formValue.hint}
+                            error={fieldError?.hint}
+                            onChange={setFieldValue}
+                        />
+                        <TextInput
+                            name="name"
+                            label="Name"
+                            value={formValue.name}
+                            error={fieldError?.name}
+                            onChange={setFieldValue}
+                        />
+                        <TextArea
+                            name="constraint"
+                            label="Constraint"
+                            value={formValue?.constraint}
+                            error={fieldError?.constraint}
+                            onChange={setFieldValue}
+                        />
+                        <ChoiceCollectionSelectInput
+                            name="choiceCollection"
+                            value={formValue.choiceCollection}
+                            label="Options"
+                            options={choiceCollectionOption}
+                            onOptionsChange={setChoiceCollectionOption}
+                            onChange={setFieldValue}
+                            projectId={projectId}
+                            questionnaireId={questionnaireId}
+                            error={fieldError?.choiceCollection}
+                        />
+                        <PillarSelectInput
+                            name="leafGroup"
+                            projectId={projectId}
+                            questionnaireId={questionnaireId}
+                            value={selectedLeafGroupId}
+                            error={fieldError?.leafGroup}
+                            onChange={setFieldValue}
+                            disabled
+                        />
+                    </TabPanel>
+                    <TabPanel
+                        className={styles.fields}
+                        name="metadata"
+                    >
+                        <MetaDataInputs
+                            onChange={setFieldValue}
+                            value={formValue}
+                            error={fieldError}
+                        />
+                    </TabPanel>
+                </Tabs>
             </div>
             <Checkbox
                 name="required"
@@ -373,19 +458,23 @@ function SelectMultipleQuestionForm(props: Props) {
                 onChange={setFieldValue}
                 value={formValue.required}
             />
-            <Button
-                name={undefined}
-                className={styles.button}
-                onClick={handleQuestionSubmit}
-                disabled={
-                    pristine
-                    || (isDefined(questionId)
-                        ? updateQuestionPending
-                        : createQuestionPending)
-                }
-            >
-                Apply
-            </Button>
+            <Footer
+                actions={(
+                    <Button
+                        name={undefined}
+                        className={styles.button}
+                        onClick={handleQuestionSubmit}
+                        disabled={
+                            pristine
+                        || (isDefined(questionId)
+                            ? updateQuestionPending
+                            : createQuestionPending)
+                        }
+                    >
+                        {isDefined(questionId) ? 'Save' : 'Create'}
+                    </Button>
+                )}
+            />
         </form>
     );
 }

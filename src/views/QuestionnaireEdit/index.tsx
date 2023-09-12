@@ -82,6 +82,8 @@ import QuestionTypeItem, { QuestionType } from './QuestionTypeItem';
 
 import styles from './index.module.css';
 
+export type QuestionTabType = 'general' | 'metadata';
+
 const QUESTIONNAIRE = gql`
     ${LEAF_GROUPS_FRAGMENT}
     query Questionnaire(

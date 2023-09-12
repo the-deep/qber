@@ -16,13 +16,22 @@
 
         .tabs {
             display: flex;
-            margin: 0 calc(-1 * var(--dui-spacing-large));
+            --color-background-inactive: #FAFAFA;
 
             .tab-item {
                 flex-grow: 1;
+                background-color: var(--color-background-inactive);
+
                 &.active {
                     border-bottom: var(--dui-width-separator-medium) solid var(--dui-color-accent);
                     background-color: var(--dui-color-secondary);
+                }
+                &.errored {
+                    color: var(--dui-color-negative);
+
+                    &.active {
+                        border-color: var(--dui-color-negative);
+                    }
                 }
             }
         }

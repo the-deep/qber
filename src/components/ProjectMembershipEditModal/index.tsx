@@ -28,7 +28,6 @@ import {
 } from '#generated/types';
 import {
     EnumOptions,
-    EnumEntity,
     enumKeySelector,
     enumLabelSelector,
 } from '#utils/common';
@@ -36,8 +35,6 @@ import {
 import styles from './index.module.css';
 
 type ProjectMembershipRoleOptions = EnumOptions<ProjectMembershipRoleTypeEnum>;
-
-type ProjectMembershipRoleOption = EnumEntity<ProjectMembershipRoleTypeEnum>;
 
 const UPDATE_MEMBERSHIP = gql`
     mutation UpdateMembership(
@@ -81,9 +78,6 @@ const ROLES = gql`
         }
     }
 `;
-
-const roleKeySelector = (r: ProjectMembershipRoleOption) => r.name;
-const roleLabelSelector = (r: ProjectMembershipRoleOption) => r.description || r.name;
 
 export type Member = NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<MembershipsQuery['private']>['projectScope']>['project']>['members']>['items']>[number]>;
 

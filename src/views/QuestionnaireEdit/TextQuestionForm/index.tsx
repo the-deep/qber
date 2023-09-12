@@ -6,6 +6,7 @@ import {
 import {
     isNotDefined,
     isDefined,
+    _cs,
 } from '@togglecorp/fujs';
 import {
     Button,
@@ -15,10 +16,15 @@ import {
     TabList,
     TabPanel,
     Tabs,
+    TextArea,
     TextInput,
     useAlert,
 } from '@the-deep/deep-ui';
-import { gql, useMutation, useQuery } from '@apollo/client';
+import {
+    gql,
+    useMutation,
+    useQuery,
+} from '@apollo/client';
 import {
     ObjectSchema,
     PartialForm,
@@ -42,10 +48,14 @@ import {
 } from '#generated/types';
 import TextQuestionPreview from '#components/questionPreviews/TextQuestionPreview';
 import PillarSelectInput from '#components/PillarSelectInput';
+import MetaDataInputs from '#components/MetaDataInputs';
+
 import {
     QUESTION_FRAGMENT,
     QUESTION_INFO,
 } from '../queries.ts';
+import { type QuestionTabType } from '..';
+import checkTabErrors from '../utils';
 
 import styles from './index.module.css';
 
@@ -121,13 +131,17 @@ const schema: FormSchema = {
             required: true,
             requiredValidation: requiredStringCondition,
         },
-        hint: {},
         required: {
             defaultValue: false,
         },
+        hint: {},
+        enumeratorSkill: {},
+        dataCollectionMethod: {},
+        priorityLevel: {},
+        requiredDuration: {},
+        constraint: {},
     }),
 };
-type TabType = 'general' | 'metadata';
 
 interface Props {
     projectId: string;
@@ -151,7 +165,7 @@ function TextQuestionForm(props: Props) {
     const [
         activeQuestionTab,
         setActiveQuestionTab,
-    ] = useState<TabType | undefined>('general');
+    ] = useState<QuestionTabType | undefined>('general');
 
     const initialFormValue: FormType = {
         type: 'TEXT' as QuestionTypeEnum,
@@ -199,6 +213,11 @@ function TextQuestionForm(props: Props) {
                     leafGroup: questionResponse?.leafGroupId,
                     hint: questionResponse?.hint,
                     required: questionResponse?.required,
+                    requiredDuration: questionResponse?.requiredDuration,
+                    priorityLevel: questionResponse?.priorityLevel,
+                    dataCollectionMethod: questionResponse?.dataCollectionMethod,
+                    enumeratorSkill: questionResponse?.enumeratorSkill,
+                    constraint: questionResponse?.constraint,
                 });
             },
         },
@@ -319,17 +338,27 @@ function TextQuestionForm(props: Props) {
                     <TabList className={styles.tabs}>
                         <Tab
                             activeClassName={styles.active}
-                            className={styles.tabItem}
+                            className={_cs(
+                                styles.tabItem,
+                                checkTabErrors(formError, 'general') && styles.errored,
+                            )}
                             name="general"
                         >
-                            General Information
+                            {checkTabErrors(formError, 'general')
+                                ? 'General Information*'
+                                : 'General Information'}
                         </Tab>
                         <Tab
                             activeClassName={styles.active}
-                            className={styles.tabItem}
+                            className={_cs(
+                                styles.tabItem,
+                                checkTabErrors(formError, 'metadata') && styles.errored,
+                            )}
                             name="metadata"
                         >
-                            Metadata
+                            {checkTabErrors(formError, 'metadata')
+                                ? 'Metadata*'
+                                : 'Metadata'}
                         </Tab>
                     </TabList>
                     <TabPanel
@@ -338,23 +367,30 @@ function TextQuestionForm(props: Props) {
                     >
                         <TextInput
                             name="label"
-                            label="Question label"
+                            label="Label"
                             value={formValue.label}
                             error={fieldError?.label}
                             onChange={setFieldValue}
                         />
                         <TextInput
                             name="hint"
-                            label="Question hint"
+                            label="Hint"
                             value={formValue.hint}
                             error={fieldError?.hint}
                             onChange={setFieldValue}
                         />
                         <TextInput
                             name="name"
-                            label="Question name"
+                            label="Name"
                             value={formValue.name}
                             error={fieldError?.name}
+                            onChange={setFieldValue}
+                        />
+                        <TextArea
+                            name="constraint"
+                            label="Constraint"
+                            value={formValue?.constraint}
+                            error={fieldError?.constraint}
                             onChange={setFieldValue}
                         />
                         <PillarSelectInput
@@ -371,7 +407,11 @@ function TextQuestionForm(props: Props) {
                         className={styles.fields}
                         name="metadata"
                     >
-                        This is the metadata tab
+                        <MetaDataInputs
+                            onChange={setFieldValue}
+                            value={formValue}
+                            error={fieldError}
+                        />
                     </TabPanel>
                 </Tabs>
             </div>
