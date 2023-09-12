@@ -1,23 +1,32 @@
-import { useCallback, useMemo } from 'react';
+import {
+    useCallback,
+    useMemo,
+    useState,
+} from 'react';
 import {
     isNotDefined,
     isDefined,
 } from '@togglecorp/fujs';
 import {
-    TextInput,
     Button,
-    useAlert,
     Checkbox,
+    Footer,
+    Tab,
+    TabList,
+    TabPanel,
+    Tabs,
+    TextInput,
+    useAlert,
 } from '@the-deep/deep-ui';
 import { gql, useMutation, useQuery } from '@apollo/client';
 import {
     ObjectSchema,
+    PartialForm,
     createSubmitHandler,
+    getErrorObject,
     removeNull,
     requiredStringCondition,
-    getErrorObject,
     useForm,
-    PartialForm,
 } from '@togglecorp/toggle-form';
 
 import {
@@ -118,6 +127,7 @@ const schema: FormSchema = {
         },
     }),
 };
+type TabType = 'general' | 'metadata';
 
 interface Props {
     projectId: string;
@@ -137,6 +147,11 @@ function TextQuestionForm(props: Props) {
     } = props;
 
     const alert = useAlert();
+
+    const [
+        activeQuestionTab,
+        setActiveQuestionTab,
+    ] = useState<TabType | undefined>('general');
 
     const initialFormValue: FormType = {
         type: 'TEXT' as QuestionTypeEnum,
@@ -296,56 +311,94 @@ function TextQuestionForm(props: Props) {
                 hint={formValue.hint}
             />
             <div className={styles.editSection}>
-                <TextInput
-                    name="label"
-                    label="Question label"
-                    value={formValue.label}
-                    error={fieldError?.label}
-                    onChange={setFieldValue}
-                />
-                <TextInput
-                    name="hint"
-                    label="Question hint"
-                    value={formValue.hint}
-                    error={fieldError?.hint}
-                    onChange={setFieldValue}
-                />
-                <TextInput
-                    name="name"
-                    label="Question name"
-                    value={formValue.name}
-                    error={fieldError?.name}
-                    onChange={setFieldValue}
-                />
-                <PillarSelectInput
-                    name="leafGroup"
-                    projectId={projectId}
-                    questionnaireId={questionnaireId}
-                    value={selectedLeafGroupId}
-                    error={fieldError?.leafGroup}
-                    onChange={setFieldValue}
-                    disabled
-                />
+                <Tabs
+                    value={activeQuestionTab}
+                    onChange={setActiveQuestionTab}
+                    variant="secondary"
+                >
+                    <TabList className={styles.tabs}>
+                        <Tab
+                            activeClassName={styles.active}
+                            className={styles.tabItem}
+                            name="general"
+                        >
+                            General Information
+                        </Tab>
+                        <Tab
+                            activeClassName={styles.active}
+                            className={styles.tabItem}
+                            name="metadata"
+                        >
+                            Metadata
+                        </Tab>
+                    </TabList>
+                    <TabPanel
+                        className={styles.fields}
+                        name="general"
+                    >
+                        <TextInput
+                            name="label"
+                            label="Question label"
+                            value={formValue.label}
+                            error={fieldError?.label}
+                            onChange={setFieldValue}
+                        />
+                        <TextInput
+                            name="hint"
+                            label="Question hint"
+                            value={formValue.hint}
+                            error={fieldError?.hint}
+                            onChange={setFieldValue}
+                        />
+                        <TextInput
+                            name="name"
+                            label="Question name"
+                            value={formValue.name}
+                            error={fieldError?.name}
+                            onChange={setFieldValue}
+                        />
+                        <PillarSelectInput
+                            name="leafGroup"
+                            projectId={projectId}
+                            questionnaireId={questionnaireId}
+                            value={selectedLeafGroupId}
+                            error={fieldError?.leafGroup}
+                            onChange={setFieldValue}
+                            disabled
+                        />
+                    </TabPanel>
+                    <TabPanel
+                        className={styles.fields}
+                        name="metadata"
+                    >
+                        This is the metadata tab
+                    </TabPanel>
+                </Tabs>
             </div>
             <Checkbox
+                className={styles.checkbox}
                 name="required"
                 label="Make question mandatory"
                 onChange={setFieldValue}
                 value={formValue.required}
             />
-            <Button
-                name={undefined}
-                className={styles.button}
-                onClick={handleQuestionSubmit}
-                disabled={
-                    pristine
-                    || (isDefined(questionId)
-                        ? updateQuestionPending
-                        : createQuestionPending)
-                }
-            >
-                Apply
-            </Button>
+            <Footer
+                actions={(
+                    <Button
+                        name={undefined}
+                        className={styles.button}
+                        onClick={handleQuestionSubmit}
+                        disabled={
+                            pristine
+                        || (isDefined(questionId)
+                            ? updateQuestionPending
+                            : createQuestionPending)
+                        }
+                    >
+                        {isDefined(questionId) ? 'Save' : 'Create'}
+                    </Button>
+                )}
+            />
         </form>
     );
 }

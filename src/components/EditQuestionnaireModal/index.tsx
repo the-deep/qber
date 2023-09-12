@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { isDefined, isNotDefined } from '@togglecorp/fujs';
 import { gql, useMutation, useQuery } from '@apollo/client';
 import {
@@ -32,9 +32,11 @@ import {
     QuestionnaireEnumeratorSkillTypeEnum,
     QuestionnaireDataCollectionMethodTypeEnum,
 } from '#generated/types';
+import PriorityLevelSelectInput from '#components/PriorityLevelSelectInput';
 
 import {
     EnumOptions,
+    EnumEntity,
     enumKeySelector,
     enumLabelSelector,
 } from '#utils/common';
@@ -161,6 +163,11 @@ function EditQuestionnaireModal(props: Props) {
     const alert = useAlert();
 
     const editMode = isDefined(questionnaireId);
+
+    const [
+        priorityLevelOptions,
+        setPriorityLevelOptions,
+    ] = useState<EnumOptions<QuestionnarePriorityLevelTypeEnum> | undefined | null>();
 
     const questionnaireVariables = useMemo(() => {
         if (isNotDefined(projectId) || isNotDefined(questionnaireId)) {
@@ -356,16 +363,6 @@ function EditQuestionnaireModal(props: Props) {
                 autoFocus
             />
             <SelectInput
-                name="priorityLevel"
-                label="Priority Level"
-                onChange={setFieldValue}
-                value={formValue?.priorityLevel}
-                error={fieldError?.priorityLevel}
-                options={priorityLevelOptions as EnumOptions<QuestionnairePriorityLevelTypeEnum>}
-                keySelector={enumKeySelector}
-                labelSelector={enumLabelSelector}
-            />
-            <SelectInput
                 name="enumeratorSkill"
                 label="Enumerator Skill"
                 onChange={setFieldValue}
@@ -388,6 +385,14 @@ function EditQuestionnaireModal(props: Props) {
                 }
                 keySelector={enumKeySelector}
                 labelSelector={enumLabelSelector}
+            />
+            <PriorityLevelSelectInput
+                name="priorityLevel"
+                onChange={setFieldValue}
+                options={priorityLevelOptions}
+                onOptionsChange={setPriorityLevelOptions}
+                value={formValue?.priorityLevel}
+                error={fieldError?.priorityLevel}
             />
             <NumberInput
                 name="requiredDuration"

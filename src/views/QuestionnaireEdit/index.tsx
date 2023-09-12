@@ -695,7 +695,8 @@ export function Component() {
                 {addQuestionPaneShown && (
                     <div className={styles.rightPane}>
                         <Header
-                            headingSize="small"
+                            className={styles.header}
+                            headingSize="extraSmall"
                             heading={isDefined(selectedQuestionType) ? 'Question Editor' : 'Add Question'}
                             actions={(
                                 <QuickActionButton

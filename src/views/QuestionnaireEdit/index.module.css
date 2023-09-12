@@ -26,7 +26,6 @@
             flex-direction: column;
             flex-shrink: 0;
             padding: var(--dui-spacing-large);
-            padding-right: var(--dui-spacing-super-small);
             padding-left: var(--dui-spacing-extra-large);
             width: var(--width-left-pane);
             overflow-y: auto;
