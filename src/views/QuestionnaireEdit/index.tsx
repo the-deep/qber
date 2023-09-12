@@ -51,10 +51,15 @@ import {
     flatten,
 } from '#utils/common';
 import {
+    OrderQuestionGroupMutation,
+    OrderQuestionGroupMutationVariables,
     QuestionnaireQuery,
     QuestionnaireQueryVariables,
+    QuestionGroupVisibilityMutation,
+    QuestionGroupVisibilityMutationVariables,
     QuestionsByGroupQuery,
     QuestionsByGroupQueryVariables,
+    VisibilityActionEnum,
 } from '#generated/types';
 
 import TextQuestionForm from './TextQuestionForm';
@@ -162,7 +167,7 @@ const ORDER_QUESTION_GROUP = gql`
 
 const QUESTION_GROUP_VISIBILITY = gql`
     ${LEAF_GROUPS_FRAGMENT}
-    mutation MyMutation(
+    mutation QuestionGroupVisibility(
         $projectId: ID!,
         $questionnaireId: ID!,
         $groupIds: [ID!]!,
@@ -404,6 +409,7 @@ export function Component() {
                 const transformedQuestionGroups = transformOptionsByCategory(items);
                 const groupOptionsSafe = getNodes(transformedQuestionGroups, []);
                 setOrderedOptions(groupOptionsSafe ?? []);
+                setSelectedGroups(questionGroups.map((item) => item.id));
             },
         },
     );
@@ -430,11 +436,12 @@ export function Component() {
 
     const [
         triggerGroupOrderChange,
-    ] = useMutation(
+    ] = useMutation<OrderQuestionGroupMutation, OrderQuestionGroupMutationVariables>(
         ORDER_QUESTION_GROUP,
         {
             onCompleted: (response) => {
-                const leafGroupsResponse = response.results;
+                const leafGroupsResponse = response?.private
+                    ?.projectScope?.bulkUpdateQuestionnairQuestionGroupsLeafOrder?.results;
                 if (!leafGroupsResponse) {
                     return;
                 }
@@ -449,6 +456,9 @@ export function Component() {
     );
 
     const handleGroupOptionsChange = useCallback((newVal: TocItem[] | undefined) => {
+        if (isNotDefined(projectId) || isNotDefined(questionnaireId)) {
+            return;
+        }
         setOrderedOptions(newVal);
 
         function getIdFromGroups(key: string) {
@@ -467,7 +477,8 @@ export function Component() {
             (item) => (item.leafNode ? [] : item.nodes),
         );
         const listToSend = flattenedNewList.map((g, index) => ({
-            id: getIdFromGroups(g.key),
+            // FIXME: We should not send an empty string here
+            id: getIdFromGroups(g.key) ?? '',
             order: index + 1,
         }));
         triggerGroupOrderChange({
@@ -486,11 +497,14 @@ export function Component() {
 
     const [
         triggerQuestionGroupsVisibility,
-    ] = useMutation(
+    ] = useMutation<QuestionGroupVisibilityMutation, QuestionGroupVisibilityMutationVariables>(
         QUESTION_GROUP_VISIBILITY,
     );
 
     const handleQuestionGroupSelect = useCallback((val: boolean, ids: string[]) => {
+        if (isNotDefined(projectId) || isNotDefined(questionnaireId)) {
+            return;
+        }
         setSelectedGroups((prevValue) => {
             if (val) {
                 return [...prevValue, ...ids];
@@ -502,7 +516,9 @@ export function Component() {
                 projectId,
                 questionnaireId,
                 groupIds: ids,
-                visibility: val ? 'SHOW' : 'HIDE',
+                visibility: val
+                    ? 'SHOW' as VisibilityActionEnum
+                    : 'HIDE' as VisibilityActionEnum,
             },
         });
     }, [

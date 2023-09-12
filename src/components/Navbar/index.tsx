@@ -123,8 +123,11 @@ function Navbar(props: Props) {
                     </NavLink>
                     <NavLink
                         // FIXME: Fix the routing
-                        className={styles.navItem}
-                        to="/"
+                        className={_cs(
+                            styles.navItem,
+                            location.pathname === '/about' && styles.active,
+                        )}
+                        to="/about"
                     >
                         About
                     </NavLink>

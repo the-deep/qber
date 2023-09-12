@@ -89,6 +89,18 @@ const register = myWrapRoute({
     },
 });
 
+const about = myWrapRoute({
+    path: 'about',
+    component: {
+        render: () => import('#views/About'),
+        props: {},
+    },
+    context: {
+        title: 'About',
+        visibility: 'is-authenticated',
+    },
+});
+
 const resetPassword = myWrapRoute({
     path: 'reset-password',
     component: {
@@ -173,6 +185,7 @@ export const wrappedRoutes = {
     home,
     login,
     register,
+    about,
     resetPassword,
     forgotPassword,
     resetPasswordRedirect,

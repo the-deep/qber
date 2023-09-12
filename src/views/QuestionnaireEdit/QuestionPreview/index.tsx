@@ -74,7 +74,6 @@ interface QuestionProps {
     setSelectedQuestionType: React.Dispatch<React.SetStateAction<string | undefined>>;
     projectId: string | undefined;
     setActiveQuestionId: React.Dispatch<React.SetStateAction<string | undefined>>;
-    selectedQuestions: string[] | undefined;
     onSelectedQuestionsChange: (val: boolean, id: string) => void;
     setSelectedLeafGroupId : React.Dispatch<React.SetStateAction<string | undefined>>;
     refetchQuestionList: () => void;
@@ -88,7 +87,6 @@ function QuestionPreview(props: QuestionProps) {
         showAddQuestionPane,
         setSelectedQuestionType,
         setActiveQuestionId,
-        selectedQuestions,
         onSelectedQuestionsChange,
         setSelectedLeafGroupId,
         projectId,
@@ -189,7 +187,7 @@ function QuestionPreview(props: QuestionProps) {
                     { /* TODO: Fix the selection behavior */ }
                     <Checkbox
                         name={question.id}
-                        value={selectedQuestions?.includes(question.id)}
+                        value={!question.isHidden}
                         onChange={onSelectedQuestionsChange}
                     />
                 </>
