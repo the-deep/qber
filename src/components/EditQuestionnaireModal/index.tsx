@@ -28,9 +28,9 @@ import {
     QuestionnaireCreateInput,
     QuestionnaireMetadataQuery,
     QuestionnaireMetadataQueryVariables,
-    QuestionnarePriorityLevelTypeEnum,
-    QuestionnareEnumeratorSkillTypeEnum,
-    QuestionnareDataCollectionMethodTypeEnum,
+    QuestionnairePriorityLevelTypeEnum,
+    QuestionnaireEnumeratorSkillTypeEnum,
+    QuestionnaireDataCollectionMethodTypeEnum,
 } from '#generated/types';
 
 import {
@@ -105,19 +105,19 @@ const QUESTIONNAIRE_DETAIL = gql`
 
 const QUESTIONNAIRE_METADATA = gql`
     query QuestionnaireMetadata {
-        questionnarePriorityLevelTypeOptions: __type(name: "QuestionnarePriorityLevelTypeEnum") {
+        questionnairePriorityLevelTypeOptions: __type(name: "QuestionnairePriorityLevelTypeEnum") {
             enumValues {
                 name
                 description
             }
         }
-        questionnareEnumeratorSkillTypeOptions: __type(name: "QuestionnareEnumeratorSkillTypeEnum") {
+        questionnaireEnumeratorSkillTypeOptions: __type(name: "QuestionnaireEnumeratorSkillTypeEnum") {
             enumValues {
                 name
                 description
             }
         }
-        questionnareDataCollectionMethodTypeOptions: __type(name: "QuestionnareDataCollectionMethodTypeEnum") {
+        questionnaireDataCollectionMethodTypeOptions: __type(name: "QuestionnaireDataCollectionMethodTypeEnum") {
             enumValues {
                 name
                 description
@@ -213,11 +213,12 @@ function EditQuestionnaireModal(props: Props) {
         QUESTIONNAIRE_METADATA,
     );
 
-    const priorityLevelOptions = metadataResponse?.questionnarePriorityLevelTypeOptions?.enumValues;
+    const priorityLevelOptions = metadataResponse
+        ?.questionnairePriorityLevelTypeOptions?.enumValues;
     const enumeratorSkillOptions = metadataResponse
-        ?.questionnareEnumeratorSkillTypeOptions?.enumValues;
+        ?.questionnaireEnumeratorSkillTypeOptions?.enumValues;
     const dataCollectionMethods = metadataResponse
-        ?.questionnareDataCollectionMethodTypeOptions?.enumValues;
+        ?.questionnaireDataCollectionMethodTypeOptions?.enumValues;
 
     const [
         triggerQuestionnaireCreate,
@@ -360,7 +361,7 @@ function EditQuestionnaireModal(props: Props) {
                 onChange={setFieldValue}
                 value={formValue?.priorityLevel}
                 error={fieldError?.priorityLevel}
-                options={priorityLevelOptions as EnumOptions<QuestionnarePriorityLevelTypeEnum>}
+                options={priorityLevelOptions as EnumOptions<QuestionnairePriorityLevelTypeEnum>}
                 keySelector={enumKeySelector}
                 labelSelector={enumLabelSelector}
             />
@@ -370,7 +371,9 @@ function EditQuestionnaireModal(props: Props) {
                 onChange={setFieldValue}
                 value={formValue?.enumeratorSkill}
                 error={fieldError?.enumeratorSkill}
-                options={enumeratorSkillOptions as EnumOptions<QuestionnareEnumeratorSkillTypeEnum>}
+                options={
+                    enumeratorSkillOptions as EnumOptions<QuestionnaireEnumeratorSkillTypeEnum>
+                }
                 keySelector={enumKeySelector}
                 labelSelector={enumLabelSelector}
             />
@@ -381,7 +384,7 @@ function EditQuestionnaireModal(props: Props) {
                 value={formValue?.dataCollectionMethod}
                 error={fieldError?.dataCollectionMethod}
                 options={
-                    dataCollectionMethods as EnumOptions<QuestionnareDataCollectionMethodTypeEnum>
+                    dataCollectionMethods as EnumOptions<QuestionnaireDataCollectionMethodTypeEnum>
                 }
                 keySelector={enumKeySelector}
                 labelSelector={enumLabelSelector}

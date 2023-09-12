@@ -151,7 +151,7 @@ const ORDER_QUESTION_GROUP = gql`
     ){
         private {
             projectScope(pk: $projectId){
-                bulkUpdateQuestionnairQuestionGroupsLeafOrder(
+                bulkUpdateQuestionnaireQuestionGroupsLeafOrder(
                 data: $groupList
                 questionnaireId: $questionnaireId
                 ) {
@@ -441,7 +441,7 @@ export function Component() {
         {
             onCompleted: (response) => {
                 const leafGroupsResponse = response?.private
-                    ?.projectScope?.bulkUpdateQuestionnairQuestionGroupsLeafOrder?.results;
+                    ?.projectScope?.bulkUpdateQuestionnaireQuestionGroupsLeafOrder?.results;
                 if (!leafGroupsResponse) {
                     return;
                 }
