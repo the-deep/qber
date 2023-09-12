@@ -409,6 +409,7 @@ export function Component() {
                 const transformedQuestionGroups = transformOptionsByCategory(items);
                 const groupOptionsSafe = getNodes(transformedQuestionGroups, []);
                 setOrderedOptions(groupOptionsSafe ?? []);
+                setSelectedGroups(questionGroups.map((item) => item.id));
             },
         },
     );
@@ -515,7 +516,6 @@ export function Component() {
                 projectId,
                 questionnaireId,
                 groupIds: ids,
-                // FIXME: Find a way to not cast this type
                 visibility: val
                     ? 'SHOW' as VisibilityActionEnum
                     : 'HIDE' as VisibilityActionEnum,

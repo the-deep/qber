@@ -97,7 +97,7 @@ const about = myWrapRoute({
     },
     context: {
         title: 'About',
-        visibility: 'anything',
+        visibility: 'is-authenticated',
     },
 });
 

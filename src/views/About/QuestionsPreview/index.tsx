@@ -21,22 +21,25 @@ import ImageQuestionPreview from '#components/questionPreviews/ImageQuestionPrev
 import FileQuestionPreview from '#components/questionPreviews/FileQuestionPreview';
 import SelectOneQuestionPreview from '#components/questionPreviews/SelectOneQuestionPreview';
 import SelectMultipleQuestionPreview from '#components/questionPreviews/SelectMultipleQuestionPreview';
+import {
+    type ProjectScope,
+} from '#utils/common';
 
 import styles from './index.module.css';
 
 const QUESTIONS_FROM_BANK = gql`
     query QuestionsFromBank (
         $leafGroupId: ID!,
+        $questionnaireId: ID!,
+        $projectId: ID!,
     ) {
         private {
-            projectScope(pk: "20") {
+            projectScope(pk: $projectId) {
                 questions(filters: {
                     leafGroup: {
                         pk: $leafGroupId
                     }
-                    questionnaire: {
-                        pk: "33"
-                    }
+                    questionnaire: { pk: $questionnaireId }
                 }) {
                     items {
                         id
@@ -59,13 +62,9 @@ const QUESTIONS_FROM_BANK = gql`
     }
 `;
 
-type Question = NonNullable<NonNullable<NonNullable<NonNullable<QuestionsFromBankQuery['private']>['projectScope']>['questions']>['items']>[number];
+type Question = NonNullable<NonNullable<ProjectScope<QuestionsFromBankQuery>['questions']>['items']>[number];
 
 const questionKeySelector = (question: Question) => question.id;
-
-interface Props {
-    id: string;
-}
 
 interface QuestionProps {
     projectId: string;
@@ -159,15 +158,27 @@ function QuestionRenderer(props: QuestionProps) {
     );
 }
 
+interface Props {
+    id: string;
+    questionnaireId: string;
+    projectId: string;
+}
+
 function QuestionsPreview(props: Props) {
     const {
         id,
+        questionnaireId,
+        projectId,
     } = props;
 
     const variables = useMemo(() => ({
         leafGroupId: id,
+        questionnaireId,
+        projectId,
     }), [
         id,
+        questionnaireId,
+        projectId,
     ]);
 
     const {
@@ -182,9 +193,9 @@ function QuestionsPreview(props: Props) {
 
     const questions = questionsResponse?.private?.projectScope?.questions?.items;
     const questionRendererParams = useCallback((_: string, datum: Question) => ({
-        projectId: '20',
+        projectId,
         question: datum,
-    }), []);
+    }), [projectId]);
 
     return (
         <ListView
@@ -193,6 +204,7 @@ function QuestionsPreview(props: Props) {
             keySelector={questionKeySelector}
             renderer={QuestionRenderer}
             rendererParams={questionRendererParams}
+            borderBetweenItem
             errored={false}
             filtered={false}
             pending={questionsPending}

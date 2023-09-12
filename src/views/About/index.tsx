@@ -5,13 +5,14 @@ import {
 import { gql, useQuery } from '@apollo/client';
 import {
     unique,
+    _cs,
     listToGroupList,
 } from '@togglecorp/fujs';
 import {
     ListView,
     Button,
     Header,
-    Heading,
+    Container,
     QuickActionButton,
 } from '@the-deep/deep-ui';
 
@@ -24,11 +25,17 @@ import {
 import QuestionsPreview from './QuestionsPreview';
 import styles from './index.module.css';
 
+const DUMMY_PROJECT_ID = '10';
+const DUMMY_QUESTIONNAIRE_ID = '30';
+
 const ABOUT_FRAMEWORK = gql`
-    query AboutFramework{
+    query AboutFramework(
+        $questionnaireId: ID!,
+        $projectId: ID!,
+    ){
         private {
-            projectScope(pk: "20") {
-                questionnaire(pk: "33") {
+            projectScope(pk: $projectId) {
+                questionnaire(pk: $questionnaireId) {
                     leafGroups {
                         id
                         name
@@ -61,11 +68,13 @@ interface ClickableNodeProps {
     type: 'MATRIX_1D' | 'MATRIX_2D';
     setSelectedLeafGroupIds: React.Dispatch<React.SetStateAction<string[]>>;
     leafNodes?: QuestionGroup[];
+    className?: string;
 }
 
 function ClickableNode(props: ClickableNodeProps) {
     const {
         id,
+        className,
         label,
         setRightPaneShown,
         type,
@@ -94,7 +103,7 @@ function ClickableNode(props: ClickableNodeProps) {
     return (
         <Button
             name={id}
-            className={styles.leaf}
+            className={_cs(styles.leaf, className)}
             spacing="loose"
             onClick={handleNodeItemClick}
         >
@@ -184,17 +193,19 @@ function SubDimensions(props: SubDimensionsProps) {
                 <tr>
                     {index === 0 && (
                         <td
+                            className={styles.cellHeader}
                             rowSpan={subDimensions.length}
                         >
                             {group.category1Display}
                         </td>
                     )}
-                    <td>
+                    <td className={styles.cellHeader}>
                         {group.category2Display}
                     </td>
                     {sectors?.map((sector) => (
-                        <td>
+                        <td className={styles.cell}>
                             <ClickableNode
+                                className={styles.button}
                                 id={sector.category3 ?? ''}
                                 label={sector.category3Display ?? '??'}
                                 setRightPaneShown={setRightPaneShown}
@@ -215,10 +226,19 @@ function SubDimensions(props: SubDimensionsProps) {
 
 // eslint-disable-next-line import/prefer-default-export
 export function Component() {
+    const projectId = DUMMY_PROJECT_ID;
+    const questionnaireId = DUMMY_QUESTIONNAIRE_ID;
+
     const {
         data: frameworkResponse,
     } = useQuery<AboutFrameworkQuery, AboutFrameworkQueryVariables>(
         ABOUT_FRAMEWORK,
+        {
+            variables: {
+                projectId,
+                questionnaireId,
+            },
+        },
     );
 
     const [selectedLeafGroupIds, setSelectedLeafGroupIds] = useState<string[]>([]);
@@ -237,7 +257,6 @@ export function Component() {
         framework,
     ]);
 
-    console.log('label', getLeafNodeLabel('1745'));
     const pillars = useMemo((): (QuestionGroup[] | undefined) => (
         framework?.filter((group) => group.type === 'MATRIX_1D')
     ), [
@@ -286,10 +305,10 @@ export function Component() {
                     )}
                     <table className={styles.twoDTable}>
                         <thead>
-                            <td />
-                            <td />
+                            <td className={styles.header} />
+                            <td className={styles.header} />
                             {uniqueSectorList?.map((sector) => (
-                                <td>
+                                <td className={styles.header}>
                                     {sector.category3Display}
                                 </td>
                             ))}
@@ -320,22 +339,23 @@ export function Component() {
                                     <IoCloseOutline />
                                 </QuickActionButton>
                             )}
+                            heading="Questions"
+                            headingSize="small"
                         />
-                        <div className={styles.questionGroups}>
-                            {selectedLeafGroupIds?.map((leafGroupId) => (
-                                <>
-                                    <Heading
-                                        className={styles.heading}
-                                        size="extraSmall"
-                                    >
-                                        {getLeafNodeLabel(leafGroupId)}
-                                    </Heading>
-                                    <QuestionsPreview
-                                        id={leafGroupId}
-                                    />
-                                </>
-                            ))}
-                        </div>
+                        {selectedLeafGroupIds?.map((leafGroupId) => (
+                            <Container
+                                className={styles.questionsContainer}
+                                heading={getLeafNodeLabel(leafGroupId)}
+                                contentClassName={styles.questionsContent}
+                                headingSize="extraSmall"
+                            >
+                                <QuestionsPreview
+                                    id={leafGroupId}
+                                    questionnaireId={questionnaireId}
+                                    projectId={projectId}
+                                />
+                            </Container>
+                        ))}
                     </div>
                 )}
             </div>

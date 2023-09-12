@@ -1,7 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import {
-    IoAdd,
-} from 'react-icons/io5';
+import { IoAdd } from 'react-icons/io5';
 import {
     isNotDefined,
     _cs,
@@ -273,11 +271,6 @@ function QuestionListRenderer(props: QuestionRendererProps) {
         triggerQuestionsOrderUpdate,
     ]);
 
-    const [
-        selectedQuestions,
-        setSelectedQuestions,
-    ] = useState<string[]>([]);
-
     const handleSelectedQuestionsChange = useCallback((val: boolean, id: string) => {
         triggerQuestionsVisibilityUpdate({
             variables: {
@@ -288,12 +281,6 @@ function QuestionListRenderer(props: QuestionRendererProps) {
                     ? 'SHOW' as VisibilityActionEnum
                     : 'HIDE' as VisibilityActionEnum,
             },
-        });
-        setSelectedQuestions((prevVal: string[]) => {
-            if (val) {
-                return [...prevVal, id];
-            }
-            return prevVal.filter((question) => id !== question);
         });
     }, [
         triggerQuestionsVisibilityUpdate,
@@ -307,7 +294,6 @@ function QuestionListRenderer(props: QuestionRendererProps) {
         setSelectedQuestionType,
         projectId,
         setActiveQuestionId,
-        selectedQuestions,
         onSelectedQuestionsChange: handleSelectedQuestionsChange,
         setSelectedLeafGroupId,
         refetchQuestionList: retriggerQuestionsFetch,
@@ -316,7 +302,6 @@ function QuestionListRenderer(props: QuestionRendererProps) {
         projectId,
         setActiveQuestionId,
         setSelectedQuestionType,
-        selectedQuestions,
         handleSelectedQuestionsChange,
         setSelectedLeafGroupId,
         retriggerQuestionsFetch,

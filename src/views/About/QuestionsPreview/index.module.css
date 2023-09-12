@@ -2,5 +2,5 @@
     display: flex;
     flex-direction: column;
     padding: var(--dui-spacing-medium);
-    gap: var(--dui-spacing-small);
+    gap: var(--dui-spacing-large);
 }

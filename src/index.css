@@ -7,12 +7,13 @@
 
     --dui-color-primary: #5A3070;
     --dui-color-secondary: #EFEDF7;
+    --dui-color-outline: #CAA9DB;
     --dui-color-background-hover-primary-button: #6E4780;
 
     --dui-color-background: #FFF;
     --dui-color-foreground: #F9F9F9;
 
-    --dui-color-foreground-scrollbar: #DAD4F1;
+    --dui-color-foreground-scrollbar: #e0e0e0;
 
     --text-color: #414141;
     --text-color-dark: #00033F;
