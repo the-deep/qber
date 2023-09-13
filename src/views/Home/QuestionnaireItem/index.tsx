@@ -391,16 +391,10 @@ function QuestionnaireItem(props: Props) {
                             Edit questions
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                            name={questionnaireItem.id}
-                            onClick={handleQuestionnaireExport}
-                        >
-                            Export Questionnaire
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
                             name={undefined}
                             onClick={handleQuestionnaireExport}
                         >
-                            Export questionnaire
+                            Export Questionnaire
                         </DropdownMenuItem>
                         <DropdownMenuItem
                             name={undefined}

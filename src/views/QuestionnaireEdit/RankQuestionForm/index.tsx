@@ -442,15 +442,15 @@ function RankQuestionForm(props: Props) {
                             value={formValue}
                             error={fieldError}
                         />
+                        <Checkbox
+                            name="required"
+                            label="Make question mandatory"
+                            onChange={setFieldValue}
+                            value={formValue.required}
+                        />
                     </TabPanel>
                 </Tabs>
             </div>
-            <Checkbox
-                name="required"
-                label="Make question mandatory"
-                onChange={setFieldValue}
-                value={formValue.required}
-            />
             <Footer
                 actions={(
                     <Button
