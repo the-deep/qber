@@ -82,6 +82,8 @@ import QuestionTypeItem, { QuestionType } from './QuestionTypeItem';
 
 import styles from './index.module.css';
 
+export type QuestionTabType = 'general' | 'metadata';
+
 const QUESTIONNAIRE = gql`
     ${LEAF_GROUPS_FRAGMENT}
     query Questionnaire(
@@ -695,7 +697,8 @@ export function Component() {
                 {addQuestionPaneShown && (
                     <div className={styles.rightPane}>
                         <Header
-                            headingSize="small"
+                            className={styles.header}
+                            headingSize="extraSmall"
                             heading={isDefined(selectedQuestionType) ? 'Question Editor' : 'Add Question'}
                             actions={(
                                 <QuickActionButton

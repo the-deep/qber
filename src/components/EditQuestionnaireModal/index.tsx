@@ -5,8 +5,6 @@ import {
     Modal,
     Button,
     TextInput,
-    SelectInput,
-    NumberInput,
     useAlert,
 } from '@the-deep/deep-ui';
 import {
@@ -26,18 +24,8 @@ import {
     QuestionnaireDetailQuery,
     QuestionnaireDetailQueryVariables,
     QuestionnaireCreateInput,
-    QuestionnaireMetadataQuery,
-    QuestionnaireMetadataQueryVariables,
-    QuestionnairePriorityLevelTypeEnum,
-    QuestionnaireEnumeratorSkillTypeEnum,
-    QuestionnaireDataCollectionMethodTypeEnum,
 } from '#generated/types';
-
-import {
-    EnumOptions,
-    enumKeySelector,
-    enumLabelSelector,
-} from '#utils/common';
+import MetaDataInputs from '#components/MetaDataInputs';
 
 import styles from './index.module.css';
 
@@ -98,29 +86,6 @@ const QUESTIONNAIRE_DETAIL = gql`
                     priorityLevel
                     requiredDuration
                 }
-            }
-        }
-    }
-`;
-
-const QUESTIONNAIRE_METADATA = gql`
-    query QuestionnaireMetadata {
-        questionnairePriorityLevelTypeOptions: __type(name: "QuestionnairePriorityLevelTypeEnum") {
-            enumValues {
-                name
-                description
-            }
-        }
-        questionnaireEnumeratorSkillTypeOptions: __type(name: "QuestionnaireEnumeratorSkillTypeEnum") {
-            enumValues {
-                name
-                description
-            }
-        }
-        questionnaireDataCollectionMethodTypeOptions: __type(name: "QuestionnaireDataCollectionMethodTypeEnum") {
-            enumValues {
-                name
-                description
             }
         }
     }
@@ -206,19 +171,6 @@ function EditQuestionnaireModal(props: Props) {
             },
         },
     );
-
-    const {
-        data: metadataResponse,
-    } = useQuery<QuestionnaireMetadataQuery, QuestionnaireMetadataQueryVariables>(
-        QUESTIONNAIRE_METADATA,
-    );
-
-    const priorityLevelOptions = metadataResponse
-        ?.questionnairePriorityLevelTypeOptions?.enumValues;
-    const enumeratorSkillOptions = metadataResponse
-        ?.questionnaireEnumeratorSkillTypeOptions?.enumValues;
-    const dataCollectionMethods = metadataResponse
-        ?.questionnaireDataCollectionMethodTypeOptions?.enumValues;
 
     const [
         triggerQuestionnaireCreate,
@@ -355,46 +307,11 @@ function EditQuestionnaireModal(props: Props) {
                 onChange={setFieldValue}
                 autoFocus
             />
-            <SelectInput
-                name="priorityLevel"
-                label="Priority Level"
+
+            <MetaDataInputs
                 onChange={setFieldValue}
-                value={formValue?.priorityLevel}
-                error={fieldError?.priorityLevel}
-                options={priorityLevelOptions as EnumOptions<QuestionnairePriorityLevelTypeEnum>}
-                keySelector={enumKeySelector}
-                labelSelector={enumLabelSelector}
-            />
-            <SelectInput
-                name="enumeratorSkill"
-                label="Enumerator Skill"
-                onChange={setFieldValue}
-                value={formValue?.enumeratorSkill}
-                error={fieldError?.enumeratorSkill}
-                options={
-                    enumeratorSkillOptions as EnumOptions<QuestionnaireEnumeratorSkillTypeEnum>
-                }
-                keySelector={enumKeySelector}
-                labelSelector={enumLabelSelector}
-            />
-            <SelectInput
-                name="dataCollectionMethod"
-                label="Data Collection Method"
-                onChange={setFieldValue}
-                value={formValue?.dataCollectionMethod}
-                error={fieldError?.dataCollectionMethod}
-                options={
-                    dataCollectionMethods as EnumOptions<QuestionnaireDataCollectionMethodTypeEnum>
-                }
-                keySelector={enumKeySelector}
-                labelSelector={enumLabelSelector}
-            />
-            <NumberInput
-                name="requiredDuration"
-                label="Maximum Duration (in minutes)"
-                onChange={setFieldValue}
-                value={formValue?.requiredDuration}
-                error={fieldError?.requiredDuration}
+                value={formValue}
+                error={fieldError}
             />
         </Modal>
     );

@@ -1,13 +1,24 @@
-import { useCallback, useMemo } from 'react';
+import {
+    useCallback,
+    useMemo,
+    useState,
+} from 'react';
 import {
     isDefined,
     isNotDefined,
+    _cs,
 } from '@togglecorp/fujs';
 import {
-    TextInput,
     Button,
-    useAlert,
     Checkbox,
+    Footer,
+    Tab,
+    TabList,
+    TabPanel,
+    Tabs,
+    TextArea,
+    TextInput,
+    useAlert,
 } from '@the-deep/deep-ui';
 import {
     gql,
@@ -37,11 +48,14 @@ import {
 } from '#generated/types';
 import FileQuestionPreview from '#components/questionPreviews/FileQuestionPreview';
 import PillarSelectInput from '#components/PillarSelectInput';
+import MetaDataInputs from '#components/MetaDataInputs';
 
 import {
     QUESTION_FRAGMENT,
     QUESTION_INFO,
 } from '../queries.ts';
+import { type QuestionTabType } from '..';
+import checkTabErrors from '../utils';
 
 import styles from './index.module.css';
 
@@ -117,6 +131,14 @@ const schema: FormSchema = {
             requiredValidation: requiredStringCondition,
         },
         hint: {},
+        required: {
+            defaultValue: false,
+        },
+        enumeratorSkill: {},
+        dataCollectionMethod: {},
+        priorityLevel: {},
+        requiredDuration: {},
+        constraint: {},
     }),
 };
 
@@ -138,6 +160,11 @@ function FileQuestionForm(props: Props) {
     } = props;
 
     const alert = useAlert();
+
+    const [
+        activeQuestionTab,
+        setActiveQuestionTab,
+    ] = useState<QuestionTabType | undefined>('general');
 
     const initialFormValue: FormType = {
         type: 'FILE' as QuestionTypeEnum,
@@ -185,6 +212,11 @@ function FileQuestionForm(props: Props) {
                     leafGroup: questionResponse?.leafGroupId,
                     hint: questionResponse?.hint,
                     required: questionResponse?.required,
+                    requiredDuration: questionResponse?.requiredDuration,
+                    priorityLevel: questionResponse?.priorityLevel,
+                    dataCollectionMethod: questionResponse?.dataCollectionMethod,
+                    enumeratorSkill: questionResponse?.enumeratorSkill,
+                    constraint: questionResponse?.constraint,
                 });
             },
         },
@@ -297,56 +329,114 @@ function FileQuestionForm(props: Props) {
                 hint={formValue.hint}
             />
             <div className={styles.editSection}>
-                <TextInput
-                    name="label"
-                    label="Question label"
-                    value={formValue.label}
-                    error={fieldError?.label}
-                    onChange={setFieldValue}
-                />
-                <TextInput
-                    name="hint"
-                    label="Question hint"
-                    value={formValue.hint}
-                    error={fieldError?.hint}
-                    onChange={setFieldValue}
-                />
-                <TextInput
-                    name="name"
-                    label="Question name"
-                    value={formValue.name}
-                    error={fieldError?.name}
-                    onChange={setFieldValue}
-                />
-                <PillarSelectInput
-                    name="leafGroup"
-                    projectId={projectId}
-                    questionnaireId={questionnaireId}
-                    value={selectedLeafGroupId}
-                    error={fieldError?.leafGroup}
-                    onChange={setFieldValue}
-                    disabled
-                />
+                <Tabs
+                    value={activeQuestionTab}
+                    onChange={setActiveQuestionTab}
+                    variant="secondary"
+                >
+                    <TabList className={styles.tabs}>
+                        <Tab
+                            activeClassName={styles.active}
+                            className={_cs(
+                                styles.tabItem,
+                                checkTabErrors(formError, 'general') && styles.errored,
+                            )}
+                            name="general"
+                        >
+                            {checkTabErrors(formError, 'general')
+                                ? 'General Information*'
+                                : 'General Information'}
+                        </Tab>
+                        <Tab
+                            activeClassName={styles.active}
+                            className={_cs(
+                                styles.tabItem,
+                                checkTabErrors(formError, 'metadata') && styles.errored,
+                            )}
+                            name="metadata"
+                        >
+                            {checkTabErrors(formError, 'metadata')
+                                ? 'Metadata*'
+                                : 'Metadata'}
+                        </Tab>
+                    </TabList>
+                    <TabPanel
+                        className={styles.fields}
+                        name="general"
+                    >
+                        <TextInput
+                            name="label"
+                            label="Question label"
+                            value={formValue.label}
+                            error={fieldError?.label}
+                            onChange={setFieldValue}
+                        />
+                        <TextInput
+                            name="hint"
+                            label="Question hint"
+                            value={formValue.hint}
+                            error={fieldError?.hint}
+                            onChange={setFieldValue}
+                        />
+                        <TextInput
+                            name="name"
+                            label="Question name"
+                            value={formValue.name}
+                            error={fieldError?.name}
+                            onChange={setFieldValue}
+                        />
+                        <TextArea
+                            name="constraint"
+                            label="Constraint"
+                            value={formValue?.constraint}
+                            error={fieldError?.constraint}
+                            onChange={setFieldValue}
+                        />
+                        <PillarSelectInput
+                            name="leafGroup"
+                            projectId={projectId}
+                            questionnaireId={questionnaireId}
+                            value={selectedLeafGroupId}
+                            error={fieldError?.leafGroup}
+                            onChange={setFieldValue}
+                            disabled
+                        />
+                    </TabPanel>
+                    <TabPanel
+                        className={styles.fields}
+                        name="metadata"
+                    >
+                        <MetaDataInputs
+                            onChange={setFieldValue}
+                            value={formValue}
+                            error={fieldError}
+                        />
+                        <Checkbox
+                            name="required"
+                            label="Make question mandatory"
+                            onChange={setFieldValue}
+                            value={formValue.required}
+                        />
+                    </TabPanel>
+                </Tabs>
             </div>
-            <Checkbox
-                name="required"
-                label="Make question mandatory"
-                onChange={setFieldValue}
-                value={formValue.required}
+            <Footer
+                actions={(
+                    <Button
+                        name={undefined}
+                        className={styles.button}
+                        onClick={handleQuestionSubmit}
+                        disabled={
+                            pristine
+                        || (isDefined(questionId)
+                            ? updateQuestionPending
+                            : createQuestionPending)
+                        }
+                    >
+                        {isDefined(questionId) ? 'Save' : 'Create'}
+                    </Button>
+                )}
             />
-            <Button
-                name={undefined}
-                className={styles.button}
-                onClick={handleQuestionSubmit}
-                disabled={
-                    pristine
-                    || (isDefined(questionId)
-                        ? updateQuestionPending
-                        : createQuestionPending)
-                }
-            >
-                Apply
-            </Button>
         </form>
     );
 }

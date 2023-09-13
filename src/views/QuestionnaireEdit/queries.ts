@@ -12,6 +12,11 @@ export const QUESTION_FRAGMENT = gql`
         isHidden
         leafGroupId
         questionnaireId
+        requiredDuration
+        priorityLevel
+        dataCollectionMethod
+        enumeratorSkill
+        constraint
         choiceCollection {
             id
             name
@@ -41,6 +46,7 @@ export const LEAF_GROUPS_FRAGMENT = gql`
 `;
 
 export const QUESTION_INFO = gql`
+    ${QUESTION_FRAGMENT}
     query QuestionInfo (
         $projectId: ID!,
         $questionId: ID!,
@@ -48,20 +54,7 @@ export const QUESTION_INFO = gql`
         private {
             projectScope(pk: $projectId) {
                 question(pk: $questionId) {
-                    id
-                    label
-                    name
-                    type
-                    hint
-                    leafGroupId
-                    required
-                    questionnaireId
-                    choiceCollection {
-                        id
-                        label
-                        name
-                        questionnaireId
-                    }
+                    ...QuestionResponse
                 }
             }
         }

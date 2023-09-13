@@ -1,4 +1,6 @@
-import { capitalize } from '@togglecorp/fujs';
+import {
+    capitalize,
+} from '@togglecorp/fujs';
 
 // eslint-disable-next-line import/prefer-default-export
 export function flatten<A, K>(

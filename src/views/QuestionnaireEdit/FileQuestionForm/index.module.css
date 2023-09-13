@@ -12,6 +12,36 @@
     .edit-section {
         display: flex;
         flex-direction: column;
-        gap: var(--dui-spacing-medium);
+        gap: var(--dui-spacing-large);
+
+        .tabs {
+            display: flex;
+            --color-background-inactive: #FAFAFA;
+
+            .tab-item {
+                flex-grow: 1;
+                background-color: var(--color-background-inactive);
+
+                &.active {
+                    border-bottom: var(--dui-width-separator-medium) solid var(--dui-color-accent);
+                    background-color: var(--dui-color-secondary);
+                }
+                &.errored {
+                    color: var(--dui-color-negative);
+
+                    &.active {
+                        border-color: var(--dui-color-negative);
+                    }
+                }
+            }
+        }
+        .fields {
+            display: flex;
+            flex-direction: column;
+            gap: var(--dui-spacing-large);
+        }
+    }
+    .button {
+        align-self: flex-end;
     }
 }

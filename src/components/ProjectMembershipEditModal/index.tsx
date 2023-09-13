@@ -26,17 +26,15 @@ import {
     UpdateMembershipMutationVariables,
     ProjectMembershipRoleTypeEnum,
 } from '#generated/types';
+import {
+    EnumOptions,
+    enumKeySelector,
+    enumLabelSelector,
+} from '#utils/common';
 
 import styles from './index.module.css';
 
-type EnumList<T extends string> = {
-    name: T;
-    description: string | null | undefined;
-}[];
-
-type ProjectMembershipRoleOptions = EnumList<ProjectMembershipRoleTypeEnum>;
-
-type ProjectMembershipRoleOption = ProjectMembershipRoleOptions[number];
+type ProjectMembershipRoleOptions = EnumOptions<ProjectMembershipRoleTypeEnum>;
 
 const UPDATE_MEMBERSHIP = gql`
     mutation UpdateMembership(
@@ -80,9 +78,6 @@ const ROLES = gql`
         }
     }
 `;
-
-const roleKeySelector = (r: ProjectMembershipRoleOption) => r.name;
-const roleLabelSelector = (r: ProjectMembershipRoleOption) => r.description || r.name;
 
 export type Member = NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<MembershipsQuery['private']>['projectScope']>['project']>['members']>['items']>[number]>;
 
@@ -260,10 +255,10 @@ function ProjectMembershipEditModal(props: MembershipProps) {
                     className={styles.input}
                     options={(
                         roles?.projectMembershipRoleTypeOptions?.enumValues as
-                        ProjectMembershipRoleOptions | null | undefined
+                        ProjectMembershipRoleOptions
                     )}
-                    keySelector={roleKeySelector}
-                    labelSelector={roleLabelSelector}
+                    keySelector={enumKeySelector}
+                    labelSelector={enumLabelSelector}
                     value={formValue.role}
                     error={fieldError?.role}
                     onChange={setFieldValue}
