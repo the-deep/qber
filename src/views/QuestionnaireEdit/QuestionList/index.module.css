@@ -9,7 +9,6 @@
 
     .item {
         border: none;
-        overflow-y: unset;
 
         .header {
             background-color: transparent;
@@ -31,7 +30,6 @@
 
         .content {
             background-color: var(--dui-color-white);
-            overflow-y: unset;
         }
 
         &.first {
