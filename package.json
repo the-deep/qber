@@ -17,7 +17,8 @@
         "lint:css": "stylelint ./src/**/*.css",
         "lint:unused": "unimported",
         "test": "vitest",
-        "test:coverage": "vitest run --coverage"
+        "test:coverage": "vitest run --coverage",
+        "postinstall": "patch-package"
     },
     "dependencies": {
         "@apollo/client": "^3.7.15",
@@ -75,7 +76,7 @@
         "vite": "^4.3.2",
         "vite-plugin-checker": "^0.6.0",
         "vite-plugin-compression2": "^0.9.1",
-        "vite-plugin-webfont-dl": "^3.7.4",
+        "vite-plugin-webfont-dl": "^3.7.6",
         "vite-tsconfig-paths": "^4.2.0",
         "vitest": "^0.31.0"
     }

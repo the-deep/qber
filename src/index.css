@@ -40,7 +40,7 @@
     text-rendering: optimizeLegibility;
     line-height: 1.5;
     color: var(--text-color);
-    font-family: 'Source Sans 3', sans-serif;
+    font-family: 'Source Sans Pro', sans-serif;
     font-weight: var(--font-weight-medium);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
