@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite';
 import tsconfigPaths from 'vite-tsconfig-paths';
-import webfontDownload from 'vite-plugin-webfont-dl';
 import reactSwc from '@vitejs/plugin-react-swc';
 import { execSync } from 'child_process';
 import { compression } from 'vite-plugin-compression2';
@@ -30,7 +29,6 @@ export default defineConfig(({ mode }) => {
             }) : undefined,
             reactSwc(),
             tsconfigPaths(),
-            webfontDownload(),
             validateEnv(envConfig),
             isProd ? compression() : undefined,
         ],
