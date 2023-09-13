@@ -644,6 +644,7 @@ export function Component() {
                 <Container
                     className={styles.leftPane}
                     heading="Select Questions"
+                    headingSize="small"
                     contentClassName={styles.leftContent}
                 >
                     <TocList
@@ -651,12 +652,12 @@ export function Component() {
                         onOrderedOptionsChange={handleGroupOptionsChange}
                         onSelectedGroupsChange={handleQuestionGroupSelect}
                         selectedGroups={selectedGroups}
-                        // onActiveTabChange={setActiveGroupTab}
                     />
                 </Container>
                 <div className={styles.content}>
                     <Header
                         className={styles.header}
+                        headingSize="small"
                         heading="My Questionnaire"
                     />
                     <Tabs
@@ -676,6 +677,7 @@ export function Component() {
                             pending={false}
                         />
                         <QuestionList
+                            className={styles.questionList}
                             data={tabQuestions}
                             projectId={projectId}
                             selectedGroups={selectedGroups}
@@ -693,7 +695,7 @@ export function Component() {
                 {addQuestionPaneShown && (
                     <div className={styles.rightPane}>
                         <Header
-                            headingSize="extraSmall"
+                            headingSize="small"
                             heading={isDefined(selectedQuestionType) ? 'Question Editor' : 'Add Question'}
                             actions={(
                                 <QuickActionButton
