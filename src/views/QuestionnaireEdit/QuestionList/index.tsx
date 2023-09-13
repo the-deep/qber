@@ -82,7 +82,6 @@ function QuestionListRenderer(props: QuestionRendererProps) {
             {item.leafNode
                 ? (
                     <LeafNode
-                        className={styles.questionList}
                         projectId={projectId}
                         questionnaireId={questionnaireId}
                         leafGroupId={item.id}

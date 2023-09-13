@@ -28,10 +28,10 @@
     --padding-medium: 2em;
 
     /* font-weights */
-    --font-weight-light: 300;
-    --font-weight-medium: 400;
-    --font-weight-bold: 700;
-    --font-weight-black: 900;
+    --dui-font-weight-light: 300;
+    --dui-font-weight-medium: 400;
+    --dui-font-weight-bold: 700;
+    --dui-font-weight-black: 900;
 
     /* overriding deep-ui variables */
     --dui-color-accent: #5A3070;
@@ -41,7 +41,7 @@
     line-height: 1.5;
     color: var(--text-color);
     font-family: 'Source Sans 3', sans-serif;
-    font-weight: var(--font-weight-medium);
+    font-weight: var(--dui-font-weight-medium);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 
