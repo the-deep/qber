@@ -321,6 +321,7 @@ function QuestionListRenderer(props: QuestionRendererProps) {
             headingClassName={styles.heading}
             headerClassName={styles.header}
             contentClassName={styles.content}
+            headingSectionClassName={styles.headingSection}
             headerActionsContainerClassName={styles.headerActions}
             headerActions={item.leafNode && (
                 <QuickActionButton
@@ -391,11 +392,13 @@ interface Props{
     addQuestionPaneShown: boolean;
     selectedGroups: string[];
     setSelectedLeafGroupId: React.Dispatch<React.SetStateAction<string | undefined>>;
+    className?: string;
 }
 
 function QuestionList(props: Props) {
     const {
         data,
+        className,
         selectedGroups,
         onEditQuestionClick,
         projectId,
@@ -476,7 +479,7 @@ function QuestionList(props: Props) {
 
     return (
         <ListView
-            className={styles.list}
+            className={_cs(className, styles.list)}
             data={finalNodes}
             keySelector={questionListKeySelector}
             rendererParams={questionListRendererParams}

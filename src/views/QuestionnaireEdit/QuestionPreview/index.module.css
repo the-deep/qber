@@ -4,6 +4,7 @@
     padding: var(--dui-spacing-extra-large);
     padding-left: var(--dui-spacing-medium);
     gap: var(--dui-spacing-large);
+    background-color: var(--dui-color-background);
 
     .drag-icon {
         > path {
