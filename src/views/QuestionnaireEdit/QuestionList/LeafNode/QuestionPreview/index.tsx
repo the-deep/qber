@@ -42,7 +42,7 @@ import {
 
 import {
     QUESTION_FRAGMENT,
-} from '../queries';
+} from '#views/QuestionnaireEdit/queries';
 
 import styles from './index.module.css';
 
