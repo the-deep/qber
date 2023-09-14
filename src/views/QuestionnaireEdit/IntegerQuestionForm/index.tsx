@@ -138,7 +138,9 @@ const schema: FormSchema = {
         dataCollectionMethod: {},
         priorityLevel: {},
         requiredDuration: {},
-        constraint: {},
+        constraint: {
+            defaultValue: '',
+        },
     }),
 };
 
