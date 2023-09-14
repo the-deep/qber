@@ -293,6 +293,7 @@ export function Component() {
                                     name={undefined}
                                     icons={<IoAdd />}
                                     onClick={showQuestionnaireModal}
+                                    disabled
                                 >
                                     Create Questionnaire
                                 </Button>

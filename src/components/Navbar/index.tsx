@@ -146,6 +146,7 @@ function Navbar(props: Props) {
                             // FIXME: Fix routes
                             className={styles.dropDownMenuItem}
                             href="#"
+                            disabled
                         >
                             Profile
                         </DropdownMenuItem>
