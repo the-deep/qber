@@ -29,6 +29,7 @@ import {
     useQuery,
     useMutation,
 } from '@apollo/client';
+import { getOperationName } from 'apollo-link';
 import {
     Container,
     Header,
@@ -51,14 +52,16 @@ import {
     flatten,
 } from '#utils/common';
 import {
+    QUESTIONS_FOR_LEAF_GROUP,
+} from '#views/QuestionnaireEdit/QuestionList/LeafNode/queries';
+import { apolloClient } from '#configs/apollo';
+import {
     OrderQuestionGroupMutation,
     OrderQuestionGroupMutationVariables,
     QuestionnaireQuery,
     QuestionnaireQueryVariables,
     QuestionGroupVisibilityMutation,
     QuestionGroupVisibilityMutationVariables,
-    QuestionsByGroupQuery,
-    QuestionsByGroupQueryVariables,
     VisibilityActionEnum,
 } from '#generated/types';
 
@@ -75,7 +78,6 @@ import SelectMultipleQuestionForm from './SelectMultipleQuestionForm';
 
 import QuestionList from './QuestionList';
 import {
-    QUESTION_FRAGMENT,
     LEAF_GROUPS_FRAGMENT,
 } from './queries';
 import QuestionTypeItem, { QuestionType } from './QuestionTypeItem';
@@ -102,41 +104,6 @@ const QUESTIONNAIRE = gql`
                     title
                     leafGroups {
                         ...LeafGroups
-                    }
-                }
-            }
-        }
-    }
-`;
-
-const QUESTIONS_BY_GROUP = gql`
-    ${QUESTION_FRAGMENT}
-    query QuestionsByGroup(
-        $projectId: ID!,
-        $questionnaireId: ID!,
-        $leafGroupId: ID!,
-    ) {
-        private {
-            projectScope(pk: $projectId) {
-                id
-                questions(
-                    filters: {
-                        questionnaire: {
-                            pk: $questionnaireId,
-                        },
-                        leafGroup: {
-                            pk: $leafGroupId,
-                        },
-                    }
-                    order: {
-                        createdAt: ASC
-                    }
-                ) {
-                    count
-                    limit
-                    offset
-                    items {
-                        ...QuestionResponse
                     }
                 }
             }
@@ -536,40 +503,16 @@ export function Component() {
 
     const [activeLeafGroupId, setActiveLeafGroupId] = useState<string | undefined>();
 
-    const questionsVariables = useMemo(() => {
-        if (isNotDefined(projectId)
-            || isNotDefined(questionnaireId)
-            || isNotDefined(activeLeafGroupId)) {
-            return undefined;
-        }
-
-        return ({
-            projectId,
-            questionnaireId,
-            leafGroupId: activeLeafGroupId,
-        });
-    }, [
-        projectId,
-        questionnaireId,
-        activeLeafGroupId,
-    ]);
-
-    const {
-        refetch: retriggerQuestions,
-    } = useQuery<QuestionsByGroupQuery, QuestionsByGroupQueryVariables>(
-        QUESTIONS_BY_GROUP,
-        {
-            skip: isNotDefined(questionsVariables),
-            variables: questionsVariables,
-        },
-    );
-
     const handleQuestionCreateSuccess = useCallback(() => {
         hideAddQuestionPane();
-        retriggerQuestions();
+        setSelectedQuestionType(undefined);
+        apolloClient.refetchQueries({
+            include: [
+                getOperationName(QUESTIONS_FOR_LEAF_GROUP),
+            ].filter(isDefined),
+        });
     }, [
         hideAddQuestionPane,
-        retriggerQuestions,
     ]);
 
     const questionTypeRendererParams = useCallback((key: string, data: QuestionType) => ({
@@ -645,8 +588,8 @@ export function Component() {
             <div className={styles.pageContent}>
                 <Container
                     className={styles.leftPane}
-                    heading="Select Questions"
-                    headingSize="small"
+                    heading="Adapt Questionnaire structure and content"
+                    headingSize="extraSmall"
                     contentClassName={styles.leftContent}
                 >
                     <TocList
@@ -659,7 +602,7 @@ export function Component() {
                 <div className={styles.content}>
                     <Header
                         className={styles.header}
-                        headingSize="small"
+                        headingSize="extraSmall"
                         heading="My Questionnaire"
                     />
                     <Tabs

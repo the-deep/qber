@@ -96,9 +96,10 @@ function SelectMultipleQuestionPreview(props: Props) {
     return (
         <div className={_cs(styles.preview, className)}>
             <TextOutput
-                value={label ?? 'Title'}
+                label={label ?? 'Title'}
                 description={hint ?? 'Choose One'}
                 spacing="none"
+                hideLabelColon
                 block
             />
             <Element

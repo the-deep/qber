@@ -1,0 +1,8 @@
+.options {
+    display: flex;
+    gap: var(--dui-spacing-medium);
+
+    .input {
+        flex-grow: 1;
+    }
+}

@@ -46,7 +46,6 @@ import {
     QuestionUpdateInput,
     QuestionTypeEnum,
 } from '#generated/types';
-import SelectOneQuestionPreview from '#components/questionPreviews/SelectOneQuestionPreview';
 import PillarSelectInput from '#components/PillarSelectInput';
 import ChoiceCollectionSelectInput, {
     type ChoiceCollectionType,
@@ -138,7 +137,9 @@ const schema: FormSchema = {
             required: true,
             requiredValidation: requiredStringCondition,
         },
-        hint: {},
+        hint: {
+            defaultValue: '',
+        },
         required: {
             defaultValue: false,
         },
@@ -350,13 +351,6 @@ function SelectOneQuestionForm(props: Props) {
 
     return (
         <form className={styles.question}>
-            <SelectOneQuestionPreview
-                className={styles.preview}
-                label={formValue.label}
-                hint={formValue.hint}
-                choiceCollectionId={formValue?.choiceCollection}
-                projectId={projectId}
-            />
             <div className={styles.editSection}>
                 <Tabs
                     value={activeQuestionTab}
@@ -373,8 +367,8 @@ function SelectOneQuestionForm(props: Props) {
                             name="general"
                         >
                             {checkTabErrors(formError, 'general')
-                                ? 'General Information*'
-                                : 'General Information'}
+                                ? 'Question Settings*'
+                                : 'Question Settings'}
                         </Tab>
                         <Tab
                             activeClassName={styles.active}
@@ -395,7 +389,7 @@ function SelectOneQuestionForm(props: Props) {
                     >
                         <TextInput
                             name="label"
-                            label="Label"
+                            label="Question Label"
                             value={formValue.label}
                             error={fieldError?.label}
                             onChange={setFieldValue}
@@ -416,7 +410,7 @@ function SelectOneQuestionForm(props: Props) {
                         />
                         <TextArea
                             name="constraint"
-                            label="Constraint"
+                            label="Conditionality"
                             value={formValue?.constraint}
                             error={fieldError?.constraint}
                             onChange={setFieldValue}
@@ -441,6 +435,12 @@ function SelectOneQuestionForm(props: Props) {
                             onChange={setFieldValue}
                             disabled
                         />
+                        <Checkbox
+                            name="required"
+                            label="Make question mandatory"
+                            onChange={setFieldValue}
+                            value={formValue.required}
+                        />
                     </TabPanel>
                     <TabPanel
                         className={styles.fields}
@@ -450,12 +450,6 @@ function SelectOneQuestionForm(props: Props) {
                             onChange={setFieldValue}
                             value={formValue}
                             error={fieldError}
-                        />
-                        <Checkbox
-                            name="required"
-                            label="Make question mandatory"
-                            onChange={setFieldValue}
-                            value={formValue.required}
                         />
                     </TabPanel>
                 </Tabs>

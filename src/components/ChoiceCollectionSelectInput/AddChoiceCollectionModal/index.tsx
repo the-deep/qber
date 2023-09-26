@@ -90,21 +90,21 @@ const EDIT_OPTIONS = gql`
                 updateQuestionChoiceCollection(
                     data: $input,
                     id: $choiceCollectionId,
-                    ) {
-                        ok
-                        result {
-                            id
-                            name
-                            questionnaireId
-                            label
-                            choices {
-                                clientId
-                                id
-                                label
-                                name
-                            }
-                        }
+                ) {
+                    ok
                     errors
+                    result {
+                        id
+                        name
+                        questionnaireId
+                        label
+                        choices {
+                            clientId
+                            id
+                            label
+                            name
+                        }
+                    }
                 }
             }
         }
@@ -202,8 +202,7 @@ const schema: FormSchema = {
 interface Props {
     choiceCollectionId?: string;
     onClose: () => void;
-    onSuccess: () => void;
-    option?: ChoiceCollectionType;
+    onSuccess: (newChoice: ChoiceCollectionType) => void;
     projectId: string;
     questionnaire: string;
 }
@@ -213,7 +212,6 @@ function AddChoiceCollectionModal(props: Props) {
         choiceCollectionId,
         onClose,
         onSuccess,
-        option,
         projectId,
         questionnaire,
     } = props;
@@ -223,10 +221,9 @@ function AddChoiceCollectionModal(props: Props) {
     const editMode = isDefined(choiceCollectionId);
 
     const initialFormValue: FormType = useMemo(() => (
-        option ?? { questionnaire }
+        { questionnaire }
     ), [
         questionnaire,
-        option,
     ]);
 
     const {
@@ -290,6 +287,7 @@ function AddChoiceCollectionModal(props: Props) {
             },
         },
     );
+
     const [
         triggerOptionCreate,
         { loading: optionCreatePending },
@@ -302,23 +300,23 @@ function AddChoiceCollectionModal(props: Props) {
                 if (!response) {
                     return;
                 }
-                if (response.ok) {
-                    onSuccess();
+                if (response.ok && response.result) {
+                    onSuccess(response.result);
                     onClose();
                     alert.show(
-                        'Options Added successfully.',
+                        'Options added successfully.',
                         { variant: 'success' },
                     );
                 } else {
                     alert.show(
-                        'Options Failed to Add.',
+                        'Failed to add options.',
                         { variant: 'error' },
                     );
                 }
             },
             onError: () => {
                 alert.show(
-                    'Failed to Add Options',
+                    'Failed to add options',
                     { variant: 'error' },
                 );
             },
@@ -337,12 +335,8 @@ function AddChoiceCollectionModal(props: Props) {
                 if (!response) {
                     return;
                 }
-                if (response.ok) {
-                    setValue({
-                        name: response.result?.name,
-                        label: response.result?.label,
-                    });
-                    onSuccess();
+                if (response.ok && response.result) {
+                    onSuccess(response.result);
                     onClose();
                     alert.show(
                         'Options updated successfully.',
@@ -350,14 +344,14 @@ function AddChoiceCollectionModal(props: Props) {
                     );
                 } else {
                     alert.show(
-                        'Failed to update Options',
+                        'Failed to update options',
                         { variant: 'error' },
                     );
                 }
             },
             onError: () => {
                 alert.show(
-                    'Failed to update Options',
+                    'Failed to update options',
                     { variant: 'error' },
                 );
             },
@@ -428,7 +422,7 @@ function AddChoiceCollectionModal(props: Props) {
             headingSize="extraSmall"
             headingDescription={formValue?.label}
             freeHeight
-            size="small"
+            size="medium"
             footerActions={(
                 <Button
                     name={undefined}
@@ -447,14 +441,17 @@ function AddChoiceCollectionModal(props: Props) {
                     <TextInput
                         name="label"
                         label="Label"
+                        className={styles.input}
                         placeholder="Enter Title"
                         value={formValue?.label}
                         error={fieldError?.label}
                         onChange={setFieldValue}
+                        autoFocus
                     />
                     <TextInput
                         name="name"
                         label="Name"
+                        className={styles.input}
                         placeholder="Enter Name"
                         value={formValue?.name}
                         error={fieldError?.name}
@@ -466,7 +463,7 @@ function AddChoiceCollectionModal(props: Props) {
                     headingSize="extraSmall"
                     withoutExternalPadding
                     className={styles.modalContent}
-                    headerActions={(
+                    footerIcons={(
                         <Button
                             name={undefined}
                             onClick={handleAddCustomActivity}

@@ -7,7 +7,6 @@ import {
     TextInput,
     Button,
     useAlert,
-    Checkbox,
 } from '@the-deep/deep-ui';
 import {
     gql,
@@ -35,7 +34,6 @@ import {
     QuestionUpdateInput,
     QuestionTypeEnum,
 } from '#generated/types';
-import NoteQuestionPreview from '#components/questionPreviews/NoteQuestionPreview';
 import PillarSelectInput from '#components/PillarSelectInput';
 
 import {
@@ -116,9 +114,6 @@ const schema: FormSchema = {
             required: true,
             requiredValidation: requiredStringCondition,
         },
-        required: {
-            defaultValue: false,
-        },
     }),
 };
 
@@ -186,7 +181,6 @@ function NoteQuestionForm(props: Props) {
                     label: questionResponse?.label,
                     leafGroup: questionResponse?.leafGroupId,
                     hint: questionResponse?.hint,
-                    required: questionResponse?.required,
                 });
             },
         },
@@ -293,10 +287,6 @@ function NoteQuestionForm(props: Props) {
 
     return (
         <form className={styles.question}>
-            <NoteQuestionPreview
-                className={styles.preview}
-                label={formValue.label}
-            />
             <div className={styles.editSection}>
                 <TextInput
                     name="label"
@@ -322,12 +312,6 @@ function NoteQuestionForm(props: Props) {
                     disabled
                 />
             </div>
-            <Checkbox
-                name="required"
-                label="Make question mandatory"
-                onChange={setFieldValue}
-                value={formValue.required}
-            />
             <Button
                 name={undefined}
                 className={styles.button}

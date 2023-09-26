@@ -46,7 +46,6 @@ import {
     QuestionUpdateInput,
     QuestionTypeEnum,
 } from '#generated/types';
-import RankQuestionPreview from '#components/questionPreviews/RankQuestionPreview';
 import PillarSelectInput from '#components/PillarSelectInput';
 import ChoiceCollectionSelectInput, {
     type ChoiceCollectionType,
@@ -138,7 +137,9 @@ const schema: FormSchema = {
             required: true,
             requiredValidation: requiredStringCondition,
         },
-        hint: {},
+        hint: {
+            defaultValue: '',
+        },
         required: {
             defaultValue: false,
         },
@@ -343,13 +344,6 @@ function RankQuestionForm(props: Props) {
 
     return (
         <form className={styles.question}>
-            <RankQuestionPreview
-                className={styles.preview}
-                label={formValue.label}
-                hint={formValue.hint}
-                projectId={projectId}
-                choiceCollectionId={formValue.choiceCollection}
-            />
             <div className={styles.editSection}>
                 <Tabs
                     value={activeQuestionTab}
@@ -366,8 +360,8 @@ function RankQuestionForm(props: Props) {
                             name="general"
                         >
                             {checkTabErrors(formError, 'general')
-                                ? 'General Information*'
-                                : 'General Information'}
+                                ? 'Question Settings*'
+                                : 'Question Settings'}
                         </Tab>
                         <Tab
                             activeClassName={styles.active}
@@ -409,7 +403,7 @@ function RankQuestionForm(props: Props) {
                         />
                         <TextArea
                             name="constraint"
-                            label="Constraint"
+                            label="Conditionality"
                             value={formValue?.constraint}
                             error={fieldError?.constraint}
                             onChange={setFieldValue}
@@ -434,6 +428,12 @@ function RankQuestionForm(props: Props) {
                             onChange={setFieldValue}
                             disabled
                         />
+                        <Checkbox
+                            name="required"
+                            label="Make question mandatory"
+                            onChange={setFieldValue}
+                            value={formValue.required}
+                        />
                     </TabPanel>
                     <TabPanel
                         className={styles.fields}
@@ -443,12 +443,6 @@ function RankQuestionForm(props: Props) {
                             onChange={setFieldValue}
                             value={formValue}
                             error={fieldError}
-                        />
-                        <Checkbox
-                            name="required"
-                            label="Make question mandatory"
-                            onChange={setFieldValue}
-                            value={formValue.required}
                         />
                     </TabPanel>
                 </Tabs>

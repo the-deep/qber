@@ -3,8 +3,39 @@
     background-color: var(--dui-color-white);
     padding: var(--dui-spacing-large);
 
-    .heading {
+    .item{
         width: 100%;
+
+        .content {
+            display: flex;
+            flex-direction: column;
+            gap: var(--dui-spacing-large);
+        }
+        .metadata {
+            display: flex;
+            gap: var(--dui-spacing-super-large);
+
+            .metadatum {
+                color: var(--dui-color-text-description);
+                font-family: var(--dui-font-family-monospace);
+                font-size: var(--dui-font-size-medium);
+
+                .value {
+                    font-weight: var(--dui-font-weight-medium);
+                }
+            }
+            .tag {
+                display: flex;
+                justify-content: center;
+                border-radius: 0.9rem;
+                background: var(--dui-color-secondary);
+                padding: var(--dui-spacing-small) var(--dui-spacing-medium);
+                width: fit-content;
+                text-align: center;
+                color: var(--dui-color-primary);
+                font-weight: var(--dui-font-weight-medium);
+            }
+        }
     }
 }
 .modal-body{

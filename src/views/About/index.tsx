@@ -23,6 +23,7 @@ import {
 } from '#generated/types';
 
 import QuestionsPreview from './QuestionsPreview';
+import IntroText from './IntroText';
 import styles from './index.module.css';
 
 const DUMMY_PROJECT_ID = '10';
@@ -113,6 +114,7 @@ function ClickableNode(props: ClickableNodeProps) {
 }
 
 const subPillarKeySelector = (group: QuestionGroup) => group.id;
+
 interface PillarsProps {
     pillars: QuestionGroup[];
     setRightPaneShown: React.Dispatch<React.SetStateAction<boolean>>;
@@ -296,6 +298,7 @@ export function Component() {
             <Navbar />
             <div className={styles.content}>
                 <div className={styles.viz}>
+                    <IntroText />
                     {pillars && (
                         <Pillars
                             pillars={pillars}

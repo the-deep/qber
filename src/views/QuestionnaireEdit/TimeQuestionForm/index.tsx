@@ -46,7 +46,6 @@ import {
     QuestionUpdateInput,
     QuestionTypeEnum,
 } from '#generated/types';
-import TimeQuestionPreview from '#components/questionPreviews/TimeQuestionPreview';
 import PillarSelectInput from '#components/PillarSelectInput';
 import MetaDataInputs from '#components/MetaDataInputs';
 
@@ -131,7 +130,9 @@ const schema: FormSchema = {
             required: true,
             requiredValidation: requiredStringCondition,
         },
-        hint: {},
+        hint: {
+            defaultValue: '',
+        },
         required: {
             defaultValue: false,
         },
@@ -326,11 +327,6 @@ function TimeQuestionForm(props: Props) {
 
     return (
         <form className={styles.question}>
-            <TimeQuestionPreview
-                className={styles.preview}
-                label={formValue.label}
-                hint={formValue.hint}
-            />
             <div className={styles.editSection}>
                 <Tabs
                     value={activeQuestionTab}
@@ -347,8 +343,8 @@ function TimeQuestionForm(props: Props) {
                             name="general"
                         >
                             {checkTabErrors(formError, 'general')
-                                ? 'General Information*'
-                                : 'General Information'}
+                                ? 'Question Settings*'
+                                : 'Question Settings'}
                         </Tab>
                         <Tab
                             activeClassName={styles.active}
@@ -390,7 +386,7 @@ function TimeQuestionForm(props: Props) {
                         />
                         <TextArea
                             name="constraint"
-                            label="Constraint"
+                            label="Conditionality"
                             value={formValue?.constraint}
                             error={fieldError?.constraint}
                             onChange={setFieldValue}
@@ -404,6 +400,12 @@ function TimeQuestionForm(props: Props) {
                             onChange={setFieldValue}
                             disabled
                         />
+                        <Checkbox
+                            name="required"
+                            label="Make question mandatory"
+                            onChange={setFieldValue}
+                            value={formValue.required}
+                        />
                     </TabPanel>
                     <TabPanel
                         className={styles.fields}
@@ -413,12 +415,6 @@ function TimeQuestionForm(props: Props) {
                             onChange={setFieldValue}
                             value={formValue}
                             error={fieldError}
-                        />
-                        <Checkbox
-                            name="required"
-                            label="Make question mandatory"
-                            onChange={setFieldValue}
-                            value={formValue.required}
                         />
                     </TabPanel>
                 </Tabs>

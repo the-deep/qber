@@ -98,9 +98,10 @@ function RankQuestionPreview(props: Props) {
     return (
         <div className={_cs(styles.preview, className)}>
             <TextOutput
-                value={label ?? 'Enter Question Label'}
+                label={label ?? 'Enter Question Label'}
                 description={hint ?? 'Enter hint'}
                 spacing="none"
+                hideLabelColon
                 block
             />
             <Element

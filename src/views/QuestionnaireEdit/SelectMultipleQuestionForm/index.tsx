@@ -46,7 +46,6 @@ import {
     QuestionUpdateInput,
     QuestionTypeEnum,
 } from '#generated/types';
-import SelectMultipleQuestionPreview from '#components/questionPreviews/SelectMultipleQuestionPreview';
 import PillarSelectInput from '#components/PillarSelectInput';
 import ChoiceCollectionSelectInput, {
     type ChoiceCollectionType,
@@ -138,7 +137,9 @@ const schema: FormSchema = {
             required: true,
             requiredValidation: requiredStringCondition,
         },
-        hint: {},
+        hint: {
+            defaultValue: '',
+        },
         required: {
             defaultValue: false,
         },
@@ -350,13 +351,6 @@ function SelectMultipleQuestionForm(props: Props) {
 
     return (
         <form className={styles.question}>
-            <SelectMultipleQuestionPreview
-                className={styles.preview}
-                label={formValue.label}
-                hint={formValue.hint}
-                choiceCollectionId={formValue?.choiceCollection}
-                projectId={projectId}
-            />
             <div className={styles.editSection}>
                 <Tabs
                     value={activeQuestionTab}
@@ -373,8 +367,8 @@ function SelectMultipleQuestionForm(props: Props) {
                             name="general"
                         >
                             {checkTabErrors(formError, 'general')
-                                ? 'General Information*'
-                                : 'General Information'}
+                                ? 'Question Settings*'
+                                : 'Question Settings'}
                         </Tab>
                         <Tab
                             activeClassName={styles.active}
@@ -416,7 +410,7 @@ function SelectMultipleQuestionForm(props: Props) {
                         />
                         <TextArea
                             name="constraint"
-                            label="Constraint"
+                            label="Conditionality"
                             value={formValue?.constraint}
                             error={fieldError?.constraint}
                             onChange={setFieldValue}

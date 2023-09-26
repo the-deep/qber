@@ -1,4 +1,8 @@
-import { useMemo, useState } from 'react';
+import {
+    useMemo,
+    useState,
+    useCallback,
+} from 'react';
 import { gql, useQuery } from '@apollo/client';
 import {
     QuickActionButton,
@@ -9,11 +13,12 @@ import {
 import { IoAdd, IoPencil } from 'react-icons/io5';
 import { isNotDefined, isDefined } from '@togglecorp/fujs';
 
-import AddChoiceCollectionModal from '#components/AddChoiceCollectionModal';
 import {
     ChoiceCollectionsQuery,
     ChoiceCollectionsQueryVariables,
 } from '#generated/types';
+
+import AddChoiceCollectionModal from './AddChoiceCollectionModal';
 
 const CHOICE_COLLECTIONS = gql`
     query ChoiceCollections(
@@ -84,6 +89,7 @@ function ChoiceCollectionSelectInput<
         projectId,
         questionnaireId,
         value,
+        name,
         ...otherProps
     } = props;
 
@@ -123,7 +129,6 @@ function ChoiceCollectionSelectInput<
     const {
         data: choiceCollectionsResponse,
         loading: choiceCollectionLoading,
-        refetch: retriggerCollectionResponse,
     } = useQuery<
         ChoiceCollectionsQuery,
         ChoiceCollectionsQueryVariables
@@ -132,6 +137,22 @@ function ChoiceCollectionSelectInput<
         variables: optionsVariables,
     });
 
+    const handleChoiceAddSuccess = useCallback((newChoice: ChoiceCollectionType) => {
+        otherProps?.onChange(newChoice.id, name);
+
+        if (otherProps?.onOptionsChange) {
+            otherProps?.onOptionsChange((oldOptions) => (
+                [
+                    ...(oldOptions ?? []),
+                    newChoice,
+                ]
+            ));
+        }
+    }, [
+        name,
+        otherProps,
+    ]);
+
     const searchOptions = choiceCollectionsResponse?.private.projectScope?.choiceCollections.items;
 
     return (
@@ -139,6 +160,7 @@ function ChoiceCollectionSelectInput<
             <SearchSelectInput
                 // eslint-disable-next-line react/jsx-props-no-spreading
                 {...otherProps}
+                name={name}
                 value={value}
                 searchOptions={searchOptions}
                 keySelector={choiceCollectionKeySelector}
@@ -177,7 +199,7 @@ function ChoiceCollectionSelectInput<
                     projectId={projectId}
                     questionnaire={questionnaireId}
                     choiceCollectionId={value}
-                    onSuccess={retriggerCollectionResponse}
+                    onSuccess={handleChoiceAddSuccess}
                 />
             )}
             {addOptionsModalShown && (
@@ -185,7 +207,7 @@ function ChoiceCollectionSelectInput<
                     onClose={hideAddOptionsModal}
                     projectId={projectId}
                     questionnaire={questionnaireId}
-                    onSuccess={retriggerCollectionResponse}
+                    onSuccess={handleChoiceAddSuccess}
                 />
             )}
         </>

@@ -35,9 +35,9 @@ import SelectOneQuestionPreview from '#components/questionPreviews/SelectOneQues
 import SelectMultipleQuestionPreview from '#components/questionPreviews/SelectMultipleQuestionPreview';
 import { Attributes, Listeners } from '#components/SortableList';
 import {
-    QuestionsByGroupQuery,
     DeleteQuestionMutation,
     DeleteQuestionMutationVariables,
+    QuestionsForLeafGroupQuery,
 } from '#generated/types';
 
 import {
@@ -46,7 +46,7 @@ import {
 
 import styles from './index.module.css';
 
-type Question = NonNullable<NonNullable<NonNullable<NonNullable<QuestionsByGroupQuery['private']>['projectScope']>['questions']>['items']>[number];
+type Question = NonNullable<NonNullable<NonNullable<NonNullable<QuestionsForLeafGroupQuery['private']>['projectScope']>['questions']>['items']>[number];
 
 const DELETE_QUESTION = gql`
     ${QUESTION_FRAGMENT}

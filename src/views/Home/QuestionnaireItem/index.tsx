@@ -27,9 +27,8 @@ import {
     AlertContext,
     Button,
     ButtonLikeLink,
-    DateOutput,
+    Container,
     DropdownMenuItem,
-    Header,
     Modal,
     QuickActionDropdownMenu,
     QuickActionLink,
@@ -49,6 +48,8 @@ import {
     ExportQuestionnaireMutationVariables,
     ExportDetailsQuery,
     ExportDetailsQueryVariables,
+    QuestionsCountQuery,
+    QuestionsCountQueryVariables,
 } from '#generated/types';
 
 import styles from './index.module.css';
@@ -120,6 +121,25 @@ const EXPORT_DETAILS = gql`
                         name
                         url
                     }
+                }
+            }
+        }
+    }
+`;
+
+const QUESTIONS_COUNT = gql`
+    query QuestionsCount(
+        $projectId: ID!,
+        $questionnaireId: ID!,
+    ){
+        private {
+            projectScope(pk: $projectId) {
+                questions(filters: {
+                    questionnaire: {
+                        pk: $questionnaireId
+                    }
+                }) {
+                    count
                 }
             }
         }
@@ -240,6 +260,31 @@ function QuestionnaireItem(props: Props) {
         projectId,
         exportIdToDownload,
     ]);
+
+    const questionsCountVariables = useMemo(() => {
+        if (isNotDefined(projectId) || isNotDefined(questionnaireItem.id)) {
+            return undefined;
+        }
+        return ({
+            projectId,
+            questionnaireId: questionnaireItem.id,
+        });
+    }, [
+        questionnaireItem,
+        projectId,
+    ]);
+
+    const {
+        data: questionsCountResponse,
+    } = useQuery<QuestionsCountQuery, QuestionsCountQueryVariables>(
+        QUESTIONS_COUNT,
+        {
+            skip: isNotDefined(questionsCountVariables),
+            variables: questionsCountVariables,
+        },
+    );
+
+    const questionsCount = questionsCountResponse?.private?.projectScope?.questions.count;
 
     const {
         data: exportDetailsResponse,
@@ -363,17 +408,11 @@ function QuestionnaireItem(props: Props) {
 
     return (
         <div className={styles.questionnaire}>
-            <Header
-                className={styles.heading}
+            <Container
+                className={styles.item}
                 heading={questionnaireItem.title}
                 headingSize="extraSmall"
-                description={(
-                    <TextOutput
-                        label="Created"
-                        value={<DateOutput value={questionnaireItem.createdAt} />}
-                    />
-                )}
-                actions={(
+                headerActions={(
                     <QuickActionDropdownMenu
                         label={<IoEllipsisVertical />}
                         variant="secondary"
@@ -383,12 +422,12 @@ function QuestionnaireItem(props: Props) {
                             name={undefined}
                             onClick={showQuestionnaireModal}
                         >
-                            Edit questionnaire
+                            Edit Settings
                         </DropdownMenuItem>
                         <DropdownMenuItem
                             href={questionsEditLink}
                         >
-                            Edit questions
+                            Design Questionnaire
                         </DropdownMenuItem>
                         <DropdownMenuItem
                             name={undefined}
@@ -404,7 +443,75 @@ function QuestionnaireItem(props: Props) {
                         </DropdownMenuItem>
                     </QuickActionDropdownMenu>
                 )}
-            />
+                contentClassName={styles.content}
+            >
+                <div className={styles.metadata}>
+                    <TextOutput
+                        className={styles.metadatum}
+                        valueContainerClassName={styles.value}
+                        label="Created"
+                        value={questionnaireItem.createdAt}
+                        valueType="date"
+                    />
+                    <TextOutput
+                        className={styles.metadatum}
+                        valueContainerClassName={styles.value}
+                        label="Last modified"
+                        value={questionnaireItem.modifiedAt}
+                        valueType="date"
+                    />
+                    <TextOutput
+                        className={styles.metadatum}
+                        valueContainerClassName={styles.value}
+                        label="No. of questions"
+                        value={questionsCount}
+                        valueType="number"
+                    />
+                </div>
+                <div className={styles.metadata}>
+                    {isDefined(questionnaireItem.dataCollectionMethodDisplay) && (
+                        <TextOutput
+                            className={styles.metadatum}
+                            label="Data Collection Technique"
+                            value={(
+                                <span className={styles.tag}>
+                                    {questionnaireItem.dataCollectionMethodDisplay}
+                                </span>
+                            )}
+                            hideLabelColon
+                            block
+                        />
+                    )}
+                    {isDefined(questionnaireItem.requiredDuration) && (
+                        <TextOutput
+                            className={styles.metadatum}
+                            label="Estimated time"
+                            value={(
+                                <span className={styles.tag}>
+                                    {questionnaireItem.requiredDuration}
+                                    &nbsp;
+                                    min
+                                </span>
+                            )}
+                            hideLabelColon
+                            block
+                        />
+                    )}
+                    {isDefined(questionnaireItem.enumeratorSkillDisplay) && (
+                        <TextOutput
+                            className={styles.metadatum}
+                            label="Enumerator Skill"
+                            value={(
+                                <span className={styles.tag}>
+                                    {questionnaireItem.enumeratorSkillDisplay}
+                                </span>
+                            )}
+                            hideLabelColon
+                            block
+                        />
+                    )}
+                </div>
+            </Container>
             {questionnaireModalShown && isDefined(projectId) && (
                 <EditQuestionnaireModal
                     projectId={projectId}
