@@ -377,8 +377,11 @@ export function Component() {
                 items.sort((a, b) => compareNumber(a.order, b.order));
                 const transformedQuestionGroups = transformOptionsByCategory(items);
                 const groupOptionsSafe = getNodes(transformedQuestionGroups, []);
+
+                const visibleQuestionGroups = items.filter((group) => !group.isHidden);
+
                 setOrderedOptions(groupOptionsSafe ?? []);
-                setSelectedGroups(questionGroups.map((item) => item.id));
+                setSelectedGroups(visibleQuestionGroups.map((item) => item.id));
             },
         },
     );

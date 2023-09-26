@@ -141,12 +141,18 @@ function ChoiceCollectionSelectInput<
         otherProps?.onChange(newChoice.id, name);
 
         if (otherProps?.onOptionsChange) {
-            otherProps?.onOptionsChange((oldOptions) => (
-                [
-                    ...(oldOptions ?? []),
+            otherProps?.onOptionsChange((oldOptions) => {
+                const oldOptionsSafe = [...(oldOptions ?? [])];
+                const oldIndex = oldOptionsSafe
+                    .findIndex((choice) => choice.id === newChoice.id);
+                if (oldIndex !== -1) {
+                    return oldOptionsSafe.splice(oldIndex, 1, newChoice);
+                }
+                return [
+                    ...(oldOptionsSafe),
                     newChoice,
-                ]
-            ));
+                ];
+            });
         }
     }, [
         name,

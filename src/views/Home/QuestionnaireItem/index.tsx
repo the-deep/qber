@@ -127,6 +127,7 @@ const EXPORT_DETAILS = gql`
     }
 `;
 
+// FIXME: Get this from questionnaire query in outside scope
 const QUESTIONS_COUNT = gql`
     query QuestionsCount(
         $projectId: ID!,
