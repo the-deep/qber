@@ -13,43 +13,38 @@ import {
 import {
     MetaDataOptionsQuery,
     MetaDataOptionsQueryVariables,
-    QuestionnairePriorityLevelTypeEnum,
-    QuestionnaireDataCollectionMethodTypeEnum,
-    QuestionnaireEnumeratorSkillTypeEnum,
+    QberEnumeratorSkillTypeEnum,
+    QberMetaDataPriorityLevelTypeEnum,
+    QberDataCollectionMethodTypeEnum,
 } from '#generated/types';
 import {
     enumKeySelector,
-    EnumOptions,
     enumLabelSelector,
 } from '#utils/common';
 
 const METADATA_OPTIONS = gql`
     query MetaDataOptions{
-        questionnairePriorityLevelTypeOptions: __type(name: "QuestionnairePriorityLevelTypeEnum") {
-            enumValues {
-                name
-                description
+        enums {
+            QuestionnaireEnumeratorSkill {
+                key
+                label
             }
-        }
-        questionnaireEnumeratorSkillTypeOptions: __type(name: "QuestionnaireEnumeratorSkillTypeEnum") {
-            enumValues {
-                name
-                description
+            QuestionnairePriorityLevel {
+                key
+                label
             }
-        }
-        questionnaireDataCollectionMethodTypeOptions: __type(name: "QuestionnaireDataCollectionMethodTypeEnum") {
-            enumValues {
-                name
-                description
+            QuestionnaireDataCollectionMethod {
+                key
+                label
             }
         }
     }
 `;
 
 type Input = {
-    priorityLevel: QuestionnairePriorityLevelTypeEnum | undefined | null;
-    enumeratorSkill: QuestionnaireEnumeratorSkillTypeEnum| undefined | null;
-    dataCollectionMethod: QuestionnaireDataCollectionMethodTypeEnum| undefined | null;
+    priorityLevel: QberMetaDataPriorityLevelTypeEnum | null | undefined;
+    enumeratorSkill: QberEnumeratorSkillTypeEnum | null | undefined;
+    dataCollectionMethod: QberDataCollectionMethodTypeEnum | null | undefined;
     requiredDuration: number | undefined | null;
 };
 
@@ -79,17 +74,11 @@ function MetaDataInputs(props: Props) {
 
     const error = getErrorObject(riskyError);
 
-    const priorityLevelOptions = metaDataOptions
-        ?.questionnairePriorityLevelTypeOptions
-        ?.enumValues as EnumOptions<QuestionnairePriorityLevelTypeEnum>;
+    const priorityLevelOptions = metaDataOptions?.enums.QuestionnairePriorityLevel;
 
-    const skillOptions = metaDataOptions
-        ?.questionnaireEnumeratorSkillTypeOptions
-        ?.enumValues as EnumOptions<QuestionnaireEnumeratorSkillTypeEnum>;
+    const skillOptions = metaDataOptions?.enums.QuestionnaireEnumeratorSkill;
 
-    const collectionMethodOptions = metaDataOptions
-        ?.questionnaireDataCollectionMethodTypeOptions
-        ?.enumValues as EnumOptions<QuestionnaireDataCollectionMethodTypeEnum>;
+    const collectionMethodOptions = metaDataOptions?.enums.QuestionnaireDataCollectionMethod;
 
     return (
         <>

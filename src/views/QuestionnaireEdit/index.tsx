@@ -1,4 +1,10 @@
-import { useMemo, useCallback, useState } from 'react';
+import {
+    useMemo,
+    useCallback,
+    useState,
+    useEffect,
+    useContext,
+} from 'react';
 import {
     useParams,
 } from 'react-router-dom';
@@ -6,6 +12,7 @@ import {
     IoCameraOutline,
     IoCloseOutline,
     IoDocumentTextOutline,
+    IoEyeSharp,
     IoRadioButtonOn,
     IoSwapVertical,
 } from 'react-icons/io5';
@@ -31,6 +38,7 @@ import {
 } from '@apollo/client';
 import { getOperationName } from 'apollo-link';
 import {
+    AlertContext,
     Container,
     Header,
     ListView,
@@ -39,6 +47,7 @@ import {
     Tabs,
     TextOutput,
     useModalState,
+    useAlert,
 } from '@the-deep/deep-ui';
 import { removeNull } from '@togglecorp/toggle-form';
 
@@ -55,9 +64,14 @@ import {
     QUESTIONS_FOR_LEAF_GROUP,
 } from '#views/QuestionnaireEdit/QuestionList/LeafNode/queries';
 import { apolloClient } from '#configs/apollo';
+import QuestionnairePreviewModal from '#components/QuestionnairePreviewModal';
 import {
     OrderQuestionGroupMutation,
     OrderQuestionGroupMutationVariables,
+    PreviewQuestionnaireMutation,
+    PreviewQuestionnaireMutationVariables,
+    PreviewDetailsQuery,
+    PreviewDetailsQueryVariables,
     QuestionnaireQuery,
     QuestionnaireQueryVariables,
     QuestionGroupVisibilityMutation,
@@ -152,6 +166,52 @@ const QUESTION_GROUP_VISIBILITY = gql`
                     results {
                         ...LeafGroups
                     }
+                }
+            }
+        }
+    }
+`;
+
+const PREVIEW_QUESTIONNAIRE = gql`
+    mutation PreviewQuestionnaire (
+        $projectId: ID!,
+        $questionnaireId: ID!,
+    ) {
+        private {
+            projectScope(pk: $projectId) {
+                createQuestionnaireExport(
+                    data: {
+                        questionnaire: $questionnaireId
+                    }
+                ) {
+                    errors
+                    ok
+                    result {
+                        enketoPreviewUrl
+                        id
+                        questionnaireId
+                        status
+                        statusDisplay
+                    }
+                }
+            }
+        }
+    }
+`;
+
+const PREVIEW_DETAILS = gql`
+    query PreviewDetails (
+        $projectId: ID!,
+        $exportId: ID!,
+    ) {
+        private {
+            projectScope(pk: $projectId) {
+                questionnaireExport(pk: $exportId) {
+                    enketoPreviewUrl
+                    status
+                    statusDisplay
+                    startedAt
+                    endedAt
                 }
             }
         }
@@ -303,6 +363,8 @@ function transformOptionsByCategory(options: QuestionGroup[]): Node[] {
     return result;
 }
 
+const PREVIEW_ALERT_NAME = 'questionnaire-preview';
+
 // eslint-disable-next-line import/prefer-default-export
 export function Component() {
     const {
@@ -330,6 +392,19 @@ export function Component() {
         selectedGroups,
         setSelectedGroups,
     ] = useState<string[]>([]);
+
+    const alert = useAlert();
+
+    const [
+        enketoPreviewModalShown,
+        showEnketoPreviewModal,
+        hideEnketoPreviewModal,
+    ] = useModalState(false);
+
+    const {
+        addAlert,
+        removeAlert,
+    } = useContext(AlertContext);
 
     const handleRightPaneClose = useCallback(() => {
         hideAddQuestionPane();
@@ -466,6 +541,122 @@ export function Component() {
         questionnaireId,
         triggerGroupOrderChange,
     ]);
+
+    const [exportIdToPreview, setExportIdToPreview] = useState<string | undefined>();
+
+    const [
+        triggerQuestionnairePreview,
+    ] = useMutation<PreviewQuestionnaireMutation, PreviewQuestionnaireMutationVariables>(
+        PREVIEW_QUESTIONNAIRE,
+        {
+            onCompleted: (response) => {
+                const exportResponse = response?.private?.projectScope?.createQuestionnaireExport;
+                if (!exportResponse?.ok) {
+                    alert.show(
+                        'Some error occured during export.',
+                        { variant: 'error' },
+                    );
+                }
+                if (exportResponse?.ok && exportResponse.result?.id) {
+                    setExportIdToPreview(exportResponse.result?.id);
+                    addAlert({
+                        variant: 'info',
+                        duration: Infinity,
+                        name: PREVIEW_ALERT_NAME,
+                        children: 'Please wait while the export is being prepared.',
+                    });
+                }
+            },
+            onError: () => {
+                alert.show(
+                    'Some error occured during export.',
+                    { variant: 'error' },
+                );
+            },
+        },
+    );
+
+    const handleQuestionnairePreview = useCallback(() => {
+        if (isNotDefined(projectId) || isNotDefined(questionnaireId)) {
+            return;
+        }
+        triggerQuestionnairePreview({
+            variables: {
+                projectId,
+                questionnaireId,
+            },
+        });
+    }, [
+        projectId,
+        questionnaireId,
+        triggerQuestionnairePreview,
+    ]);
+
+    const exportVariables = useMemo(() => {
+        if (isNotDefined(projectId) || isNotDefined(exportIdToPreview)) {
+            return undefined;
+        }
+        return {
+            projectId,
+            exportId: exportIdToPreview,
+        };
+    }, [
+        projectId,
+        exportIdToPreview,
+    ]);
+
+    const {
+        data: previewDetailsResponse,
+        startPolling,
+        stopPolling,
+    } = useQuery<PreviewDetailsQuery, PreviewDetailsQueryVariables>(
+        PREVIEW_DETAILS,
+        {
+            skip: isNotDefined(exportVariables),
+            variables: exportVariables,
+            onCompleted: (response) => {
+                const exportResponse = response.private.projectScope?.questionnaireExport;
+                if (isNotDefined(exportResponse)) {
+                    setExportIdToPreview(undefined);
+                    removeAlert(PREVIEW_ALERT_NAME);
+                    alert.show(
+                        'There was some issue creating the export.',
+                        { variant: 'error' },
+                    );
+                }
+                if (exportResponse?.status === 'SUCCESS') {
+                    removeAlert(PREVIEW_ALERT_NAME);
+                    showEnketoPreviewModal();
+                } else if (exportResponse?.status === 'FAILURE') {
+                    removeAlert(PREVIEW_ALERT_NAME);
+                    alert.show(
+                        'There was some issue creating the export.',
+                        { variant: 'error' },
+                    );
+                }
+            },
+        },
+    );
+
+    useEffect(
+        () => {
+            const shouldPoll = exportIdToPreview
+                && previewDetailsResponse?.private?.projectScope?.questionnaireExport?.status !== 'SUCCESS'
+                && previewDetailsResponse?.private?.projectScope?.questionnaireExport?.status !== 'FAILURE';
+
+            if (shouldPoll) {
+                startPolling(5000);
+            } else {
+                stopPolling();
+            }
+        },
+        [
+            previewDetailsResponse,
+            exportIdToPreview,
+            startPolling,
+            stopPolling,
+        ],
+    );
 
     const [
         triggerQuestionGroupsVisibility,
@@ -607,6 +798,14 @@ export function Component() {
                         className={styles.header}
                         headingSize="extraSmall"
                         heading="My Questionnaire"
+                        actions={(
+                            <QuickActionButton
+                                name={undefined}
+                                onClick={handleQuestionnairePreview}
+                            >
+                                <IoEyeSharp />
+                            </QuickActionButton>
+                        )}
                     />
                     <Tabs
                         onChange={setActiveGroupTab}
@@ -763,6 +962,13 @@ export function Component() {
                             </div>
                         )}
                     </div>
+                )}
+                {enketoPreviewModalShown && (
+                    <QuestionnairePreviewModal
+                        onClose={hideEnketoPreviewModal}
+                        previewUrl={previewDetailsResponse?.private
+                            .projectScope?.questionnaireExport?.enketoPreviewUrl ?? ''}
+                    />
                 )}
             </div>
         </div>

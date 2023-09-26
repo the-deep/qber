@@ -12,7 +12,6 @@ import {
     IoEllipsisVertical,
     IoDownloadOutline,
     IoEyeOutline,
-    IoArrowRedoSharp,
 } from 'react-icons/io5';
 import {
     isNotDefined,
@@ -31,7 +30,6 @@ import {
     DropdownMenuItem,
     Modal,
     QuickActionDropdownMenu,
-    QuickActionLink,
     TextOutput,
     useAlert,
     useConfirmation,
@@ -40,6 +38,7 @@ import {
 
 import { wrappedRoutes } from '#app/routes';
 import EditQuestionnaireModal from '#components/EditQuestionnaireModal';
+import QuestionnairePreviewModal from '#components/QuestionnairePreviewModal';
 import {
     QuestionnairesForProjectQuery,
     DeleteQuestionnaireMutation,
@@ -565,32 +564,11 @@ function QuestionnaireItem(props: Props) {
                 </Modal>
             )}
             {enketoPreviewModalShown && (
-                <Modal
-                    bodyClassName={styles.modalBody}
-                    heading="Questionnaire Preview"
-                    headingSize="small"
-                    onCloseButtonClick={hideEnketoPreviewModal}
-                    headerActions={(
-                        <QuickActionLink
-                            to={exportDetailsResponse?.private.projectScope?.questionnaireExport?.enketoPreviewUrl ?? ''}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            variant="transparent"
-                            spacing="compact"
-                            title="Open preview in a separate tab"
-                        >
-                            <IoArrowRedoSharp />
-                        </QuickActionLink>
-                    )}
-                    size="large"
-                >
-                    <iframe
-                        className={styles.iframe}
-                        title="Visualization"
-                        src={exportDetailsResponse?.private.projectScope?.questionnaireExport?.enketoPreviewUrl ?? ''}
-                        sandbox="allow-scripts allow-same-origin allow-downloads"
-                    />
-                </Modal>
+                <QuestionnairePreviewModal
+                    onClose={hideEnketoPreviewModal}
+                    previewUrl={exportDetailsResponse
+                        ?.private.projectScope?.questionnaireExport?.enketoPreviewUrl ?? ''}
+                />
             )}
             {modal}
         </div>

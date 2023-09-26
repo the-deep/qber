@@ -44,7 +44,7 @@ import {
     QuestionInfoQueryVariables,
     QuestionCreateInput,
     QuestionUpdateInput,
-    QuestionTypeEnum,
+    QberQuestionTypeEnum,
 } from '#generated/types';
 import PillarSelectInput from '#components/PillarSelectInput';
 import MetaDataInputs from '#components/MetaDataInputs';
@@ -170,7 +170,7 @@ function FileQuestionForm(props: Props) {
     ] = useState<QuestionTabType | undefined>('general');
 
     const initialFormValue: FormType = {
-        type: 'FILE' as QuestionTypeEnum,
+        type: 'FILE' as QberQuestionTypeEnum,
         questionnaire: questionnaireId,
         leafGroup: selectedLeafGroupId,
     };

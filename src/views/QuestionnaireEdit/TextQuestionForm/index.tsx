@@ -44,7 +44,7 @@ import {
     QuestionInfoQueryVariables,
     QuestionCreateInput,
     QuestionUpdateInput,
-    QuestionTypeEnum,
+    QberQuestionTypeEnum,
 } from '#generated/types';
 import PillarSelectInput from '#components/PillarSelectInput';
 import MetaDataInputs from '#components/MetaDataInputs';
@@ -171,7 +171,7 @@ function TextQuestionForm(props: Props) {
     ] = useState<QuestionTabType | undefined>('general');
 
     const initialFormValue: FormType = {
-        type: 'TEXT' as QuestionTypeEnum,
+        type: 'TEXT' as QberQuestionTypeEnum,
         questionnaire: questionnaireId,
         leafGroup: selectedLeafGroupId,
     };

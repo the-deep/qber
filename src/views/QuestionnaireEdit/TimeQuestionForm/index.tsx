@@ -44,7 +44,7 @@ import {
     QuestionInfoQueryVariables,
     QuestionCreateInput,
     QuestionUpdateInput,
-    QuestionTypeEnum,
+    QberQuestionTypeEnum,
 } from '#generated/types';
 import PillarSelectInput from '#components/PillarSelectInput';
 import MetaDataInputs from '#components/MetaDataInputs';
@@ -171,7 +171,7 @@ function TimeQuestionForm(props: Props) {
     ] = useState<QuestionTabType | undefined>('general');
 
     const initialFormValue: FormType = {
-        type: 'TIME' as QuestionTypeEnum,
+        type: 'TIME' as QberQuestionTypeEnum,
         questionnaire: questionnaireId,
         leafGroup: selectedLeafGroupId,
     };

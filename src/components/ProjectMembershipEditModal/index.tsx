@@ -24,17 +24,14 @@ import {
     MembershipsQuery,
     UpdateMembershipMutation,
     UpdateMembershipMutationVariables,
-    ProjectMembershipRoleTypeEnum,
 } from '#generated/types';
 import {
-    EnumOptions,
     enumKeySelector,
     enumLabelSelector,
+    type ProjectScope,
 } from '#utils/common';
 
 import styles from './index.module.css';
-
-type ProjectMembershipRoleOptions = EnumOptions<ProjectMembershipRoleTypeEnum>;
 
 const UPDATE_MEMBERSHIP = gql`
     mutation UpdateMembership(
@@ -70,16 +67,16 @@ const UPDATE_MEMBERSHIP = gql`
 
 const ROLES = gql`
     query Roles {
-        projectMembershipRoleTypeOptions: __type(name: "ProjectMembershipRoleTypeEnum") {
-            enumValues {
-                name
-                description
+        enums {
+            ProjectMembershipRole {
+                key
+                label
             }
         }
     }
 `;
 
-export type Member = NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<MembershipsQuery['private']>['projectScope']>['project']>['members']>['items']>[number]>;
+export type Member = NonNullable<NonNullable<NonNullable<NonNullable<ProjectScope<MembershipsQuery>['project']>['members']>['items']>[number]>;
 
 type FormType = PartialForm<ProjectMembershipUpdateInput>;
 type FormSchema = ObjectSchema<FormType>;
@@ -98,7 +95,7 @@ const schema: FormSchema = {
     }),
 };
 
-export type ProjectMembershipType = NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<MembershipsQuery['private']>['projectScope']>['project']>['members']>['items']>[number];
+export type ProjectMembershipType = NonNullable<NonNullable<NonNullable<ProjectScope<MembershipsQuery>['project']>['members']>['items']>[number];
 
 interface MembershipProps {
     projectId: string;
@@ -253,10 +250,7 @@ function ProjectMembershipEditModal(props: MembershipProps) {
                     name="role"
                     label="Role"
                     className={styles.input}
-                    options={(
-                        roles?.projectMembershipRoleTypeOptions?.enumValues as
-                        ProjectMembershipRoleOptions
-                    )}
+                    options={roles?.enums.ProjectMembershipRole}
                     keySelector={enumKeySelector}
                     labelSelector={enumLabelSelector}
                     value={formValue.role}

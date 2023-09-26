@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from 'react';
+import { useCallback } from 'react';
 import { gql, useQuery } from '@apollo/client';
 import {
     isDefined,
@@ -21,40 +21,39 @@ import ImageQuestionPreview from '#components/questionPreviews/ImageQuestionPrev
 import FileQuestionPreview from '#components/questionPreviews/FileQuestionPreview';
 import SelectOneQuestionPreview from '#components/questionPreviews/SelectOneQuestionPreview';
 import SelectMultipleQuestionPreview from '#components/questionPreviews/SelectMultipleQuestionPreview';
-import {
-    type ProjectScope,
-} from '#utils/common';
 
 import styles from './index.module.css';
 
 const QUESTIONS_FROM_BANK = gql`
     query QuestionsFromBank (
+        $questionBankId: ID!,
         $leafGroupId: ID!,
-        $questionnaireId: ID!,
-        $projectId: ID!,
     ) {
         private {
-            projectScope(pk: $projectId) {
-                questions(filters: {
-                    leafGroup: {
-                        pk: $leafGroupId
-                    }
-                    questionnaire: { pk: $questionnaireId }
-                }) {
-                    items {
+            qbQuestions(
+                filters: {
+                    qbank: {pk: $questionBankId}
+                    leafGroup: {pk: $leafGroupId}
+                },
+                pagination: {
+                    offset: 0,
+                    limit: 50,
+                },
+            ) {
+                count
+                items {
+                    id
+                    label
+                    name
+                    type
+                    hint
+                    leafGroupId
+                    qbankId
+                    choiceCollection {
                         id
-                        label
                         name
-                        type
-                        hint
-                        leafGroupId
-                        questionnaireId
-                        choiceCollection {
-                            id
-                            name
-                            label
-                            questionnaireId
-                        }
+                        label
+                        qbankId
                     }
                 }
             }
@@ -62,7 +61,7 @@ const QUESTIONS_FROM_BANK = gql`
     }
 `;
 
-type Question = NonNullable<NonNullable<ProjectScope<QuestionsFromBankQuery>['questions']>['items']>[number];
+type Question = NonNullable<NonNullable<NonNullable<QuestionsFromBankQuery['private']>['qbQuestions']>['items']>[number];
 
 const questionKeySelector = (question: Question) => question.id;
 
@@ -159,27 +158,15 @@ function QuestionRenderer(props: QuestionProps) {
 }
 
 interface Props {
-    id: string;
-    questionnaireId: string;
-    projectId: string;
+    questionBankId: string;
+    leafGroupId: string;
 }
 
 function QuestionsPreview(props: Props) {
     const {
-        id,
-        questionnaireId,
-        projectId,
+        leafGroupId,
+        questionBankId,
     } = props;
-
-    const variables = useMemo(() => ({
-        leafGroupId: id,
-        questionnaireId,
-        projectId,
-    }), [
-        id,
-        questionnaireId,
-        projectId,
-    ]);
 
     const {
         data: questionsResponse,
@@ -187,15 +174,17 @@ function QuestionsPreview(props: Props) {
     } = useQuery<QuestionsFromBankQuery, QuestionsFromBankQueryVariables>(
         QUESTIONS_FROM_BANK,
         {
-            variables,
+            variables: {
+                questionBankId,
+                leafGroupId,
+            },
         },
     );
 
-    const questions = questionsResponse?.private?.projectScope?.questions?.items;
+    const questions = questionsResponse?.private?.qbQuestions?.items;
     const questionRendererParams = useCallback((_: string, datum: Question) => ({
-        projectId,
         question: datum,
-    }), [projectId]);
+    }), []);
 
     return (
         <ListView

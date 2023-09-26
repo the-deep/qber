@@ -44,7 +44,7 @@ import {
     QuestionInfoQueryVariables,
     QuestionCreateInput,
     QuestionUpdateInput,
-    QuestionTypeEnum,
+    QberQuestionTypeEnum,
 } from '#generated/types';
 import PillarSelectInput from '#components/PillarSelectInput';
 import ChoiceCollectionSelectInput, {
@@ -178,7 +178,7 @@ function SelectOneQuestionForm(props: Props) {
     ] = useState<QuestionTabType | undefined>('general');
 
     const initialFormValue: FormType = {
-        type: 'SELECT_ONE' as QuestionTypeEnum,
+        type: 'SELECT_ONE' as QberQuestionTypeEnum,
         questionnaire: questionnaireId,
         leafGroup: selectedLeafGroupId,
     };

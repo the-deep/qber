@@ -26,92 +26,35 @@ import QuestionsPreview from './QuestionsPreview';
 import IntroText from './IntroText';
 import styles from './index.module.css';
 
-const DUMMY_PROJECT_ID = '10';
-const DUMMY_QUESTIONNAIRE_ID = '30';
+const QUESTION_BANK_ID = '1';
 
 const ABOUT_FRAMEWORK = gql`
     query AboutFramework(
-        $questionnaireId: ID!,
-        $projectId: ID!,
+        $questionBankId: ID!,
     ){
         private {
-            projectScope(pk: $projectId) {
-                questionnaire(pk: $questionnaireId) {
-                    leafGroups {
-                        id
-                        name
-                        order
-                        category1
-                        category1Display
-                        category2
-                        category2Display
-                        category3
-                        category3Display
-                        category4
-                        category4Display
-                        type
-                        typeDisplay
-                        isHidden
-                    }
+            questionBank(pk: $questionBankId) {
+                leafGroups {
+                    category1
+                    category1Display
+                    category2
+                    category2Display
+                    category3
+                    category3Display
+                    category4
+                    category4Display
+                    id
+                    name
+                    order
+                    type
+                    typeDisplay
                 }
             }
         }
     }
 `;
 
-type QuestionGroup = NonNullable<NonNullable<NonNullable<NonNullable<AboutFrameworkQuery['private']>['projectScope']>['questionnaire']>['leafGroups']>[number];
-
-interface ClickableNodeProps {
-    id: string;
-    label: string;
-    hideLabel?: boolean;
-    setRightPaneShown: React.Dispatch<React.SetStateAction<boolean>>;
-    type: 'MATRIX_1D' | 'MATRIX_2D';
-    setSelectedLeafGroupIds: React.Dispatch<React.SetStateAction<string[]>>;
-    leafNodes?: QuestionGroup[];
-    className?: string;
-}
-
-function ClickableNode(props: ClickableNodeProps) {
-    const {
-        id,
-        className,
-        label,
-        setRightPaneShown,
-        type,
-        hideLabel = false,
-        setSelectedLeafGroupIds,
-        leafNodes,
-    } = props;
-
-    const handleNodeItemClick = useCallback((key: string) => {
-        setRightPaneShown(true);
-        if (type === 'MATRIX_1D') {
-            setSelectedLeafGroupIds([key]);
-        } else {
-            const filteredLeafNodeIds = leafNodes
-                ?.filter((node) => node.category3 === key)
-                ?.map((node) => node.id) ?? [];
-            setSelectedLeafGroupIds(filteredLeafNodeIds);
-        }
-    }, [
-        leafNodes,
-        setRightPaneShown,
-        setSelectedLeafGroupIds,
-        type,
-    ]);
-
-    return (
-        <Button
-            name={id}
-            className={_cs(styles.leaf, className)}
-            spacing="loose"
-            onClick={handleNodeItemClick}
-        >
-            {hideLabel ? undefined : label}
-        </Button>
-    );
-}
+type QuestionGroup = NonNullable<NonNullable<NonNullable<AboutFrameworkQuery['private']>['questionBank']>['leafGroups']>[number];
 
 const subPillarKeySelector = (group: QuestionGroup) => group.id;
 
@@ -128,15 +71,21 @@ function Pillars(props: PillarsProps) {
         setSelectedLeafGroupIds,
     } = props;
 
+    const handleSubPillarClick = useCallback((subPillarId: string) => {
+        setSelectedLeafGroupIds([subPillarId]);
+        setRightPaneShown(true);
+    }, [
+        setSelectedLeafGroupIds,
+        setRightPaneShown,
+    ]);
+
     const pillarsRendererParams = useCallback((_: string, datum: QuestionGroup) => ({
-        id: datum.id,
-        label: datum.category2Display,
-        type: datum.type,
-        setRightPaneShown,
-        setSelectedLeafGroupIds,
+        name: datum.id,
+        className: _cs(styles.leaf, styles.button),
+        children: datum.category2Display,
+        onClick: handleSubPillarClick,
     }), [
-        setRightPaneShown,
-        setSelectedLeafGroupIds,
+        handleSubPillarClick,
     ]);
 
     const groupedList = useMemo(() => (
@@ -160,7 +109,7 @@ function Pillars(props: PillarsProps) {
                         className={styles.subPillars}
                         data={group}
                         keySelector={subPillarKeySelector}
-                        renderer={ClickableNode}
+                        renderer={Button}
                         rendererParams={pillarsRendererParams}
                         filtered={false}
                         pending={false}
@@ -172,79 +121,82 @@ function Pillars(props: PillarsProps) {
     );
 }
 
-interface SubDimensionsProps {
-    subDimensions: QuestionGroup[];
+interface SubDimensionProps {
     sectors: QuestionGroup[];
+    subDimension: QuestionGroup;
+    subDimensionIndex: number;
     setRightPaneShown: React.Dispatch<React.SetStateAction<boolean>>;
+    subDimensionsCount: number;
     setSelectedLeafGroupIds: React.Dispatch<React.SetStateAction<string[]>>;
     leafNodes: QuestionGroup[];
 }
 
-function SubDimensions(props: SubDimensionsProps) {
+function SubDimension(props: SubDimensionProps) {
     const {
-        subDimensions,
         sectors,
         setRightPaneShown,
         setSelectedLeafGroupIds,
+        subDimensionsCount,
+        subDimension,
+        subDimensionIndex,
         leafNodes,
     } = props;
 
+    const handleCategoryClick = useCallback((sectorId: string) => {
+        setRightPaneShown(true);
+        setSelectedLeafGroupIds(
+            leafNodes
+                .filter((item) => item.category3 === sectorId)
+                .map((item) => item.id),
+        );
+    }, [
+        leafNodes,
+        setRightPaneShown,
+        setSelectedLeafGroupIds,
+    ]);
+
     return (
-        <>
-            {subDimensions.map((group, index) => (
-                <tr>
-                    {index === 0 && (
-                        <td
-                            className={styles.cellHeader}
-                            rowSpan={subDimensions.length}
-                        >
-                            {group.category1Display}
-                        </td>
-                    )}
-                    <td className={styles.cellHeader}>
-                        {group.category2Display}
-                    </td>
-                    {sectors?.map((sector) => (
-                        <td className={styles.cell}>
-                            <ClickableNode
-                                className={styles.button}
-                                id={sector.category3 ?? ''}
-                                label={sector.category3Display ?? '??'}
-                                setRightPaneShown={setRightPaneShown}
-                                type={sector.type}
-                                leafNodes={leafNodes.filter(
-                                    (node) => node.category2 === group.category2,
-                                )}
-                                setSelectedLeafGroupIds={setSelectedLeafGroupIds}
-                                hideLabel
-                            />
-                        </td>
-                    ))}
-                </tr>
-            ))}
-        </>
+        <tr>
+            {subDimensionIndex === 0 && (
+                <td
+                    className={styles.cellHeader}
+                    rowSpan={subDimensionsCount}
+                >
+                    {subDimension.category1Display}
+                </td>
+            )}
+            <td className={styles.cellHeader}>
+                {subDimension.category2Display}
+            </td>
+            {sectors?.map((sector) => (sector.category3 ? (
+                <td className={styles.cell}>
+                    <Button
+                        name={sector.category3}
+                        className={_cs(styles.leaf, styles.button)}
+                        spacing="loose"
+                        onClick={handleCategoryClick}
+                    />
+                </td>
+            ) : undefined))}
+        </tr>
     );
 }
 
 // eslint-disable-next-line import/prefer-default-export
 export function Component() {
-    const projectId = DUMMY_PROJECT_ID;
-    const questionnaireId = DUMMY_QUESTIONNAIRE_ID;
-
     const {
         data: frameworkResponse,
     } = useQuery<AboutFrameworkQuery, AboutFrameworkQueryVariables>(
         ABOUT_FRAMEWORK,
         {
             variables: {
-                projectId,
-                questionnaireId,
+                questionBankId: QUESTION_BANK_ID,
             },
         },
     );
 
     const [selectedLeafGroupIds, setSelectedLeafGroupIds] = useState<string[]>([]);
-    const framework = frameworkResponse?.private?.projectScope?.questionnaire?.leafGroups;
+    const framework = frameworkResponse?.private?.questionBank?.leafGroups;
 
     const getLeafNodeLabel = useCallback((leafId: string): string | undefined => {
         const leafNodeItem = framework?.find((group) => group.id === leafId);
@@ -316,16 +268,25 @@ export function Component() {
                                 </td>
                             ))}
                         </thead>
-                        {dimensionRows.map((rowItem) => (
-                            <SubDimensions
-                                leafNodes={dimensions.filter(
-                                    (dimension) => dimension.category1 === rowItem[0].category1,
-                                )}
-                                subDimensions={rowItem}
-                                sectors={uniqueSectorList}
-                                setRightPaneShown={setRightPaneShown}
-                                setSelectedLeafGroupIds={setSelectedLeafGroupIds}
-                            />
+                        {dimensionRows.map((subDimensionsWithinRow) => (
+                            <>
+                                {subDimensionsWithinRow.map((item, index) => (
+                                    <SubDimension
+                                        leafNodes={dimensions.filter(
+                                            (dimension) => (
+                                                dimension.category1 === item.category1
+                                                && dimension.category2 === item.category2
+                                            ),
+                                        )}
+                                        subDimensionsCount={subDimensionsWithinRow.length}
+                                        subDimensionIndex={index}
+                                        subDimension={item}
+                                        sectors={uniqueSectorList}
+                                        setRightPaneShown={setRightPaneShown}
+                                        setSelectedLeafGroupIds={setSelectedLeafGroupIds}
+                                    />
+                                ))}
+                            </>
                         ))}
                     </table>
                 </div>
@@ -353,9 +314,8 @@ export function Component() {
                                 headingSize="extraSmall"
                             >
                                 <QuestionsPreview
-                                    id={leafGroupId}
-                                    questionnaireId={questionnaireId}
-                                    projectId={projectId}
+                                    leafGroupId={leafGroupId}
+                                    questionBankId={QUESTION_BANK_ID}
                                 />
                             </Container>
                         ))}

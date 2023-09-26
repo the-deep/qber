@@ -44,7 +44,7 @@ import {
     QuestionInfoQueryVariables,
     QuestionCreateInput,
     QuestionUpdateInput,
-    QuestionTypeEnum,
+    QberQuestionTypeEnum,
 } from '#generated/types';
 import PillarSelectInput from '#components/PillarSelectInput';
 import ChoiceCollectionSelectInput, {
@@ -178,7 +178,7 @@ function RankQuestionForm(props: Props) {
     ] = useState<QuestionTabType | undefined>('general');
 
     const initialFormValue: FormType = {
-        type: 'RANK' as QuestionTypeEnum,
+        type: 'RANK' as QberQuestionTypeEnum,
         questionnaire: questionnaireId,
         leafGroup: selectedLeafGroupId,
     };

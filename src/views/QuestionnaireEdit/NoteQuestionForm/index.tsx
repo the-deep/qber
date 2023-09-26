@@ -32,7 +32,7 @@ import {
     QuestionInfoQueryVariables,
     QuestionCreateInput,
     QuestionUpdateInput,
-    QuestionTypeEnum,
+    QberQuestionTypeEnum,
 } from '#generated/types';
 import PillarSelectInput from '#components/PillarSelectInput';
 
@@ -137,7 +137,7 @@ function NoteQuestionForm(props: Props) {
     const alert = useAlert();
 
     const initialFormValue: FormType = {
-        type: 'NOTE' as QuestionTypeEnum,
+        type: 'NOTE' as QberQuestionTypeEnum,
         questionnaire: questionnaireId,
         leafGroup: selectedLeafGroupId,
     };
