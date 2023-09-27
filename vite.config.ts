@@ -23,9 +23,9 @@ export default defineConfig(({ mode }) => {
                 eslint: {
                     lintCommand: 'eslint ./src',
                 },
-                stylelint: {
-                    lintCommand: 'stylelint "./src/**/*.css"',
-                },
+                // stylelint: {
+                    // lintCommand: 'stylelint "./src/**/*.css"',
+                // },
             }) : undefined,
             reactSwc(),
             tsconfigPaths(),

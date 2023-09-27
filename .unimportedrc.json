@@ -8,6 +8,7 @@
         "#app/*": ["./src/App/*"],
         "#views/*": ["./src/views/*"],
         "#utils/*": ["./src/utils/*"],
+        "#types/*": ["./src/types/*"],
         "#redirects/*": ["./src/redirects/*"],
         "#contexts/*": ["./src/contexts/*"],
         "#components/*": ["./src/components/*"],

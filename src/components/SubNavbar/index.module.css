@@ -1,12 +1,15 @@
 .sub-navbar {
-    --height-navbar: 4rem;
+    --height-navbar: 3.6rem;
     display: flex;
+    flex-shrink: 0;
     background-color: var(--dui-color-secondary);
     padding: var(--dui-spacing-medium) var(--dui-spacing-super-large);
     height: var(--height-navbar);
+    gap: var(--dui-spacing-large);
 
     .logo-container {
         display: flex;
+        align-self: center;
         flex-shrink: 0;
 
         .logo {
@@ -18,7 +21,6 @@
         display: flex;
         align-self: center;
         flex-grow: 1;
-        padding-left: calc(20rem - 4rem);
     }
 
     .right {

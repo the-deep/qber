@@ -23,17 +23,17 @@ import {
 } from '#utils/common';
 
 const METADATA_OPTIONS = gql`
-    query MetaDataOptions{
+    query MetaDataOptions {
         enums {
-            QuestionnaireEnumeratorSkill {
+            QuestionnaireEnumeratorSkills {
                 key
                 label
             }
-            QuestionnairePriorityLevel {
+            QuestionnairePriorityLevels {
                 key
                 label
             }
-            QuestionnaireDataCollectionMethod {
+            QuestionnaireDataCollectionMethods {
                 key
                 label
             }
@@ -74,11 +74,11 @@ function MetaDataInputs(props: Props) {
 
     const error = getErrorObject(riskyError);
 
-    const priorityLevelOptions = metaDataOptions?.enums.QuestionnairePriorityLevel;
+    const priorityLevelOptions = metaDataOptions?.enums.QuestionnairePriorityLevels;
 
-    const skillOptions = metaDataOptions?.enums.QuestionnaireEnumeratorSkill;
+    const skillOptions = metaDataOptions?.enums.QuestionnaireEnumeratorSkills;
 
-    const collectionMethodOptions = metaDataOptions?.enums.QuestionnaireDataCollectionMethod;
+    const collectionMethodOptions = metaDataOptions?.enums.QuestionnaireDataCollectionMethods;
 
     return (
         <>
@@ -120,7 +120,7 @@ function MetaDataInputs(props: Props) {
             />
             <NumberInput
                 className={className}
-                label="Maximum duration (in minutes)"
+                label="Maximum duration (in seconds)"
                 name="requiredDuration"
                 value={value?.requiredDuration}
                 error={error?.requiredDuration}

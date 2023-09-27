@@ -79,11 +79,13 @@ const QUESTIONNAIRES_FOR_PROJECT = gql`
                         modifiedAt
                         createdAt
                         requiredDuration
-                        priorityLevelDisplay
-                        enumeratorSkillDisplay
-                        dataCollectionMethodDisplay
+                        priorityLevelsDisplay
+                        enumeratorSkillsDisplay
+                        dataCollectionMethodsDisplay
+                        totalQuestions {
+                            visible
+                        }
                     }
-                    count
                 }
             }
         }
@@ -244,7 +246,7 @@ export function Component() {
                             className={styles.addProjectButton}
                             name={undefined}
                             icons={<IoAdd />}
-                            variant="primary"
+                            variant="secondary"
                             onClick={showProjectCreateModal}
                         >
                             Add project
@@ -292,15 +294,15 @@ export function Component() {
                 {isDefined(activeProject) && (
                     <div className={styles.content}>
                         <Header
-                            headingSize="large"
+                            headingSize="medium"
                             className={styles.questionnaireHeader}
-                            heading={activeProjectData?.title}
-                            description="Questionnaires"
+                            heading={`${activeProjectData?.title}: Questionnaires `}
                             actions={(
                                 <Button
                                     name={undefined}
                                     icons={<IoAdd />}
                                     onClick={showQuestionnaireModal}
+                                    variant="tertiary"
                                 >
                                     Create Questionnaire
                                 </Button>

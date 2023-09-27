@@ -2,8 +2,10 @@ import { useCallback, useMemo } from 'react';
 import { isDefined, isNotDefined } from '@togglecorp/fujs';
 import { gql, useMutation, useQuery } from '@apollo/client';
 import {
-    Modal,
     Button,
+    Modal,
+    MultiSelectInput,
+    NumberInput,
     TextInput,
     useAlert,
 } from '@the-deep/deep-ui';
@@ -24,8 +26,13 @@ import {
     QuestionnaireDetailQuery,
     QuestionnaireDetailQueryVariables,
     QuestionnaireCreateInput,
+    QuestionnaireMetadataQuery,
+    QuestionnaireMetadataQueryVariables,
 } from '#generated/types';
-import MetaDataInputs from '#components/MetaDataInputs';
+import {
+    enumKeySelector,
+    enumLabelSelector,
+} from '#utils/common';
 
 import styles from './index.module.css';
 
@@ -78,14 +85,33 @@ const QUESTIONNAIRE_DETAIL = gql`
                     title
                     projectId
                     createdAt
-                    dataCollectionMethod
-                    dataCollectionMethodDisplay
-                    enumeratorSkill
-                    enumeratorSkillDisplay
-                    priorityLevelDisplay
-                    priorityLevel
+                    dataCollectionMethods
+                    dataCollectionMethodsDisplay
+                    enumeratorSkills
+                    enumeratorSkillsDisplay
+                    priorityLevels
+                    priorityLevelsDisplay
                     requiredDuration
                 }
+            }
+        }
+    }
+`;
+
+const QUESTIONNAIRE_METADATA = gql`
+    query QuestionnaireMetadata {
+        enums {
+            QuestionnaireEnumeratorSkills {
+                key
+                label
+            }
+            QuestionnairePriorityLevels {
+                key
+                label
+            }
+            QuestionnaireDataCollectionMethods {
+                key
+                label
             }
         }
     }
@@ -101,9 +127,9 @@ const schema: FormSchema = {
             required: true,
             requiredValidation: requiredStringCondition,
         },
-        dataCollectionMethod: {},
-        enumeratorSkill: {},
-        priorityLevel: {},
+        dataCollectionMethods: {},
+        enumeratorSkills: {},
+        priorityLevels: {},
         requiredDuration: {},
     }),
 };
@@ -152,7 +178,14 @@ function EditQuestionnaireModal(props: Props) {
         setValue,
     } = useForm(schema, { value: initialValue });
 
-    const fieldError = getErrorObject(formError);
+    const error = getErrorObject(formError);
+
+    const {
+        data: metadataOptions,
+        loading: metadataOptionsPending,
+    } = useQuery<QuestionnaireMetadataQuery, QuestionnaireMetadataQueryVariables>(
+        QUESTIONNAIRE_METADATA,
+    );
 
     useQuery<QuestionnaireDetailQuery, QuestionnaireDetailQueryVariables>(
         QUESTIONNAIRE_DETAIL,
@@ -163,9 +196,9 @@ function EditQuestionnaireModal(props: Props) {
                 const questionnaireDetails = response?.private?.projectScope?.questionnaire;
                 setValue({
                     title: questionnaireDetails?.title,
-                    priorityLevel: questionnaireDetails?.priorityLevel,
-                    enumeratorSkill: questionnaireDetails?.enumeratorSkill,
-                    dataCollectionMethod: questionnaireDetails?.dataCollectionMethod,
+                    priorityLevels: questionnaireDetails?.priorityLevels,
+                    enumeratorSkills: questionnaireDetails?.enumeratorSkills,
+                    dataCollectionMethods: questionnaireDetails?.dataCollectionMethods,
                     requiredDuration: questionnaireDetails?.requiredDuration,
                 });
             },
@@ -243,6 +276,10 @@ function EditQuestionnaireModal(props: Props) {
         },
     );
 
+    const priorityLevelOptions = metadataOptions?.enums.QuestionnairePriorityLevels;
+    const skillOptions = metadataOptions?.enums.QuestionnaireEnumeratorSkills;
+    const collectionMethodOptions = metadataOptions?.enums.QuestionnaireDataCollectionMethods;
+
     const handleSubmit = useCallback(() => {
         const handler = createSubmitHandler(
             validate,
@@ -303,15 +340,49 @@ function EditQuestionnaireModal(props: Props) {
                 label="Title"
                 placeholder="Questionnaire Title"
                 value={formValue?.title}
-                error={fieldError?.title}
+                error={error?.title}
                 onChange={setFieldValue}
                 autoFocus
             />
-
-            <MetaDataInputs
+            <MultiSelectInput
+                name="priorityLevels"
+                value={formValue?.priorityLevels}
                 onChange={setFieldValue}
-                value={formValue}
-                error={fieldError}
+                error={error?.priorityLevels}
+                label="Priority Levels"
+                options={priorityLevelOptions}
+                keySelector={enumKeySelector}
+                labelSelector={enumLabelSelector}
+                optionsPending={metadataOptionsPending}
+            />
+            <MultiSelectInput
+                name="dataCollectionMethods"
+                value={formValue?.dataCollectionMethods}
+                onChange={setFieldValue}
+                error={error?.dataCollectionMethods}
+                label="Data Collection Method"
+                options={collectionMethodOptions}
+                keySelector={enumKeySelector}
+                labelSelector={enumLabelSelector}
+                optionsPending={metadataOptionsPending}
+            />
+            <MultiSelectInput
+                name="enumeratorSkills"
+                value={formValue?.enumeratorSkills}
+                onChange={setFieldValue}
+                error={error?.enumeratorSkills}
+                label="Enumerator Skills"
+                options={skillOptions}
+                keySelector={enumKeySelector}
+                labelSelector={enumLabelSelector}
+                optionsPending={metadataOptionsPending}
+            />
+            <NumberInput
+                label="Maximum duration (in seconds)"
+                name="requiredDuration"
+                value={formValue?.requiredDuration}
+                error={error?.requiredDuration}
+                onChange={setFieldValue}
             />
         </Modal>
     );

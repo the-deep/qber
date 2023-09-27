@@ -47,8 +47,6 @@ import {
     ExportQuestionnaireMutationVariables,
     ExportDetailsQuery,
     ExportDetailsQueryVariables,
-    QuestionsCountQuery,
-    QuestionsCountQueryVariables,
 } from '#generated/types';
 
 import styles from './index.module.css';
@@ -120,26 +118,6 @@ const EXPORT_DETAILS = gql`
                         name
                         url
                     }
-                }
-            }
-        }
-    }
-`;
-
-// FIXME: Get this from questionnaire query in outside scope
-const QUESTIONS_COUNT = gql`
-    query QuestionsCount(
-        $projectId: ID!,
-        $questionnaireId: ID!,
-    ){
-        private {
-            projectScope(pk: $projectId) {
-                questions(filters: {
-                    questionnaire: {
-                        pk: $questionnaireId
-                    }
-                }) {
-                    count
                 }
             }
         }
@@ -261,30 +239,7 @@ function QuestionnaireItem(props: Props) {
         exportIdToDownload,
     ]);
 
-    const questionsCountVariables = useMemo(() => {
-        if (isNotDefined(projectId) || isNotDefined(questionnaireItem.id)) {
-            return undefined;
-        }
-        return ({
-            projectId,
-            questionnaireId: questionnaireItem.id,
-        });
-    }, [
-        questionnaireItem,
-        projectId,
-    ]);
-
-    const {
-        data: questionsCountResponse,
-    } = useQuery<QuestionsCountQuery, QuestionsCountQueryVariables>(
-        QUESTIONS_COUNT,
-        {
-            skip: isNotDefined(questionsCountVariables),
-            variables: questionsCountVariables,
-        },
-    );
-
-    const questionsCount = questionsCountResponse?.private?.projectScope?.questions.count;
+    const questionsCount = questionnaireItem?.totalQuestions.visible;
 
     const {
         data: exportDetailsResponse,
@@ -469,14 +424,21 @@ function QuestionnaireItem(props: Props) {
                     />
                 </div>
                 <div className={styles.metadata}>
-                    {isDefined(questionnaireItem.dataCollectionMethodDisplay) && (
+                    {(questionnaireItem.dataCollectionMethodsDisplay.length > 0) && (
+
                         <TextOutput
                             className={styles.metadatum}
                             label="Data Collection Technique"
-                            value={(
-                                <span className={styles.tag}>
-                                    {questionnaireItem.dataCollectionMethodDisplay}
-                                </span>
+                            valueContainerClassName={styles.tags}
+                            value={questionnaireItem.dataCollectionMethodsDisplay.map(
+                                (method) => (
+                                    <span
+                                        key={method}
+                                        className={styles.tag}
+                                    >
+                                        {method}
+                                    </span>
+                                ),
                             )}
                             hideLabelColon
                             block
@@ -497,14 +459,20 @@ function QuestionnaireItem(props: Props) {
                             block
                         />
                     )}
-                    {isDefined(questionnaireItem.enumeratorSkillDisplay) && (
+                    {(questionnaireItem.enumeratorSkillsDisplay.length > 0) && (
                         <TextOutput
                             className={styles.metadatum}
                             label="Enumerator Skill"
-                            value={(
-                                <span className={styles.tag}>
-                                    {questionnaireItem.enumeratorSkillDisplay}
-                                </span>
+                            valueContainerClassName={styles.tags}
+                            value={questionnaireItem.enumeratorSkillsDisplay.map(
+                                (skill) => (
+                                    <span
+                                        className={styles.tag}
+                                        key={skill}
+                                    >
+                                        {skill}
+                                    </span>
+                                ),
                             )}
                             hideLabelColon
                             block

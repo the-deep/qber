@@ -1,6 +1,7 @@
 .navbar {
-    --height-navbar: 4rem;
+    --height-navbar: 3.6rem;
     display: flex;
+    flex-shrink: 0;
     background-color: var(--dui-color-secondary);
     padding: var(--dui-spacing-medium) var(--dui-spacing-super-large);
     padding-top: 0;
@@ -9,6 +10,7 @@
 
     .logo-container {
         display: flex;
+        align-self: center;
         flex-shrink: 0;
         padding: var(--dui-spacing-small);
         padding-bottom: 0;

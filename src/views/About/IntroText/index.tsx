@@ -1,8 +1,6 @@
-import styles from './index.module.css';
-
 function IntroText() {
     return (
-        <div className={styles.intro}>
+        <div>
             <p>
                 <b>
                     Qber is an online platform funded by the Centre for Disease Control

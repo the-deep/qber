@@ -16,6 +16,7 @@
             gap: var(--dui-spacing-super-large);
 
             .metadatum {
+                width: max-content;
                 color: var(--dui-color-text-description);
                 font-family: var(--dui-font-family-monospace);
                 font-size: var(--dui-font-size-medium);
@@ -23,6 +24,11 @@
                 .value {
                     font-weight: var(--dui-font-weight-medium);
                 }
+            }
+            .tags {
+                display: flex;
+                flex-wrap: wrap;
+                gap: var(--dui-spacing-small);
             }
             .tag {
                 display: flex;

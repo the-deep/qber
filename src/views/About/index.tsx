@@ -1,4 +1,9 @@
-import { useMemo, useCallback, useState } from 'react';
+import {
+    useMemo,
+    useCallback,
+    useState,
+    Fragment,
+} from 'react';
 import {
     IoCloseOutline,
 } from 'react-icons/io5';
@@ -10,8 +15,8 @@ import {
 } from '@togglecorp/fujs';
 import {
     ListView,
+    Message,
     Button,
-    Header,
     Container,
     QuickActionButton,
 } from '@the-deep/deep-ui';
@@ -29,7 +34,7 @@ import styles from './index.module.css';
 const QUESTION_BANK_ID = '1';
 
 const ABOUT_FRAMEWORK = gql`
-    query AboutFramework(
+    query AboutFramework (
         $questionBankId: ID!,
     ){
         private {
@@ -49,12 +54,24 @@ const ABOUT_FRAMEWORK = gql`
                     type
                     typeDisplay
                 }
+                choiceCollections {
+                    choices {
+                        collectionId
+                        id
+                        label
+                        name
+                    }
+                    id
+                    label
+                    name
+                }
             }
         }
     }
 `;
 
-type QuestionGroup = NonNullable<NonNullable<NonNullable<AboutFrameworkQuery['private']>['questionBank']>['leafGroups']>[number];
+type QuestionGroup = NonNullable<NonNullable<AboutFrameworkQuery['private']>['questionBank']>['leafGroups'][number];
+export type ChoiceCollectionsType = NonNullable<NonNullable<AboutFrameworkQuery['private']>['questionBank']>['choiceCollections'];
 
 const subPillarKeySelector = (group: QuestionGroup) => group.id;
 
@@ -101,7 +118,10 @@ function Pillars(props: PillarsProps) {
     return (
         <div className={styles.pillars}>
             {groupedList?.map((group) => (
-                <div className={styles.pillarItem}>
+                <div
+                    className={styles.pillarItem}
+                    key={group[0].category1}
+                >
                     <div className={styles.parent}>
                         {group[0].category1Display}
                     </div>
@@ -169,7 +189,10 @@ function SubDimension(props: SubDimensionProps) {
                 {subDimension.category2Display}
             </td>
             {sectors?.map((sector) => (sector.category3 ? (
-                <td className={styles.cell}>
+                <td
+                    className={styles.cell}
+                    key={sector.category3}
+                >
                     <Button
                         name={sector.category3}
                         className={_cs(styles.leaf, styles.button)}
@@ -197,6 +220,8 @@ export function Component() {
 
     const [selectedLeafGroupIds, setSelectedLeafGroupIds] = useState<string[]>([]);
     const framework = frameworkResponse?.private?.questionBank?.leafGroups;
+
+    const choiceCollections = frameworkResponse?.private?.questionBank?.choiceCollections;
 
     const getLeafNodeLabel = useCallback((leafId: string): string | undefined => {
         const leafNodeItem = framework?.find((group) => group.id === leafId);
@@ -259,19 +284,23 @@ export function Component() {
                         />
                     )}
                     <table className={styles.twoDTable}>
-                        <thead>
+                        <tr>
                             <td className={styles.header} />
                             <td className={styles.header} />
                             {uniqueSectorList?.map((sector) => (
-                                <td className={styles.header}>
+                                <td
+                                    className={styles.header}
+                                    key={sector.category3}
+                                >
                                     {sector.category3Display}
                                 </td>
                             ))}
-                        </thead>
+                        </tr>
                         {dimensionRows.map((subDimensionsWithinRow) => (
-                            <>
+                            <Fragment key={subDimensionsWithinRow[0]?.category1}>
                                 {subDimensionsWithinRow.map((item, index) => (
                                     <SubDimension
+                                        key={item.category2}
                                         leafNodes={dimensions.filter(
                                             (dimension) => (
                                                 dimension.category1 === item.category1
@@ -286,28 +315,29 @@ export function Component() {
                                         setSelectedLeafGroupIds={setSelectedLeafGroupIds}
                                     />
                                 ))}
-                            </>
+                            </Fragment>
                         ))}
                     </table>
                 </div>
                 {rightPaneShown && (
-                    <div className={styles.rightPane}>
-                        <Header
-                            actions={(
-                                <QuickActionButton
-                                    name={undefined}
-                                    title="Close right pane"
-                                    variant="transparent"
-                                    onClick={() => setRightPaneShown(false)}
-                                >
-                                    <IoCloseOutline />
-                                </QuickActionButton>
-                            )}
-                            heading="Questions"
-                            headingSize="small"
-                        />
+                    <Container
+                        className={styles.rightPane}
+                        headerActions={(
+                            <QuickActionButton
+                                name={undefined}
+                                title="Close right pane"
+                                variant="transparent"
+                                onClick={() => setRightPaneShown(false)}
+                            >
+                                <IoCloseOutline />
+                            </QuickActionButton>
+                        )}
+                        heading="Questions"
+                        headingSize="small"
+                    >
                         {selectedLeafGroupIds?.map((leafGroupId) => (
                             <Container
+                                key={leafGroupId}
                                 className={styles.questionsContainer}
                                 heading={getLeafNodeLabel(leafGroupId)}
                                 contentClassName={styles.questionsContent}
@@ -316,10 +346,16 @@ export function Component() {
                                 <QuestionsPreview
                                     leafGroupId={leafGroupId}
                                     questionBankId={QUESTION_BANK_ID}
+                                    choiceCollections={choiceCollections}
                                 />
                             </Container>
                         ))}
-                    </div>
+                        {selectedLeafGroupIds?.length === 0 && (
+                            <Message
+                                message="No questions found in the selected category."
+                            />
+                        )}
+                    </Container>
                 )}
             </div>
         </div>

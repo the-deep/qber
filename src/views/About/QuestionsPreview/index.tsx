@@ -21,6 +21,9 @@ import ImageQuestionPreview from '#components/questionPreviews/ImageQuestionPrev
 import FileQuestionPreview from '#components/questionPreviews/FileQuestionPreview';
 import SelectOneQuestionPreview from '#components/questionPreviews/SelectOneQuestionPreview';
 import SelectMultipleQuestionPreview from '#components/questionPreviews/SelectMultipleQuestionPreview';
+import {
+    ChoiceCollectionType,
+} from '#types/common';
 
 import styles from './index.module.css';
 
@@ -49,12 +52,7 @@ const QUESTIONS_FROM_BANK = gql`
                     hint
                     leafGroupId
                     qbankId
-                    choiceCollection {
-                        id
-                        name
-                        label
-                        qbankId
-                    }
+                    choiceCollectionId
                 }
             }
         }
@@ -66,14 +64,14 @@ type Question = NonNullable<NonNullable<NonNullable<QuestionsFromBankQuery['priv
 const questionKeySelector = (question: Question) => question.id;
 
 interface QuestionProps {
-    projectId: string;
     question: Question;
+    choiceCollection: ChoiceCollectionType | undefined;
 }
 
 function QuestionRenderer(props: QuestionProps) {
     const {
-        projectId,
         question,
+        choiceCollection,
     } = props;
 
     return (
@@ -92,13 +90,12 @@ function QuestionRenderer(props: QuestionProps) {
                     hint={question.hint}
                 />
             )}
-            {(question.type === 'RANK') && isDefined(projectId) && (
+            {(question.type === 'RANK') && isDefined(choiceCollection) && (
                 <RankQuestionPreview
                     className={styles.questionItem}
                     label={question.label}
                     hint={question.hint}
-                    projectId={projectId}
-                    choiceCollectionId={question.choiceCollection?.id}
+                    choiceCollection={choiceCollection}
                 />
             )}
             {(question.type === 'DATE') && (
@@ -135,22 +132,20 @@ function QuestionRenderer(props: QuestionProps) {
                     hint={question.hint}
                 />
             )}
-            {(question.type === 'SELECT_ONE') && isDefined(projectId) && (
+            {(question.type === 'SELECT_ONE') && isDefined(choiceCollection) && (
                 <SelectOneQuestionPreview
                     className={styles.questionItem}
                     label={question.label}
                     hint={question.hint}
-                    projectId={projectId}
-                    choiceCollectionId={question.choiceCollection?.id}
+                    choiceCollection={choiceCollection}
                 />
             )}
-            {(question.type === 'SELECT_MULTIPLE') && isDefined(projectId) && (
+            {(question.type === 'SELECT_MULTIPLE') && isDefined(choiceCollection) && (
                 <SelectMultipleQuestionPreview
                     className={styles.questionItem}
                     label={question.label}
                     hint={question.hint}
-                    projectId={projectId}
-                    choiceCollectionId={question.choiceCollection?.id}
+                    choiceCollection={choiceCollection}
                 />
             )}
         </div>
@@ -160,12 +155,14 @@ function QuestionRenderer(props: QuestionProps) {
 interface Props {
     questionBankId: string;
     leafGroupId: string;
+    choiceCollections: ChoiceCollectionType[] | undefined;
 }
 
 function QuestionsPreview(props: Props) {
     const {
         leafGroupId,
         questionBankId,
+        choiceCollections,
     } = props;
 
     const {
@@ -184,7 +181,12 @@ function QuestionsPreview(props: Props) {
     const questions = questionsResponse?.private?.qbQuestions?.items;
     const questionRendererParams = useCallback((_: string, datum: Question) => ({
         question: datum,
-    }), []);
+        choiceCollection: choiceCollections?.find(
+            (collection) => collection.id === datum.choiceCollectionId,
+        ),
+    }), [
+        choiceCollections,
+    ]);
 
     return (
         <ListView

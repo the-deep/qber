@@ -47,10 +47,11 @@ import {
     QberQuestionTypeEnum,
 } from '#generated/types';
 import PillarSelectInput from '#components/PillarSelectInput';
-import ChoiceCollectionSelectInput, {
-    type ChoiceCollectionType,
-} from '#components/ChoiceCollectionSelectInput';
+import ChoiceCollectionSelectInput from '#components/ChoiceCollectionSelectInput';
 import MetaDataInputs from '#components/MetaDataInputs';
+import {
+    ChoiceCollectionType,
+} from '#types/common';
 
 import {
     QUESTION_FRAGMENT,
@@ -159,6 +160,7 @@ interface Props {
     questionId?: string;
     onSuccess: (questionId: string | undefined) => void;
     selectedLeafGroupId: string;
+    choiceCollections?: ChoiceCollectionType[];
 }
 
 function SelectMultipleQuestionForm(props: Props) {
@@ -168,6 +170,7 @@ function SelectMultipleQuestionForm(props: Props) {
         questionId,
         onSuccess,
         selectedLeafGroupId,
+        choiceCollections,
     } = props;
 
     const alert = useAlert();
@@ -192,11 +195,6 @@ function SelectMultipleQuestionForm(props: Props) {
         setValue,
         setError,
     } = useForm(schema, { value: initialFormValue });
-
-    const [
-        choiceCollectionOption,
-        setChoiceCollectionOption,
-    ] = useState<ChoiceCollectionType[] | null | undefined>();
 
     const fieldError = getErrorObject(formError);
 
@@ -229,17 +227,12 @@ function SelectMultipleQuestionForm(props: Props) {
                     hint: questionResponse?.hint,
                     required: questionResponse?.required,
                     requiredDuration: questionResponse?.requiredDuration,
-                    choiceCollection: questionResponse?.choiceCollection?.id,
+                    choiceCollection: questionResponse?.choiceCollectionId,
                     priorityLevel: questionResponse?.priorityLevel,
                     dataCollectionMethod: questionResponse?.dataCollectionMethod,
                     enumeratorSkill: questionResponse?.enumeratorSkill,
                     constraint: questionResponse?.constraint,
                 });
-                const choiceCollection = questionResponse?.choiceCollection;
-                const choiceCollectionOptions = isDefined(choiceCollection)
-                    ? [choiceCollection]
-                    : [];
-                setChoiceCollectionOption(choiceCollectionOptions);
             },
         },
     );
@@ -419,8 +412,7 @@ function SelectMultipleQuestionForm(props: Props) {
                             name="choiceCollection"
                             value={formValue.choiceCollection}
                             label="Options"
-                            options={choiceCollectionOption}
-                            onOptionsChange={setChoiceCollectionOption}
+                            options={choiceCollections}
                             onChange={setFieldValue}
                             projectId={projectId}
                             questionnaireId={questionnaireId}

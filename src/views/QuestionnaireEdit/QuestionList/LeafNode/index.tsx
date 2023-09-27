@@ -27,6 +27,9 @@ import {
 import {
     type ProjectScope,
 } from '#utils/common';
+import {
+    ChoiceCollectionType,
+} from '#types/common';
 
 import QuestionPreview from './QuestionPreview';
 import {
@@ -47,6 +50,7 @@ interface Props {
     setSelectedQuestionType: React.Dispatch<React.SetStateAction<string | undefined>>;
     setActiveQuestionId: React.Dispatch<React.SetStateAction<string | undefined>>;
     setSelectedLeafGroupId: React.Dispatch<React.SetStateAction<string | undefined>>;
+    choiceCollections: ChoiceCollectionType[] | undefined;
 }
 
 function LeafNode(props: Props) {
@@ -59,6 +63,7 @@ function LeafNode(props: Props) {
         setSelectedQuestionType,
         setActiveQuestionId,
         setSelectedLeafGroupId,
+        choiceCollections,
     } = props;
 
     const alert = useAlert();
@@ -201,6 +206,9 @@ function LeafNode(props: Props) {
         onSelectedQuestionsChange: handleSelectedQuestionsChange,
         setSelectedLeafGroupId,
         refetchQuestionList: retriggerQuestionsFetch,
+        choiceCollection: choiceCollections?.find(
+            (collection) => collection.id === datum.choiceCollectionId,
+        ),
     }), [
         onEditQuestionClick,
         projectId,
@@ -209,6 +217,7 @@ function LeafNode(props: Props) {
         handleSelectedQuestionsChange,
         setSelectedLeafGroupId,
         retriggerQuestionsFetch,
+        choiceCollections,
     ]);
 
     return (

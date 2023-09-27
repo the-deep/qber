@@ -93,6 +93,7 @@ import SelectMultipleQuestionForm from './SelectMultipleQuestionForm';
 import QuestionList from './QuestionList';
 import {
     LEAF_GROUPS_FRAGMENT,
+    CHOICE_COLLECTION_FRAGMENT,
 } from './queries';
 import QuestionTypeItem, { QuestionType } from './QuestionTypeItem';
 
@@ -102,6 +103,7 @@ export type QuestionTabType = 'general' | 'metadata';
 
 const QUESTIONNAIRE = gql`
     ${LEAF_GROUPS_FRAGMENT}
+    ${CHOICE_COLLECTION_FRAGMENT}
     query Questionnaire(
         $projectId: ID!,
         $questionnaireId: ID!,
@@ -118,6 +120,9 @@ const QUESTIONNAIRE = gql`
                     title
                     leafGroups {
                         ...LeafGroups
+                    }
+                    choiceCollections {
+                        ...ChoiceCollections
                     }
                 }
             }
@@ -481,6 +486,9 @@ export function Component() {
     const questionnaireTitle = questionnaireResponse?.private.projectScope?.questionnaire?.title;
     const projectTitle = questionnaireResponse?.private.projectScope?.project.title;
 
+    const choiceCollections = questionnaireResponse?.private?.projectScope
+        ?.questionnaire?.choiceCollections;
+
     const [
         triggerGroupOrderChange,
     ] = useMutation<OrderQuestionGroupMutation, OrderQuestionGroupMutationVariables>(
@@ -836,6 +844,7 @@ export function Component() {
                             handleQuestionAdd={handleQuestionAdd}
                             addQuestionPaneShown={addQuestionPaneShown}
                             setSelectedLeafGroupId={setActiveLeafGroupId}
+                            choiceCollections={choiceCollections}
                         />
                     </Tabs>
                 </div>
@@ -894,6 +903,7 @@ export function Component() {
                                         questionId={activeQuestionId}
                                         onSuccess={handleQuestionCreateSuccess}
                                         selectedLeafGroupId={activeLeafGroupId}
+                                        choiceCollections={choiceCollections}
                                     />
                                 )}
                                 {(selectedQuestionType === 'SELECT_ONE') && (
@@ -903,6 +913,7 @@ export function Component() {
                                         questionId={activeQuestionId}
                                         onSuccess={handleQuestionCreateSuccess}
                                         selectedLeafGroupId={activeLeafGroupId}
+                                        choiceCollections={choiceCollections}
                                     />
                                 )}
                                 {(selectedQuestionType === 'SELECT_MULTIPLE') && (
@@ -912,6 +923,7 @@ export function Component() {
                                         questionId={activeQuestionId}
                                         onSuccess={handleQuestionCreateSuccess}
                                         selectedLeafGroupId={activeLeafGroupId}
+                                        choiceCollections={choiceCollections}
                                     />
                                 )}
                                 {(selectedQuestionType === 'DATE') && (

@@ -68,6 +68,9 @@ body {
         background-color: var(--dui-color-foreground-scrollbar);
     }
 
+    h1, h2, h3, h4, h5, h6 {
+        text-transform: unset!important;
+    }
 }
 
 body {

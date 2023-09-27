@@ -131,7 +131,6 @@ function Navbar(props: Props) {
                     >
                         About
                     </NavLink>
-
                 </div>
                 <div className={styles.actions}>
                     <DropdownMenu
