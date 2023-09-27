@@ -31,14 +31,12 @@ import QuestionsPreview from './QuestionsPreview';
 import IntroText from './IntroText';
 import styles from './index.module.css';
 
-const QUESTION_BANK_ID = '1';
-
 const ABOUT_FRAMEWORK = gql`
-    query AboutFramework (
-        $questionBankId: ID!,
-    ){
+    query AboutFramework {
         private {
-            questionBank(pk: $questionBankId) {
+            id
+            activeQuestionBank {
+                id
                 leafGroups {
                     category1
                     category1Display
@@ -70,8 +68,8 @@ const ABOUT_FRAMEWORK = gql`
     }
 `;
 
-type QuestionGroup = NonNullable<NonNullable<AboutFrameworkQuery['private']>['questionBank']>['leafGroups'][number];
-export type ChoiceCollectionsType = NonNullable<NonNullable<AboutFrameworkQuery['private']>['questionBank']>['choiceCollections'];
+type QuestionGroup = NonNullable<NonNullable<AboutFrameworkQuery['private']>['activeQuestionBank']>['leafGroups'][number];
+export type ChoiceCollectionsType = NonNullable<NonNullable<AboutFrameworkQuery['private']>['activeQuestionBank']>['choiceCollections'];
 
 const subPillarKeySelector = (group: QuestionGroup) => group.id;
 
@@ -211,17 +209,13 @@ export function Component() {
         data: frameworkResponse,
     } = useQuery<AboutFrameworkQuery, AboutFrameworkQueryVariables>(
         ABOUT_FRAMEWORK,
-        {
-            variables: {
-                questionBankId: QUESTION_BANK_ID,
-            },
-        },
     );
 
     const [selectedLeafGroupIds, setSelectedLeafGroupIds] = useState<string[]>([]);
-    const framework = frameworkResponse?.private?.questionBank?.leafGroups;
+    const bankId = frameworkResponse?.private?.activeQuestionBank?.id;
+    const framework = frameworkResponse?.private?.activeQuestionBank?.leafGroups;
 
-    const choiceCollections = frameworkResponse?.private?.questionBank?.choiceCollections;
+    const choiceCollections = frameworkResponse?.private?.activeQuestionBank?.choiceCollections;
 
     const getLeafNodeLabel = useCallback((leafId: string): string | undefined => {
         const leafNodeItem = framework?.find((group) => group.id === leafId);
@@ -319,7 +313,7 @@ export function Component() {
                         ))}
                     </table>
                 </div>
-                {rightPaneShown && (
+                {rightPaneShown && bankId && (
                     <Container
                         className={styles.rightPane}
                         headerActions={(
@@ -345,7 +339,7 @@ export function Component() {
                             >
                                 <QuestionsPreview
                                     leafGroupId={leafGroupId}
-                                    questionBankId={QUESTION_BANK_ID}
+                                    questionBankId={bankId}
                                     choiceCollections={choiceCollections}
                                 />
                             </Container>

@@ -33,6 +33,7 @@ const QUESTIONS_FROM_BANK = gql`
         $leafGroupId: ID!,
     ) {
         private {
+            id
             qbQuestions(
                 filters: {
                     qbank: {pk: $questionBankId}

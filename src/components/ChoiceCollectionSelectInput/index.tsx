@@ -27,6 +27,7 @@ const CHOICE_COLLECTIONS = gql`
         $search:String
         ) {
         private {
+            id
             projectScope(pk: $projectId) {
                 id
                 choiceCollections(

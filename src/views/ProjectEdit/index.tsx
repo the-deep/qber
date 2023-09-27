@@ -54,7 +54,9 @@ const MEMBERSHIPS = gql`
         $projectId: ID!,
     ) {
         private {
+            id
             projectScope(pk: $projectId) {
+                id
                 project {
                     id
                     title
@@ -96,7 +98,9 @@ const UPDATE_PROJECT = gql`
         $input: ProjectUpdateInput!,
     ) {
         private {
+            id
             projectScope(pk: $projectId) {
+                id
                 updateProject(data: $input) {
                     errors
                     ok
@@ -129,6 +133,7 @@ const DELETE_MEMBERSHIP = gql`
         $membershipIdToDelete: ID!,
     ) {
         private {
+            id
             projectScope(pk: $projectId) {
                 id
                 updateMemberships(deleteIds: [$membershipIdToDelete]) {

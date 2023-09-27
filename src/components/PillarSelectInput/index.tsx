@@ -11,8 +11,11 @@ const PILLARS = gql`
         $questionnaireId: ID!,
     ) {
         private {
+            id
             projectScope(pk: $projectId) {
+                id
                 questionnaire(pk: $questionnaireId) {
+                    id
                     leafGroups {
                         id
                         name

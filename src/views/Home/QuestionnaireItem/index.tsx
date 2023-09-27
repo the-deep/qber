@@ -57,7 +57,9 @@ const DELETE_QUESTIONNAIRE = gql`
         $projectId: ID!,
     ) {
         private {
+            id
             projectScope(pk: $projectId) {
+                id
                 deleteQuestionnaire(id: $questionnaireId){
                     errors
                     ok
@@ -73,7 +75,9 @@ const EXPORT_QUESTIONNAIRE = gql`
         $questionnaireId: ID!,
     ) {
         private {
+            id
             projectScope(pk: $projectId) {
+                id
                 createQuestionnaireExport(
                     data: {
                         questionnaire: $questionnaireId
@@ -100,7 +104,9 @@ const EXPORT_DETAILS = gql`
         $exportId: ID!,
     ) {
         private {
+            id
             projectScope(pk: $projectId) {
+                id
                 questionnaireExport(pk: $exportId) {
                     endedAt
                     enketoPreviewUrl

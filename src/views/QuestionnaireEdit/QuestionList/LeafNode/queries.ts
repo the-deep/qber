@@ -12,6 +12,7 @@ export const QUESTIONS_FOR_LEAF_GROUP = gql`
         $leafGroupId: ID!,
     ) {
         private {
+            id
             projectScope(pk: $projectId) {
                 id
                 questions(
@@ -48,11 +49,13 @@ export const UPDATE_QUESTIONS_ORDER = gql`
         $data: [QuestionOrderInputType!]!
     ) {
         private {
+            id
             projectScope(pk: $projectId) {
+                id
                 bulkUpdateQuestionsOrder(
-                data: $data
-                leafGroupId: $leafGroupId
-                questionnaireId: $questionnaireId
+                    data: $data
+                    leafGroupId: $leafGroupId
+                    questionnaireId: $questionnaireId
                 ) {
                     errors
                     results {
@@ -73,11 +76,13 @@ export const UPDATE_QUESTIONS_VISIBILITY = gql`
     $visibility: VisibilityActionEnum!,
     ){
         private {
+            id
             projectScope(pk: $projectId) {
+                id
                 updateQuestionsVisibility(
-                ids: $questionIds,
-                questionnaireId: $questionnaireId,
-                visibility: $visibility,
+                    ids: $questionIds,
+                    questionnaireId: $questionnaireId,
+                    visibility: $visibility,
                 ) {
                     errors
                     results {

@@ -58,7 +58,9 @@ const DELETE_QUESTION = gql`
         $questionId: ID!,
     ) {
         private {
+            id
             projectScope(pk: $projectId) {
+                id
                 deleteQuestion(id: $questionId) {
                     errors
                     ok

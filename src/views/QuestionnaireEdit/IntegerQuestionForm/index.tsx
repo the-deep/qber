@@ -65,7 +65,9 @@ const CREATE_INTEGER_QUESTION = gql`
         $input: QuestionCreateInput!,
     ){
         private {
+            id
             projectScope(pk: $projectId) {
+                id
                 createQuestion(
                     data: $input,
                 ) {
@@ -88,7 +90,9 @@ const UPDATE_INTEGER_QUESTION = gql`
         $input: QuestionUpdateInput!,
     ) {
         private {
+            id
             projectScope(pk: $projectId) {
+                id
                 updateQuestion (
                     data: $input
                     id: $questionId,

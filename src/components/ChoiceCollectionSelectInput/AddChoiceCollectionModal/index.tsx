@@ -55,7 +55,9 @@ const ADD_OPTIONS = gql`
         $input: QuestionChoiceCollectionCreateInput!,
     ) {
         private {
+            id
             projectScope(pk: $projectId) {
+                id
                 createQuestionChoiceCollection(
                     data: $input,
                 ) {
@@ -86,7 +88,9 @@ const EDIT_OPTIONS = gql`
         $choiceCollectionId: ID!,
     ) {
         private {
+            id
             projectScope(pk: $projectId) {
+                id
                 updateQuestionChoiceCollection(
                     data: $input,
                     id: $choiceCollectionId,
@@ -117,6 +121,7 @@ const COLLECTION = gql`
         $choiceCollectionId: ID!,
     ) {
         private {
+            id
             projectScope(pk: $projectId) {
                 id
                 choiceCollection(pk: $choiceCollectionId) {
