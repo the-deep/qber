@@ -41,6 +41,7 @@ const UPDATE_MEMBERSHIP = gql`
         $membershipId: ID,
     ) {
         private {
+            id
             projectScope(pk: $projectId) {
                 id
                 updateMemberships(

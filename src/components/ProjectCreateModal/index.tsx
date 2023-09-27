@@ -26,6 +26,7 @@ const CREATE_PROJECT = gql`
         $input: ProjectCreateInput!,
     ) {
         private {
+            id
             createProject(data: $input) {
                 errors
                 ok

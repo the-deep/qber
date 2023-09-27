@@ -63,7 +63,9 @@ export const QUESTION_INFO = gql`
         $questionId: ID!,
     ) {
         private {
+            id
             projectScope(pk: $projectId) {
+                id
                 question(pk: $questionId) {
                     ...QuestionResponse
                 }

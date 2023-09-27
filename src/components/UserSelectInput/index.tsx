@@ -21,6 +21,7 @@ const USERS = gql`
         $search: String,
     ) {
         private {
+            id
             users(
                 pagination: {
                     limit: $limit,

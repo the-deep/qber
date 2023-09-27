@@ -109,6 +109,7 @@ const QUESTIONNAIRE = gql`
         $questionnaireId: ID!,
     ) {
         private {
+            id
             projectScope(pk: $projectId) {
                 id
                 project {
@@ -138,10 +139,12 @@ const ORDER_QUESTION_GROUP = gql`
         $questionnaireId: ID!,
     ){
         private {
+            id
             projectScope(pk: $projectId){
+                id
                 bulkUpdateQuestionnaireQuestionGroupsLeafOrder(
-                data: $groupList
-                questionnaireId: $questionnaireId
+                    data: $groupList
+                    questionnaireId: $questionnaireId
                 ) {
                     errors
                     results {
@@ -162,7 +165,9 @@ const QUESTION_GROUP_VISIBILITY = gql`
         $visibility: VisibilityActionEnum!,
     ) {
         private {
+            id
             projectScope(pk: $projectId) {
+                id
                 updateQuestionGroupsLeafVisibility(
                     questionnaireId: $questionnaireId,
                     ids: $groupIds,
@@ -183,7 +188,9 @@ const PREVIEW_QUESTIONNAIRE = gql`
         $questionnaireId: ID!,
     ) {
         private {
+            id
             projectScope(pk: $projectId) {
+                id
                 createQuestionnaireExport(
                     data: {
                         questionnaire: $questionnaireId
@@ -210,8 +217,11 @@ const PREVIEW_DETAILS = gql`
         $exportId: ID!,
     ) {
         private {
+            id
             projectScope(pk: $projectId) {
+                id
                 questionnaireExport(pk: $exportId) {
+                    id
                     enketoPreviewUrl
                     status
                     statusDisplay

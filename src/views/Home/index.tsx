@@ -41,6 +41,7 @@ const PROJECTS = gql`
         $offset: Int,
     ) {
         private {
+            id
             projects (
                 filters: {
                     search: $search,
@@ -69,6 +70,7 @@ const QUESTIONNAIRES_FOR_PROJECT = gql`
         $projectId: ID!,
     ) {
         private {
+            id
             projectScope(pk: $projectId){
                 id
                 questionnaires {

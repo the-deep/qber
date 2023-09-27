@@ -42,7 +42,9 @@ const CREATE_QUESTIONNAIRE = gql`
         $input: QuestionnaireCreateInput!,
     ) {
         private {
+            id
             projectScope(pk: $projectId) {
+                id
                 createQuestionnaire(data: $input) {
                     errors
                     ok
@@ -59,7 +61,9 @@ const EDIT_QUESTIONNAIRE = gql`
         $input: QuestionnaireUpdateInput!,
     ) {
         private {
+            id
             projectScope(pk: $projectId) {
+                id
                 updateQuestionnaire(data: $input, id: $questionnaireId) {
                     errors
                     ok
@@ -79,7 +83,9 @@ const QUESTIONNAIRE_DETAIL = gql`
         $questionnaireId: ID!,
     ) {
         private {
+            id
             projectScope(pk: $projectId) {
+                id
                 questionnaire(pk: $questionnaireId) {
                     id
                     title
