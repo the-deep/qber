@@ -1,7 +1,3 @@
-import {
-    capitalize,
-} from '@togglecorp/fujs';
-
 // eslint-disable-next-line import/prefer-default-export
 export function flatten<A, K>(
     list: A[],
@@ -77,17 +73,17 @@ export type DeepReplace<T, A, B> = (
 );
 
 export interface EnumEntity<T> {
-    name: T;
-    description?: string | null;
+    key: T;
+    label: string;
 }
 
 export type EnumOptions<T> = EnumEntity<T>[] | null | undefined;
 
 export const enumKeySelector = <T>(d: EnumEntity<T>) => (
-    d.name
+    d.key
 );
-export const enumLabelSelector = <T extends string | number>(d: EnumEntity<T>) => (
-    d.description ?? capitalize(String(d.name))
+export const enumLabelSelector = <T extends string>(d: EnumEntity<T>) => (
+    d.label
 );
 
 export type ProjectScope<T> = T extends {

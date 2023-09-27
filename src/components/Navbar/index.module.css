@@ -1,17 +1,22 @@
 .navbar {
-    --height-navbar: 4rem;
+    --height-navbar: 3.6rem;
     display: flex;
+    flex-shrink: 0;
     background-color: var(--dui-color-secondary);
     padding: var(--dui-spacing-medium) var(--dui-spacing-super-large);
+    padding-top: 0;
     padding-bottom: 0;
     height: var(--height-navbar);
 
     .logo-container {
         display: flex;
+        align-self: center;
         flex-shrink: 0;
+        padding: var(--dui-spacing-small);
+        padding-bottom: 0;
 
         .logo {
-            width: 4rem;
+            width: 3.5rem;
         }
     }
     .mid-section {
@@ -29,6 +34,7 @@
 
         .nav-links {
             display: flex;
+            height: 100%;
             gap: var(--dui-spacing-medium);
 
             .nav-item {

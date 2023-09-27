@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from 'react';
+import { useCallback } from 'react';
 import { gql, useQuery } from '@apollo/client';
 import {
     isDefined,
@@ -22,59 +22,56 @@ import FileQuestionPreview from '#components/questionPreviews/FileQuestionPrevie
 import SelectOneQuestionPreview from '#components/questionPreviews/SelectOneQuestionPreview';
 import SelectMultipleQuestionPreview from '#components/questionPreviews/SelectMultipleQuestionPreview';
 import {
-    type ProjectScope,
-} from '#utils/common';
+    ChoiceCollectionType,
+} from '#types/common';
 
 import styles from './index.module.css';
 
 const QUESTIONS_FROM_BANK = gql`
     query QuestionsFromBank (
+        $questionBankId: ID!,
         $leafGroupId: ID!,
-        $questionnaireId: ID!,
-        $projectId: ID!,
     ) {
         private {
-            projectScope(pk: $projectId) {
-                questions(filters: {
-                    leafGroup: {
-                        pk: $leafGroupId
-                    }
-                    questionnaire: { pk: $questionnaireId }
-                }) {
-                    items {
-                        id
-                        label
-                        name
-                        type
-                        hint
-                        leafGroupId
-                        questionnaireId
-                        choiceCollection {
-                            id
-                            name
-                            label
-                            questionnaireId
-                        }
-                    }
+            qbQuestions(
+                filters: {
+                    qbank: {pk: $questionBankId}
+                    leafGroup: {pk: $leafGroupId}
+                },
+                pagination: {
+                    offset: 0,
+                    limit: 50,
+                },
+            ) {
+                count
+                items {
+                    id
+                    label
+                    name
+                    type
+                    hint
+                    leafGroupId
+                    qbankId
+                    choiceCollectionId
                 }
             }
         }
     }
 `;
 
-type Question = NonNullable<NonNullable<ProjectScope<QuestionsFromBankQuery>['questions']>['items']>[number];
+type Question = NonNullable<NonNullable<NonNullable<QuestionsFromBankQuery['private']>['qbQuestions']>['items']>[number];
 
 const questionKeySelector = (question: Question) => question.id;
 
 interface QuestionProps {
-    projectId: string;
     question: Question;
+    choiceCollection: ChoiceCollectionType | undefined;
 }
 
 function QuestionRenderer(props: QuestionProps) {
     const {
-        projectId,
         question,
+        choiceCollection,
     } = props;
 
     return (
@@ -93,13 +90,12 @@ function QuestionRenderer(props: QuestionProps) {
                     hint={question.hint}
                 />
             )}
-            {(question.type === 'RANK') && isDefined(projectId) && (
+            {(question.type === 'RANK') && isDefined(choiceCollection) && (
                 <RankQuestionPreview
                     className={styles.questionItem}
                     label={question.label}
                     hint={question.hint}
-                    projectId={projectId}
-                    choiceCollectionId={question.choiceCollection?.id}
+                    choiceCollection={choiceCollection}
                 />
             )}
             {(question.type === 'DATE') && (
@@ -136,22 +132,20 @@ function QuestionRenderer(props: QuestionProps) {
                     hint={question.hint}
                 />
             )}
-            {(question.type === 'SELECT_ONE') && isDefined(projectId) && (
+            {(question.type === 'SELECT_ONE') && isDefined(choiceCollection) && (
                 <SelectOneQuestionPreview
                     className={styles.questionItem}
                     label={question.label}
                     hint={question.hint}
-                    projectId={projectId}
-                    choiceCollectionId={question.choiceCollection?.id}
+                    choiceCollection={choiceCollection}
                 />
             )}
-            {(question.type === 'SELECT_MULTIPLE') && isDefined(projectId) && (
+            {(question.type === 'SELECT_MULTIPLE') && isDefined(choiceCollection) && (
                 <SelectMultipleQuestionPreview
                     className={styles.questionItem}
                     label={question.label}
                     hint={question.hint}
-                    projectId={projectId}
-                    choiceCollectionId={question.choiceCollection?.id}
+                    choiceCollection={choiceCollection}
                 />
             )}
         </div>
@@ -159,27 +153,17 @@ function QuestionRenderer(props: QuestionProps) {
 }
 
 interface Props {
-    id: string;
-    questionnaireId: string;
-    projectId: string;
+    questionBankId: string;
+    leafGroupId: string;
+    choiceCollections: ChoiceCollectionType[] | undefined;
 }
 
 function QuestionsPreview(props: Props) {
     const {
-        id,
-        questionnaireId,
-        projectId,
+        leafGroupId,
+        questionBankId,
+        choiceCollections,
     } = props;
-
-    const variables = useMemo(() => ({
-        leafGroupId: id,
-        questionnaireId,
-        projectId,
-    }), [
-        id,
-        questionnaireId,
-        projectId,
-    ]);
 
     const {
         data: questionsResponse,
@@ -187,15 +171,22 @@ function QuestionsPreview(props: Props) {
     } = useQuery<QuestionsFromBankQuery, QuestionsFromBankQueryVariables>(
         QUESTIONS_FROM_BANK,
         {
-            variables,
+            variables: {
+                questionBankId,
+                leafGroupId,
+            },
         },
     );
 
-    const questions = questionsResponse?.private?.projectScope?.questions?.items;
+    const questions = questionsResponse?.private?.qbQuestions?.items;
     const questionRendererParams = useCallback((_: string, datum: Question) => ({
-        projectId,
         question: datum,
-    }), [projectId]);
+        choiceCollection: choiceCollections?.find(
+            (collection) => collection.id === datum.choiceCollectionId,
+        ),
+    }), [
+        choiceCollections,
+    ]);
 
     return (
         <ListView

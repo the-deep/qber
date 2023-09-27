@@ -94,15 +94,11 @@ function App() {
         setUserDetails(undefined);
     }, []);
 
-    const setUser = useCallback((newUserDetails: UserDetails) => {
-        setUserDetails(newUserDetails);
-    }, []);
-
     const userContextValue = useMemo(() => ({
         userDetails,
-        setUser,
+        setUser: setUserDetails,
         removeUser,
-    }), [userDetails, setUser, removeUser]);
+    }), [userDetails, removeUser]);
 
     return (
         <ApolloProvider client={apolloClient}>

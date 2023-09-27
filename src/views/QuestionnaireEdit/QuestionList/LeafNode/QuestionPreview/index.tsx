@@ -35,9 +35,12 @@ import SelectOneQuestionPreview from '#components/questionPreviews/SelectOneQues
 import SelectMultipleQuestionPreview from '#components/questionPreviews/SelectMultipleQuestionPreview';
 import { Attributes, Listeners } from '#components/SortableList';
 import {
-    QuestionsByGroupQuery,
+    ChoiceCollectionType,
+} from '#types/common';
+import {
     DeleteQuestionMutation,
     DeleteQuestionMutationVariables,
+    QuestionsForLeafGroupQuery,
 } from '#generated/types';
 
 import {
@@ -46,7 +49,7 @@ import {
 
 import styles from './index.module.css';
 
-type Question = NonNullable<NonNullable<NonNullable<NonNullable<QuestionsByGroupQuery['private']>['projectScope']>['questions']>['items']>[number];
+type Question = NonNullable<NonNullable<NonNullable<NonNullable<QuestionsForLeafGroupQuery['private']>['projectScope']>['questions']>['items']>[number];
 
 const DELETE_QUESTION = gql`
     ${QUESTION_FRAGMENT}
@@ -79,6 +82,7 @@ interface QuestionProps {
     refetchQuestionList: () => void;
     attributes?: Attributes;
     listeners?: Listeners;
+    choiceCollection: ChoiceCollectionType | undefined;
 }
 
 function QuestionPreview(props: QuestionProps) {
@@ -93,6 +97,7 @@ function QuestionPreview(props: QuestionProps) {
         refetchQuestionList,
         attributes,
         listeners,
+        choiceCollection,
     } = props;
 
     const alert = useAlert();
@@ -226,13 +231,12 @@ function QuestionPreview(props: QuestionProps) {
                     hint={question.hint}
                 />
             )}
-            {(question.type === 'RANK') && isDefined(projectId) && (
+            {(question.type === 'RANK') && isDefined(choiceCollection) && (
                 <RankQuestionPreview
                     className={styles.questionItem}
                     label={question.label}
                     hint={question.hint}
-                    projectId={projectId}
-                    choiceCollectionId={question.choiceCollection?.id}
+                    choiceCollection={choiceCollection}
                 />
             )}
             {(question.type === 'DATE') && (
@@ -269,22 +273,20 @@ function QuestionPreview(props: QuestionProps) {
                     hint={question.hint}
                 />
             )}
-            {(question.type === 'SELECT_ONE') && isDefined(projectId) && (
+            {(question.type === 'SELECT_ONE') && isDefined(choiceCollection) && (
                 <SelectOneQuestionPreview
                     className={styles.questionItem}
                     label={question.label}
                     hint={question.hint}
-                    projectId={projectId}
-                    choiceCollectionId={question.choiceCollection?.id}
+                    choiceCollection={choiceCollection}
                 />
             )}
-            {(question.type === 'SELECT_MULTIPLE') && isDefined(projectId) && (
+            {(question.type === 'SELECT_MULTIPLE') && isDefined(choiceCollection) && (
                 <SelectMultipleQuestionPreview
                     className={styles.questionItem}
                     label={question.label}
                     hint={question.hint}
-                    projectId={projectId}
-                    choiceCollectionId={question.choiceCollection?.id}
+                    choiceCollection={choiceCollection}
                 />
             )}
             {modal}

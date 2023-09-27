@@ -44,9 +44,8 @@ import {
     QuestionInfoQueryVariables,
     QuestionCreateInput,
     QuestionUpdateInput,
-    QuestionTypeEnum,
+    QberQuestionTypeEnum,
 } from '#generated/types';
-import FileQuestionPreview from '#components/questionPreviews/FileQuestionPreview';
 import PillarSelectInput from '#components/PillarSelectInput';
 import MetaDataInputs from '#components/MetaDataInputs';
 
@@ -130,7 +129,9 @@ const schema: FormSchema = {
             required: true,
             requiredValidation: requiredStringCondition,
         },
-        hint: {},
+        hint: {
+            defaultValue: '',
+        },
         required: {
             defaultValue: false,
         },
@@ -169,7 +170,7 @@ function FileQuestionForm(props: Props) {
     ] = useState<QuestionTabType | undefined>('general');
 
     const initialFormValue: FormType = {
-        type: 'FILE' as QuestionTypeEnum,
+        type: 'FILE' as QberQuestionTypeEnum,
         questionnaire: questionnaireId,
         leafGroup: selectedLeafGroupId,
     };
@@ -325,11 +326,6 @@ function FileQuestionForm(props: Props) {
 
     return (
         <form className={styles.question}>
-            <FileQuestionPreview
-                className={styles.preview}
-                label={formValue.label}
-                hint={formValue.hint}
-            />
             <div className={styles.editSection}>
                 <Tabs
                     value={activeQuestionTab}
@@ -346,8 +342,8 @@ function FileQuestionForm(props: Props) {
                             name="general"
                         >
                             {checkTabErrors(formError, 'general')
-                                ? 'General Information*'
-                                : 'General Information'}
+                                ? 'Question Settings*'
+                                : 'Question Settings'}
                         </Tab>
                         <Tab
                             activeClassName={styles.active}
@@ -389,7 +385,7 @@ function FileQuestionForm(props: Props) {
                         />
                         <TextArea
                             name="constraint"
-                            label="Constraint"
+                            label="Conditionality"
                             value={formValue?.constraint}
                             error={fieldError?.constraint}
                             onChange={setFieldValue}
@@ -403,6 +399,12 @@ function FileQuestionForm(props: Props) {
                             onChange={setFieldValue}
                             disabled
                         />
+                        <Checkbox
+                            name="required"
+                            label="Make question mandatory"
+                            onChange={setFieldValue}
+                            value={formValue.required}
+                        />
                     </TabPanel>
                     <TabPanel
                         className={styles.fields}
@@ -412,12 +414,6 @@ function FileQuestionForm(props: Props) {
                             onChange={setFieldValue}
                             value={formValue}
                             error={fieldError}
-                        />
-                        <Checkbox
-                            name="required"
-                            label="Make question mandatory"
-                            onChange={setFieldValue}
-                            value={formValue.required}
                         />
                     </TabPanel>
                 </Tabs>

@@ -29,9 +29,10 @@ function ImageQuestionPreview(props: Props) {
     return (
         <div className={_cs(styles.preview, className)}>
             <TextOutput
-                value={label ?? 'Upload photos'}
+                label={label ?? 'Upload photos'}
                 description={hint ?? 'Only jpg'}
                 spacing="none"
+                hideLabelColon
                 block
             />
             <Element

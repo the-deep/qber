@@ -4,6 +4,7 @@
             "#app/*": ["./src/App/*"],
             "#views/*": ["./src/views/*"],
             "#utils/*": ["./src/utils/*"],
+            "#types/*": ["./src/types/*"],
             "#components/*": ["./src/components/*"],
             "#hooks/*": ["./src/hooks/*"],
             "#contexts/*": ["./src/contexts/*"],

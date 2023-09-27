@@ -1,5 +1,6 @@
 import type { ReactElement } from 'react';
 import { useContext } from 'react';
+import { PendingMessage } from '@the-deep/deep-ui';
 import { Navigate } from 'react-router-dom';
 import { isDefined } from '@togglecorp/fujs';
 import { gql, useQuery } from '@apollo/client';
@@ -40,7 +41,9 @@ function Auth(props: Props) {
 
     const { userDetails, setUser } = useContext(UserContext);
 
-    useQuery<MeQuery, MeQueryVariables>(
+    const {
+        loading,
+    } = useQuery<MeQuery, MeQueryVariables>(
         ME,
         {
             onCompleted: (response) => {
@@ -51,6 +54,12 @@ function Auth(props: Props) {
             },
         },
     );
+
+    if (loading) {
+        return (
+            <PendingMessage />
+        );
+    }
 
     if (context.visibility === 'is-authenticated' && !userDetails) {
         return (

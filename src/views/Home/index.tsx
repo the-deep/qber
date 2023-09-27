@@ -21,6 +21,9 @@ import useDebouncedValue from '#hooks/useDebouncedValue';
 import EditQuestionnaireModal from '#components/EditQuestionnaireModal';
 import ProjectCreateModal from '#components/ProjectCreateModal';
 import {
+    type ProjectScope,
+} from '#utils/common';
+import {
     ProjectsQuery,
     ProjectsQueryVariables,
     QuestionnairesForProjectQuery,
@@ -70,12 +73,19 @@ const QUESTIONNAIRES_FOR_PROJECT = gql`
                 id
                 questionnaires {
                     items {
-                        createdAt
                         id
                         title
                         projectId
+                        modifiedAt
+                        createdAt
+                        requiredDuration
+                        priorityLevelsDisplay
+                        enumeratorSkillsDisplay
+                        dataCollectionMethodsDisplay
+                        totalQuestions {
+                            visible
+                        }
                     }
-                    count
                 }
             }
         }
@@ -85,7 +95,7 @@ const QUESTIONNAIRES_FOR_PROJECT = gql`
 type ProjectType = NonNullable<NonNullable<NonNullable<ProjectsQuery['private']>['projects']>['items']>[number];
 const projectKeySelector = (d: ProjectType) => d.id;
 
-type QuestionnaireType = NonNullable<NonNullable<NonNullable<NonNullable<QuestionnairesForProjectQuery['private']>['projectScope']>['questionnaires']>['items']>[number];
+type QuestionnaireType = NonNullable<NonNullable<ProjectScope<QuestionnairesForProjectQuery>['questionnaires']>['items']>[number];
 const questionnaireKeySelector = (d: QuestionnaireType) => d.id;
 
 const PAGE_SIZE = 20;
@@ -236,7 +246,7 @@ export function Component() {
                             className={styles.addProjectButton}
                             name={undefined}
                             icons={<IoAdd />}
-                            variant="primary"
+                            variant="secondary"
                             onClick={showProjectCreateModal}
                         >
                             Add project
@@ -284,16 +294,15 @@ export function Component() {
                 {isDefined(activeProject) && (
                     <div className={styles.content}>
                         <Header
-                            headingSize="large"
+                            headingSize="medium"
                             className={styles.questionnaireHeader}
-                            heading={activeProjectData?.title}
-                            description="Questionnaires"
+                            heading={`${activeProjectData?.title}: Questionnaires `}
                             actions={(
                                 <Button
                                     name={undefined}
                                     icons={<IoAdd />}
                                     onClick={showQuestionnaireModal}
-                                    disabled
+                                    variant="tertiary"
                                 >
                                     Create Questionnaire
                                 </Button>

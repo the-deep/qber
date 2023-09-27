@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { IoTrashBinOutline } from 'react-icons/io5';
 import { randomString } from '@togglecorp/fujs';
 import {
+    Element,
     TextInput,
     QuickActionButton,
 } from '@the-deep/deep-ui';
@@ -12,7 +13,7 @@ import {
     getErrorObject,
 } from '@togglecorp/toggle-form';
 
-import { type ChoiceType } from '#components/AddChoiceCollectionModal';
+import { type ChoiceType } from '..';
 
 import styles from './index.module.css';
 
@@ -50,31 +51,36 @@ function AddChoicesInput(props: Props) {
     );
 
     return (
-        <div className={styles.optionList}>
-            <div className={styles.option}>
-                <TextInput
-                    name="label"
-                    value={value?.label}
-                    onChange={onFieldChange}
-                    rows={2}
-                    error={error?.label}
-                />
-                <TextInput
-                    name="name"
-                    value={value?.name}
-                    onChange={onFieldChange}
-                    rows={2}
-                    error={error?.name}
-                />
-            </div>
-            <QuickActionButton
-                name={index}
-                onClick={onRemove}
-                variant="secondary"
-            >
-                <IoTrashBinOutline />
-            </QuickActionButton>
-        </div>
+        <Element
+            childrenContainerClassName={styles.options}
+            actions={(
+                <QuickActionButton
+                    name={index}
+                    onClick={onRemove}
+                    variant="secondary"
+                >
+                    <IoTrashBinOutline />
+                </QuickActionButton>
+            )}
+        >
+            <TextInput
+                name="label"
+                placeholder="Enter option label"
+                className={styles.input}
+                value={value?.label}
+                onChange={onFieldChange}
+                error={error?.label}
+                autoFocus
+            />
+            <TextInput
+                name="name"
+                placeholder="Enter option name"
+                className={styles.input}
+                value={value?.name}
+                onChange={onFieldChange}
+                error={error?.name}
+            />
+        </Element>
     );
 }
 

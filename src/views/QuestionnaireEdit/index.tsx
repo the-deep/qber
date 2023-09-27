@@ -1,4 +1,10 @@
-import { useMemo, useCallback, useState } from 'react';
+import {
+    useMemo,
+    useCallback,
+    useState,
+    useEffect,
+    useContext,
+} from 'react';
 import {
     useParams,
 } from 'react-router-dom';
@@ -6,6 +12,7 @@ import {
     IoCameraOutline,
     IoCloseOutline,
     IoDocumentTextOutline,
+    IoEyeSharp,
     IoRadioButtonOn,
     IoSwapVertical,
 } from 'react-icons/io5';
@@ -29,7 +36,9 @@ import {
     useQuery,
     useMutation,
 } from '@apollo/client';
+import { getOperationName } from 'apollo-link';
 import {
+    AlertContext,
     Container,
     Header,
     ListView,
@@ -38,6 +47,7 @@ import {
     Tabs,
     TextOutput,
     useModalState,
+    useAlert,
 } from '@the-deep/deep-ui';
 import { removeNull } from '@togglecorp/toggle-form';
 
@@ -51,14 +61,21 @@ import {
     flatten,
 } from '#utils/common';
 import {
+    QUESTIONS_FOR_LEAF_GROUP,
+} from '#views/QuestionnaireEdit/QuestionList/LeafNode/queries';
+import { apolloClient } from '#configs/apollo';
+import QuestionnairePreviewModal from '#components/QuestionnairePreviewModal';
+import {
     OrderQuestionGroupMutation,
     OrderQuestionGroupMutationVariables,
+    PreviewQuestionnaireMutation,
+    PreviewQuestionnaireMutationVariables,
+    PreviewDetailsQuery,
+    PreviewDetailsQueryVariables,
     QuestionnaireQuery,
     QuestionnaireQueryVariables,
     QuestionGroupVisibilityMutation,
     QuestionGroupVisibilityMutationVariables,
-    QuestionsByGroupQuery,
-    QuestionsByGroupQueryVariables,
     VisibilityActionEnum,
 } from '#generated/types';
 
@@ -75,8 +92,8 @@ import SelectMultipleQuestionForm from './SelectMultipleQuestionForm';
 
 import QuestionList from './QuestionList';
 import {
-    QUESTION_FRAGMENT,
     LEAF_GROUPS_FRAGMENT,
+    CHOICE_COLLECTION_FRAGMENT,
 } from './queries';
 import QuestionTypeItem, { QuestionType } from './QuestionTypeItem';
 
@@ -86,6 +103,7 @@ export type QuestionTabType = 'general' | 'metadata';
 
 const QUESTIONNAIRE = gql`
     ${LEAF_GROUPS_FRAGMENT}
+    ${CHOICE_COLLECTION_FRAGMENT}
     query Questionnaire(
         $projectId: ID!,
         $questionnaireId: ID!,
@@ -103,40 +121,8 @@ const QUESTIONNAIRE = gql`
                     leafGroups {
                         ...LeafGroups
                     }
-                }
-            }
-        }
-    }
-`;
-
-const QUESTIONS_BY_GROUP = gql`
-    ${QUESTION_FRAGMENT}
-    query QuestionsByGroup(
-        $projectId: ID!,
-        $questionnaireId: ID!,
-        $leafGroupId: ID!,
-    ) {
-        private {
-            projectScope(pk: $projectId) {
-                id
-                questions(
-                    filters: {
-                        questionnaire: {
-                            pk: $questionnaireId,
-                        },
-                        leafGroup: {
-                            pk: $leafGroupId,
-                        },
-                    }
-                    order: {
-                        createdAt: ASC
-                    }
-                ) {
-                    count
-                    limit
-                    offset
-                    items {
-                        ...QuestionResponse
+                    choiceCollections {
+                        ...ChoiceCollections
                     }
                 }
             }
@@ -185,6 +171,52 @@ const QUESTION_GROUP_VISIBILITY = gql`
                     results {
                         ...LeafGroups
                     }
+                }
+            }
+        }
+    }
+`;
+
+const PREVIEW_QUESTIONNAIRE = gql`
+    mutation PreviewQuestionnaire (
+        $projectId: ID!,
+        $questionnaireId: ID!,
+    ) {
+        private {
+            projectScope(pk: $projectId) {
+                createQuestionnaireExport(
+                    data: {
+                        questionnaire: $questionnaireId
+                    }
+                ) {
+                    errors
+                    ok
+                    result {
+                        enketoPreviewUrl
+                        id
+                        questionnaireId
+                        status
+                        statusDisplay
+                    }
+                }
+            }
+        }
+    }
+`;
+
+const PREVIEW_DETAILS = gql`
+    query PreviewDetails (
+        $projectId: ID!,
+        $exportId: ID!,
+    ) {
+        private {
+            projectScope(pk: $projectId) {
+                questionnaireExport(pk: $exportId) {
+                    enketoPreviewUrl
+                    status
+                    statusDisplay
+                    startedAt
+                    endedAt
                 }
             }
         }
@@ -336,6 +368,8 @@ function transformOptionsByCategory(options: QuestionGroup[]): Node[] {
     return result;
 }
 
+const PREVIEW_ALERT_NAME = 'questionnaire-preview';
+
 // eslint-disable-next-line import/prefer-default-export
 export function Component() {
     const {
@@ -363,6 +397,19 @@ export function Component() {
         selectedGroups,
         setSelectedGroups,
     ] = useState<string[]>([]);
+
+    const alert = useAlert();
+
+    const [
+        enketoPreviewModalShown,
+        showEnketoPreviewModal,
+        hideEnketoPreviewModal,
+    ] = useModalState(false);
+
+    const {
+        addAlert,
+        removeAlert,
+    } = useContext(AlertContext);
 
     const handleRightPaneClose = useCallback(() => {
         hideAddQuestionPane();
@@ -410,8 +457,11 @@ export function Component() {
                 items.sort((a, b) => compareNumber(a.order, b.order));
                 const transformedQuestionGroups = transformOptionsByCategory(items);
                 const groupOptionsSafe = getNodes(transformedQuestionGroups, []);
+
+                const visibleQuestionGroups = items.filter((group) => !group.isHidden);
+
                 setOrderedOptions(groupOptionsSafe ?? []);
-                setSelectedGroups(questionGroups.map((item) => item.id));
+                setSelectedGroups(visibleQuestionGroups.map((item) => item.id));
             },
         },
     );
@@ -435,6 +485,9 @@ export function Component() {
 
     const questionnaireTitle = questionnaireResponse?.private.projectScope?.questionnaire?.title;
     const projectTitle = questionnaireResponse?.private.projectScope?.project.title;
+
+    const choiceCollections = questionnaireResponse?.private?.projectScope
+        ?.questionnaire?.choiceCollections;
 
     const [
         triggerGroupOrderChange,
@@ -497,6 +550,122 @@ export function Component() {
         triggerGroupOrderChange,
     ]);
 
+    const [exportIdToPreview, setExportIdToPreview] = useState<string | undefined>();
+
+    const [
+        triggerQuestionnairePreview,
+    ] = useMutation<PreviewQuestionnaireMutation, PreviewQuestionnaireMutationVariables>(
+        PREVIEW_QUESTIONNAIRE,
+        {
+            onCompleted: (response) => {
+                const exportResponse = response?.private?.projectScope?.createQuestionnaireExport;
+                if (!exportResponse?.ok) {
+                    alert.show(
+                        'Some error occured during export.',
+                        { variant: 'error' },
+                    );
+                }
+                if (exportResponse?.ok && exportResponse.result?.id) {
+                    setExportIdToPreview(exportResponse.result?.id);
+                    addAlert({
+                        variant: 'info',
+                        duration: Infinity,
+                        name: PREVIEW_ALERT_NAME,
+                        children: 'Please wait while the export is being prepared.',
+                    });
+                }
+            },
+            onError: () => {
+                alert.show(
+                    'Some error occured during export.',
+                    { variant: 'error' },
+                );
+            },
+        },
+    );
+
+    const handleQuestionnairePreview = useCallback(() => {
+        if (isNotDefined(projectId) || isNotDefined(questionnaireId)) {
+            return;
+        }
+        triggerQuestionnairePreview({
+            variables: {
+                projectId,
+                questionnaireId,
+            },
+        });
+    }, [
+        projectId,
+        questionnaireId,
+        triggerQuestionnairePreview,
+    ]);
+
+    const exportVariables = useMemo(() => {
+        if (isNotDefined(projectId) || isNotDefined(exportIdToPreview)) {
+            return undefined;
+        }
+        return {
+            projectId,
+            exportId: exportIdToPreview,
+        };
+    }, [
+        projectId,
+        exportIdToPreview,
+    ]);
+
+    const {
+        data: previewDetailsResponse,
+        startPolling,
+        stopPolling,
+    } = useQuery<PreviewDetailsQuery, PreviewDetailsQueryVariables>(
+        PREVIEW_DETAILS,
+        {
+            skip: isNotDefined(exportVariables),
+            variables: exportVariables,
+            onCompleted: (response) => {
+                const exportResponse = response.private.projectScope?.questionnaireExport;
+                if (isNotDefined(exportResponse)) {
+                    setExportIdToPreview(undefined);
+                    removeAlert(PREVIEW_ALERT_NAME);
+                    alert.show(
+                        'There was some issue creating the export.',
+                        { variant: 'error' },
+                    );
+                }
+                if (exportResponse?.status === 'SUCCESS') {
+                    removeAlert(PREVIEW_ALERT_NAME);
+                    showEnketoPreviewModal();
+                } else if (exportResponse?.status === 'FAILURE') {
+                    removeAlert(PREVIEW_ALERT_NAME);
+                    alert.show(
+                        'There was some issue creating the export.',
+                        { variant: 'error' },
+                    );
+                }
+            },
+        },
+    );
+
+    useEffect(
+        () => {
+            const shouldPoll = exportIdToPreview
+                && previewDetailsResponse?.private?.projectScope?.questionnaireExport?.status !== 'SUCCESS'
+                && previewDetailsResponse?.private?.projectScope?.questionnaireExport?.status !== 'FAILURE';
+
+            if (shouldPoll) {
+                startPolling(5000);
+            } else {
+                stopPolling();
+            }
+        },
+        [
+            previewDetailsResponse,
+            exportIdToPreview,
+            startPolling,
+            stopPolling,
+        ],
+    );
+
     const [
         triggerQuestionGroupsVisibility,
     ] = useMutation<QuestionGroupVisibilityMutation, QuestionGroupVisibilityMutationVariables>(
@@ -536,40 +705,16 @@ export function Component() {
 
     const [activeLeafGroupId, setActiveLeafGroupId] = useState<string | undefined>();
 
-    const questionsVariables = useMemo(() => {
-        if (isNotDefined(projectId)
-            || isNotDefined(questionnaireId)
-            || isNotDefined(activeLeafGroupId)) {
-            return undefined;
-        }
-
-        return ({
-            projectId,
-            questionnaireId,
-            leafGroupId: activeLeafGroupId,
-        });
-    }, [
-        projectId,
-        questionnaireId,
-        activeLeafGroupId,
-    ]);
-
-    const {
-        refetch: retriggerQuestions,
-    } = useQuery<QuestionsByGroupQuery, QuestionsByGroupQueryVariables>(
-        QUESTIONS_BY_GROUP,
-        {
-            skip: isNotDefined(questionsVariables),
-            variables: questionsVariables,
-        },
-    );
-
     const handleQuestionCreateSuccess = useCallback(() => {
         hideAddQuestionPane();
-        retriggerQuestions();
+        setSelectedQuestionType(undefined);
+        apolloClient.refetchQueries({
+            include: [
+                getOperationName(QUESTIONS_FOR_LEAF_GROUP),
+            ].filter(isDefined),
+        });
     }, [
         hideAddQuestionPane,
-        retriggerQuestions,
     ]);
 
     const questionTypeRendererParams = useCallback((key: string, data: QuestionType) => ({
@@ -645,8 +790,8 @@ export function Component() {
             <div className={styles.pageContent}>
                 <Container
                     className={styles.leftPane}
-                    heading="Select Questions"
-                    headingSize="small"
+                    heading="Adapt Questionnaire structure and content"
+                    headingSize="extraSmall"
                     contentClassName={styles.leftContent}
                 >
                     <TocList
@@ -659,8 +804,16 @@ export function Component() {
                 <div className={styles.content}>
                     <Header
                         className={styles.header}
-                        headingSize="small"
+                        headingSize="extraSmall"
                         heading="My Questionnaire"
+                        actions={(
+                            <QuickActionButton
+                                name={undefined}
+                                onClick={handleQuestionnairePreview}
+                            >
+                                <IoEyeSharp />
+                            </QuickActionButton>
+                        )}
                     />
                     <Tabs
                         onChange={setActiveGroupTab}
@@ -691,6 +844,7 @@ export function Component() {
                             handleQuestionAdd={handleQuestionAdd}
                             addQuestionPaneShown={addQuestionPaneShown}
                             setSelectedLeafGroupId={setActiveLeafGroupId}
+                            choiceCollections={choiceCollections}
                         />
                     </Tabs>
                 </div>
@@ -749,6 +903,7 @@ export function Component() {
                                         questionId={activeQuestionId}
                                         onSuccess={handleQuestionCreateSuccess}
                                         selectedLeafGroupId={activeLeafGroupId}
+                                        choiceCollections={choiceCollections}
                                     />
                                 )}
                                 {(selectedQuestionType === 'SELECT_ONE') && (
@@ -758,6 +913,7 @@ export function Component() {
                                         questionId={activeQuestionId}
                                         onSuccess={handleQuestionCreateSuccess}
                                         selectedLeafGroupId={activeLeafGroupId}
+                                        choiceCollections={choiceCollections}
                                     />
                                 )}
                                 {(selectedQuestionType === 'SELECT_MULTIPLE') && (
@@ -767,6 +923,7 @@ export function Component() {
                                         questionId={activeQuestionId}
                                         onSuccess={handleQuestionCreateSuccess}
                                         selectedLeafGroupId={activeLeafGroupId}
+                                        choiceCollections={choiceCollections}
                                     />
                                 )}
                                 {(selectedQuestionType === 'DATE') && (
@@ -817,6 +974,13 @@ export function Component() {
                             </div>
                         )}
                     </div>
+                )}
+                {enketoPreviewModalShown && (
+                    <QuestionnairePreviewModal
+                        onClose={hideEnketoPreviewModal}
+                        previewUrl={previewDetailsResponse?.private
+                            .projectScope?.questionnaireExport?.enketoPreviewUrl ?? ''}
+                    />
                 )}
             </div>
         </div>

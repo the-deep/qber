@@ -44,14 +44,12 @@ import {
     QuestionInfoQueryVariables,
     QuestionCreateInput,
     QuestionUpdateInput,
-    QuestionTypeEnum,
+    QberQuestionTypeEnum,
 } from '#generated/types';
-import SelectOneQuestionPreview from '#components/questionPreviews/SelectOneQuestionPreview';
 import PillarSelectInput from '#components/PillarSelectInput';
-import ChoiceCollectionSelectInput, {
-    type ChoiceCollectionType,
-} from '#components/ChoiceCollectionSelectInput';
+import ChoiceCollectionSelectInput from '#components/ChoiceCollectionSelectInput';
 import MetaDataInputs from '#components/MetaDataInputs';
+import { ChoiceCollectionType } from '#types/common';
 
 import {
     QUESTION_FRAGMENT,
@@ -138,7 +136,9 @@ const schema: FormSchema = {
             required: true,
             requiredValidation: requiredStringCondition,
         },
-        hint: {},
+        hint: {
+            defaultValue: '',
+        },
         required: {
             defaultValue: false,
         },
@@ -158,6 +158,7 @@ interface Props {
     questionId?: string;
     onSuccess: (questionId: string | undefined) => void;
     selectedLeafGroupId: string;
+    choiceCollections?: ChoiceCollectionType[];
 }
 
 function SelectOneQuestionForm(props: Props) {
@@ -167,6 +168,7 @@ function SelectOneQuestionForm(props: Props) {
         questionId,
         onSuccess,
         selectedLeafGroupId,
+        choiceCollections,
     } = props;
 
     const alert = useAlert();
@@ -177,7 +179,7 @@ function SelectOneQuestionForm(props: Props) {
     ] = useState<QuestionTabType | undefined>('general');
 
     const initialFormValue: FormType = {
-        type: 'SELECT_ONE' as QuestionTypeEnum,
+        type: 'SELECT_ONE' as QberQuestionTypeEnum,
         questionnaire: questionnaireId,
         leafGroup: selectedLeafGroupId,
     };
@@ -191,11 +193,6 @@ function SelectOneQuestionForm(props: Props) {
         setValue,
         setError,
     } = useForm(schema, { value: initialFormValue });
-
-    const [
-        choiceCollectionOption,
-        setChoiceCollectionOption,
-    ] = useState<ChoiceCollectionType[] | null | undefined>();
 
     const fieldError = getErrorObject(formError);
 
@@ -228,17 +225,12 @@ function SelectOneQuestionForm(props: Props) {
                     hint: questionResponse?.hint,
                     required: questionResponse?.required,
                     requiredDuration: questionResponse?.requiredDuration,
-                    choiceCollection: questionResponse?.choiceCollection?.id,
+                    choiceCollection: questionResponse?.choiceCollectionId,
                     priorityLevel: questionResponse?.priorityLevel,
                     dataCollectionMethod: questionResponse?.dataCollectionMethod,
                     enumeratorSkill: questionResponse?.enumeratorSkill,
                     constraint: questionResponse?.constraint,
                 });
-                const choiceCollection = questionResponse?.choiceCollection;
-                const choiceCollectionOptions = isDefined(choiceCollection)
-                    ? [choiceCollection]
-                    : [];
-                setChoiceCollectionOption(choiceCollectionOptions);
             },
         },
     );
@@ -350,13 +342,6 @@ function SelectOneQuestionForm(props: Props) {
 
     return (
         <form className={styles.question}>
-            <SelectOneQuestionPreview
-                className={styles.preview}
-                label={formValue.label}
-                hint={formValue.hint}
-                choiceCollectionId={formValue?.choiceCollection}
-                projectId={projectId}
-            />
             <div className={styles.editSection}>
                 <Tabs
                     value={activeQuestionTab}
@@ -373,8 +358,8 @@ function SelectOneQuestionForm(props: Props) {
                             name="general"
                         >
                             {checkTabErrors(formError, 'general')
-                                ? 'General Information*'
-                                : 'General Information'}
+                                ? 'Question Settings*'
+                                : 'Question Settings'}
                         </Tab>
                         <Tab
                             activeClassName={styles.active}
@@ -395,7 +380,7 @@ function SelectOneQuestionForm(props: Props) {
                     >
                         <TextInput
                             name="label"
-                            label="Label"
+                            label="Question Label"
                             value={formValue.label}
                             error={fieldError?.label}
                             onChange={setFieldValue}
@@ -416,7 +401,7 @@ function SelectOneQuestionForm(props: Props) {
                         />
                         <TextArea
                             name="constraint"
-                            label="Constraint"
+                            label="Conditionality"
                             value={formValue?.constraint}
                             error={fieldError?.constraint}
                             onChange={setFieldValue}
@@ -425,8 +410,7 @@ function SelectOneQuestionForm(props: Props) {
                             name="choiceCollection"
                             value={formValue.choiceCollection}
                             label="Options"
-                            options={choiceCollectionOption}
-                            onOptionsChange={setChoiceCollectionOption}
+                            options={choiceCollections}
                             onChange={setFieldValue}
                             projectId={projectId}
                             questionnaireId={questionnaireId}
@@ -441,6 +425,12 @@ function SelectOneQuestionForm(props: Props) {
                             onChange={setFieldValue}
                             disabled
                         />
+                        <Checkbox
+                            name="required"
+                            label="Make question mandatory"
+                            onChange={setFieldValue}
+                            value={formValue.required}
+                        />
                     </TabPanel>
                     <TabPanel
                         className={styles.fields}
@@ -450,12 +440,6 @@ function SelectOneQuestionForm(props: Props) {
                             onChange={setFieldValue}
                             value={formValue}
                             error={fieldError}
-                        />
-                        <Checkbox
-                            name="required"
-                            label="Make question mandatory"
-                            onChange={setFieldValue}
-                            value={formValue.required}
                         />
                     </TabPanel>
                 </Tabs>

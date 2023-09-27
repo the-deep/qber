@@ -1,0 +1,15 @@
+.modal-body{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: var(--dui-spacing-medium);
+
+    .buttons {
+        display: flex;
+        gap: var(--dui-spacing-medium);
+    }
+
+    .iframe {
+        flex-grow: 1;
+    }
+}

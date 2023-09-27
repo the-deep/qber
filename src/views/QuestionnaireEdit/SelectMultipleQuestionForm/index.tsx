@@ -44,14 +44,14 @@ import {
     QuestionInfoQueryVariables,
     QuestionCreateInput,
     QuestionUpdateInput,
-    QuestionTypeEnum,
+    QberQuestionTypeEnum,
 } from '#generated/types';
-import SelectMultipleQuestionPreview from '#components/questionPreviews/SelectMultipleQuestionPreview';
 import PillarSelectInput from '#components/PillarSelectInput';
-import ChoiceCollectionSelectInput, {
-    type ChoiceCollectionType,
-} from '#components/ChoiceCollectionSelectInput';
+import ChoiceCollectionSelectInput from '#components/ChoiceCollectionSelectInput';
 import MetaDataInputs from '#components/MetaDataInputs';
+import {
+    ChoiceCollectionType,
+} from '#types/common';
 
 import {
     QUESTION_FRAGMENT,
@@ -138,7 +138,9 @@ const schema: FormSchema = {
             required: true,
             requiredValidation: requiredStringCondition,
         },
-        hint: {},
+        hint: {
+            defaultValue: '',
+        },
         required: {
             defaultValue: false,
         },
@@ -158,6 +160,7 @@ interface Props {
     questionId?: string;
     onSuccess: (questionId: string | undefined) => void;
     selectedLeafGroupId: string;
+    choiceCollections?: ChoiceCollectionType[];
 }
 
 function SelectMultipleQuestionForm(props: Props) {
@@ -167,6 +170,7 @@ function SelectMultipleQuestionForm(props: Props) {
         questionId,
         onSuccess,
         selectedLeafGroupId,
+        choiceCollections,
     } = props;
 
     const alert = useAlert();
@@ -177,7 +181,7 @@ function SelectMultipleQuestionForm(props: Props) {
     ] = useState<QuestionTabType | undefined>('general');
 
     const initialFormValue: FormType = {
-        type: 'SELECT_MULTIPLE' as QuestionTypeEnum,
+        type: 'SELECT_MULTIPLE' as QberQuestionTypeEnum,
         questionnaire: questionnaireId,
         leafGroup: selectedLeafGroupId,
     };
@@ -191,11 +195,6 @@ function SelectMultipleQuestionForm(props: Props) {
         setValue,
         setError,
     } = useForm(schema, { value: initialFormValue });
-
-    const [
-        choiceCollectionOption,
-        setChoiceCollectionOption,
-    ] = useState<ChoiceCollectionType[] | null | undefined>();
 
     const fieldError = getErrorObject(formError);
 
@@ -228,17 +227,12 @@ function SelectMultipleQuestionForm(props: Props) {
                     hint: questionResponse?.hint,
                     required: questionResponse?.required,
                     requiredDuration: questionResponse?.requiredDuration,
-                    choiceCollection: questionResponse?.choiceCollection?.id,
+                    choiceCollection: questionResponse?.choiceCollectionId,
                     priorityLevel: questionResponse?.priorityLevel,
                     dataCollectionMethod: questionResponse?.dataCollectionMethod,
                     enumeratorSkill: questionResponse?.enumeratorSkill,
                     constraint: questionResponse?.constraint,
                 });
-                const choiceCollection = questionResponse?.choiceCollection;
-                const choiceCollectionOptions = isDefined(choiceCollection)
-                    ? [choiceCollection]
-                    : [];
-                setChoiceCollectionOption(choiceCollectionOptions);
             },
         },
     );
@@ -350,13 +344,6 @@ function SelectMultipleQuestionForm(props: Props) {
 
     return (
         <form className={styles.question}>
-            <SelectMultipleQuestionPreview
-                className={styles.preview}
-                label={formValue.label}
-                hint={formValue.hint}
-                choiceCollectionId={formValue?.choiceCollection}
-                projectId={projectId}
-            />
             <div className={styles.editSection}>
                 <Tabs
                     value={activeQuestionTab}
@@ -373,8 +360,8 @@ function SelectMultipleQuestionForm(props: Props) {
                             name="general"
                         >
                             {checkTabErrors(formError, 'general')
-                                ? 'General Information*'
-                                : 'General Information'}
+                                ? 'Question Settings*'
+                                : 'Question Settings'}
                         </Tab>
                         <Tab
                             activeClassName={styles.active}
@@ -416,7 +403,7 @@ function SelectMultipleQuestionForm(props: Props) {
                         />
                         <TextArea
                             name="constraint"
-                            label="Constraint"
+                            label="Conditionality"
                             value={formValue?.constraint}
                             error={fieldError?.constraint}
                             onChange={setFieldValue}
@@ -425,8 +412,7 @@ function SelectMultipleQuestionForm(props: Props) {
                             name="choiceCollection"
                             value={formValue.choiceCollection}
                             label="Options"
-                            options={choiceCollectionOption}
-                            onOptionsChange={setChoiceCollectionOption}
+                            options={choiceCollections}
                             onChange={setFieldValue}
                             projectId={projectId}
                             questionnaireId={questionnaireId}

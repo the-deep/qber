@@ -29,9 +29,10 @@ function FileQuestionPreview(props: Props) {
     return (
         <div className={_cs(styles.preview, className)}>
             <TextOutput
-                value={label ?? 'Upload files'}
+                label={label ?? 'Upload files'}
                 description={hint ?? 'Files'}
                 spacing="none"
+                hideLabelColon
                 block
             />
             <Element

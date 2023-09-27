@@ -13,43 +13,38 @@ import {
 import {
     MetaDataOptionsQuery,
     MetaDataOptionsQueryVariables,
-    QuestionnairePriorityLevelTypeEnum,
-    QuestionnaireDataCollectionMethodTypeEnum,
-    QuestionnaireEnumeratorSkillTypeEnum,
+    QberEnumeratorSkillTypeEnum,
+    QberMetaDataPriorityLevelTypeEnum,
+    QberDataCollectionMethodTypeEnum,
 } from '#generated/types';
 import {
     enumKeySelector,
-    EnumOptions,
     enumLabelSelector,
 } from '#utils/common';
 
 const METADATA_OPTIONS = gql`
-    query MetaDataOptions{
-        questionnairePriorityLevelTypeOptions: __type(name: "QuestionnairePriorityLevelTypeEnum") {
-            enumValues {
-                name
-                description
+    query MetaDataOptions {
+        enums {
+            QuestionnaireEnumeratorSkills {
+                key
+                label
             }
-        }
-        questionnaireEnumeratorSkillTypeOptions: __type(name: "QuestionnaireEnumeratorSkillTypeEnum") {
-            enumValues {
-                name
-                description
+            QuestionnairePriorityLevels {
+                key
+                label
             }
-        }
-        questionnaireDataCollectionMethodTypeOptions: __type(name: "QuestionnaireDataCollectionMethodTypeEnum") {
-            enumValues {
-                name
-                description
+            QuestionnaireDataCollectionMethods {
+                key
+                label
             }
         }
     }
 `;
 
 type Input = {
-    priorityLevel: QuestionnairePriorityLevelTypeEnum | undefined | null;
-    enumeratorSkill: QuestionnaireEnumeratorSkillTypeEnum| undefined | null;
-    dataCollectionMethod: QuestionnaireDataCollectionMethodTypeEnum| undefined | null;
+    priorityLevel: QberMetaDataPriorityLevelTypeEnum | null | undefined;
+    enumeratorSkill: QberEnumeratorSkillTypeEnum | null | undefined;
+    dataCollectionMethod: QberDataCollectionMethodTypeEnum | null | undefined;
     requiredDuration: number | undefined | null;
 };
 
@@ -79,17 +74,11 @@ function MetaDataInputs(props: Props) {
 
     const error = getErrorObject(riskyError);
 
-    const priorityLevelOptions = metaDataOptions
-        ?.questionnairePriorityLevelTypeOptions
-        ?.enumValues as EnumOptions<QuestionnairePriorityLevelTypeEnum>;
+    const priorityLevelOptions = metaDataOptions?.enums.QuestionnairePriorityLevels;
 
-    const skillOptions = metaDataOptions
-        ?.questionnaireEnumeratorSkillTypeOptions
-        ?.enumValues as EnumOptions<QuestionnaireEnumeratorSkillTypeEnum>;
+    const skillOptions = metaDataOptions?.enums.QuestionnaireEnumeratorSkills;
 
-    const collectionMethodOptions = metaDataOptions
-        ?.questionnaireDataCollectionMethodTypeOptions
-        ?.enumValues as EnumOptions<QuestionnaireDataCollectionMethodTypeEnum>;
+    const collectionMethodOptions = metaDataOptions?.enums.QuestionnaireDataCollectionMethods;
 
     return (
         <>
@@ -131,7 +120,7 @@ function MetaDataInputs(props: Props) {
             />
             <NumberInput
                 className={className}
-                label="Maximum duration (in minutes)"
+                label="Maximum duration (in seconds)"
                 name="requiredDuration"
                 value={value?.requiredDuration}
                 error={error?.requiredDuration}

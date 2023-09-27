@@ -6,7 +6,6 @@ import {
 import {
     useQuery,
     useMutation,
-    gql,
 } from '@apollo/client';
 import {
     isNotDefined,
@@ -28,99 +27,19 @@ import {
 import {
     type ProjectScope,
 } from '#utils/common';
+import {
+    ChoiceCollectionType,
+} from '#types/common';
 
 import QuestionPreview from './QuestionPreview';
 import {
-    QUESTION_FRAGMENT,
-} from '../../queries';
+    QUESTIONS_FOR_LEAF_GROUP,
+    UPDATE_QUESTIONS_ORDER,
+    UPDATE_QUESTIONS_VISIBILITY,
+} from './queries';
 
 type Question = NonNullable<NonNullable<ProjectScope<QuestionsForLeafGroupQuery>['questions']>['items']>[number];
 const questionKeySelector = (q: Question) => q.id;
-
-const QUESTIONS_FOR_LEAF_GROUP = gql`
-    ${QUESTION_FRAGMENT}
-    query QuestionsForLeafGroup(
-        $projectId: ID!,
-        $questionnaireId: ID!,
-        $leafGroupId: ID!,
-    ) {
-        private {
-            projectScope(pk: $projectId) {
-                id
-                questions(
-                    filters: {
-                        questionnaire: {
-                            pk: $questionnaireId,
-                        },
-                        leafGroup: {
-                            pk: $leafGroupId,
-                        },
-                    }
-                    order: {
-                        order: ASC
-                    }
-                ) {
-                    count
-                    limit
-                    offset
-                    items {
-                        ...QuestionResponse
-                    }
-                }
-            }
-        }
-    }
-`;
-
-const UPDATE_QUESTIONS_ORDER = gql`
-    ${QUESTION_FRAGMENT}
-    mutation UpdateQuestionsOrder(
-        $projectId: ID!,
-        $questionnaireId: ID!,
-        $leafGroupId: ID!,
-        $data: [QuestionOrderInputType!]!
-    ) {
-        private {
-            projectScope(pk: $projectId) {
-                bulkUpdateQuestionsOrder(
-                data: $data
-                leafGroupId: $leafGroupId
-                questionnaireId: $questionnaireId
-                ) {
-                    errors
-                    results {
-                        ...QuestionResponse
-                    }
-                }
-            }
-        }
-    }
-`;
-
-const UPDATE_QUESTIONS_VISIBILITY = gql`
-    ${QUESTION_FRAGMENT}
-    mutation UpdateQuestionsVisibility(
-    $projectId: ID!,
-    $questionIds: [ID!]!,
-    $questionnaireId: ID!,
-    $visibility: VisibilityActionEnum!,
-    ){
-        private {
-            projectScope(pk: $projectId) {
-                updateQuestionsVisibility(
-                ids: $questionIds,
-                questionnaireId: $questionnaireId,
-                visibility: $visibility,
-                ) {
-                    errors
-                    results {
-                        ...QuestionResponse
-                    }
-                }
-            }
-        }
-    }
-`;
 
 interface Props {
     className?: string;
@@ -131,6 +50,7 @@ interface Props {
     setSelectedQuestionType: React.Dispatch<React.SetStateAction<string | undefined>>;
     setActiveQuestionId: React.Dispatch<React.SetStateAction<string | undefined>>;
     setSelectedLeafGroupId: React.Dispatch<React.SetStateAction<string | undefined>>;
+    choiceCollections: ChoiceCollectionType[] | undefined;
 }
 
 function LeafNode(props: Props) {
@@ -143,6 +63,7 @@ function LeafNode(props: Props) {
         setSelectedQuestionType,
         setActiveQuestionId,
         setSelectedLeafGroupId,
+        choiceCollections,
     } = props;
 
     const alert = useAlert();
@@ -285,6 +206,9 @@ function LeafNode(props: Props) {
         onSelectedQuestionsChange: handleSelectedQuestionsChange,
         setSelectedLeafGroupId,
         refetchQuestionList: retriggerQuestionsFetch,
+        choiceCollection: choiceCollections?.find(
+            (collection) => collection.id === datum.choiceCollectionId,
+        ),
     }), [
         onEditQuestionClick,
         projectId,
@@ -293,6 +217,7 @@ function LeafNode(props: Props) {
         handleSelectedQuestionsChange,
         setSelectedLeafGroupId,
         retriggerQuestionsFetch,
+        choiceCollections,
     ]);
 
     return (

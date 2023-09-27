@@ -1,13 +1,10 @@
-import { useMemo } from 'react';
 import {
     IoRadioButtonOn,
 } from 'react-icons/io5';
 import {
     _cs,
-    isNotDefined,
     noOp,
 } from '@togglecorp/fujs';
-import { gql, useQuery } from '@apollo/client';
 import {
     Element,
     RadioInput,
@@ -15,38 +12,11 @@ import {
 } from '@the-deep/deep-ui';
 
 import {
-    SingleOptionListQuery,
-    SingleOptionListQueryVariables,
-} from '#generated/types';
-import {
-    type ProjectScope,
-} from '#utils/common';
+    ChoiceCollectionType,
+    ChoiceType,
+} from '#types/common';
 
 import styles from './index.module.css';
-
-const SINGLE_OPTION_LIST = gql`
-    query SingleOptionList(
-        $projectId: ID!,
-        $choiceCollectionId: ID!,
-        ) {
-        private {
-            projectScope(pk: $projectId) {
-                choiceCollection(pk: $choiceCollectionId) {
-                    label
-                    id
-                    name
-                    choices {
-                        id
-                        label
-                        name
-                    }
-                }
-            }
-        }
-    }
-`;
-
-type ChoiceType = NonNullable<NonNullable<ProjectScope<SingleOptionListQuery>['choiceCollection']>['choices']>[number];
 
 const choiceCollectionKeySelector = (d: ChoiceType) => d.id;
 const choiceCollectionLabelSelector = (d: ChoiceType) => d.label;
@@ -55,8 +25,7 @@ interface Props {
     className?: string;
     label?: string;
     hint?: string | null;
-    choiceCollectionId: string | undefined | null;
-    projectId: string;
+    choiceCollection: ChoiceCollectionType;
 }
 
 function SelectOneQuestionPreview(props: Props) {
@@ -64,42 +33,16 @@ function SelectOneQuestionPreview(props: Props) {
         className,
         label,
         hint,
-        choiceCollectionId,
-        projectId,
+        choiceCollection,
     } = props;
-
-    const optionListVariables = useMemo(() => {
-        if (isNotDefined(projectId) || isNotDefined(choiceCollectionId)) {
-            return undefined;
-        }
-        return ({
-            projectId,
-            choiceCollectionId,
-        });
-    }, [
-        projectId,
-        choiceCollectionId,
-    ]);
-
-    const {
-        data: optionsListResponse,
-        loading: optionListLoading,
-    } = useQuery<SingleOptionListQuery, SingleOptionListQueryVariables>(
-        SINGLE_OPTION_LIST,
-        {
-            skip: isNotDefined(optionListVariables),
-            variables: optionListVariables,
-        },
-    );
-
-    const optionsList = optionsListResponse?.private?.projectScope?.choiceCollection?.choices ?? [];
 
     return (
         <div className={_cs(styles.preview, className)}>
             <TextOutput
-                value={label ?? 'Title'}
+                label={label ?? 'Title'}
                 description={hint ?? 'Choose One'}
                 spacing="none"
+                hideLabelColon
                 block
             />
             <Element
@@ -113,10 +56,9 @@ function SelectOneQuestionPreview(props: Props) {
                     labelSelector={choiceCollectionLabelSelector}
                     name="options"
                     onChange={noOp}
-                    options={optionsList}
-                    value={optionsListResponse?.private?.projectScope?.choiceCollection?.name}
+                    options={choiceCollection?.choices}
+                    value={choiceCollection?.name}
                     readOnly
-                    disabled={optionListLoading}
                 />
             </Element>
         </div>

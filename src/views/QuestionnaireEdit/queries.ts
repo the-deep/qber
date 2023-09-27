@@ -17,12 +17,7 @@ export const QUESTION_FRAGMENT = gql`
         dataCollectionMethod
         enumeratorSkill
         constraint
-        choiceCollection {
-            id
-            name
-            label
-            questionnaireId
-        }
+        choiceCollectionId
     }
 `;
 
@@ -42,6 +37,22 @@ export const LEAF_GROUPS_FRAGMENT = gql`
         type
         typeDisplay
         isHidden
+    }
+`;
+
+export const CHOICE_COLLECTION_FRAGMENT = gql`
+    fragment ChoiceCollections on QuestionChoiceCollectionType {
+        id
+        name
+        label
+        questionnaireId
+        choices {
+            id
+            clientId
+            name
+            label
+            collectionId
+        }
     }
 `;
 

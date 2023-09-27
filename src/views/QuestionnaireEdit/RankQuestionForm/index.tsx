@@ -44,14 +44,14 @@ import {
     QuestionInfoQueryVariables,
     QuestionCreateInput,
     QuestionUpdateInput,
-    QuestionTypeEnum,
+    QberQuestionTypeEnum,
 } from '#generated/types';
-import RankQuestionPreview from '#components/questionPreviews/RankQuestionPreview';
 import PillarSelectInput from '#components/PillarSelectInput';
-import ChoiceCollectionSelectInput, {
-    type ChoiceCollectionType,
-} from '#components/ChoiceCollectionSelectInput';
+import ChoiceCollectionSelectInput from '#components/ChoiceCollectionSelectInput';
 import MetaDataInputs from '#components/MetaDataInputs';
+import {
+    ChoiceCollectionType,
+} from '#types/common';
 
 import {
     QUESTION_FRAGMENT,
@@ -138,7 +138,9 @@ const schema: FormSchema = {
             required: true,
             requiredValidation: requiredStringCondition,
         },
-        hint: {},
+        hint: {
+            defaultValue: '',
+        },
         required: {
             defaultValue: false,
         },
@@ -158,6 +160,7 @@ interface Props {
     questionId?: string;
     onSuccess: (questionId: string | undefined) => void;
     selectedLeafGroupId: string;
+    choiceCollections?: ChoiceCollectionType[];
 }
 
 function RankQuestionForm(props: Props) {
@@ -167,6 +170,7 @@ function RankQuestionForm(props: Props) {
         questionId,
         onSuccess,
         selectedLeafGroupId,
+        choiceCollections,
     } = props;
 
     const alert = useAlert();
@@ -177,7 +181,7 @@ function RankQuestionForm(props: Props) {
     ] = useState<QuestionTabType | undefined>('general');
 
     const initialFormValue: FormType = {
-        type: 'RANK' as QuestionTypeEnum,
+        type: 'RANK' as QberQuestionTypeEnum,
         questionnaire: questionnaireId,
         leafGroup: selectedLeafGroupId,
     };
@@ -191,11 +195,6 @@ function RankQuestionForm(props: Props) {
         setValue,
         setError,
     } = useForm(schema, { value: initialFormValue });
-
-    const [
-        choiceCollectionOption,
-        setChoiceCollectionOption,
-    ] = useState<ChoiceCollectionType[] | null | undefined>();
 
     const fieldError = getErrorObject(formError);
 
@@ -228,17 +227,12 @@ function RankQuestionForm(props: Props) {
                     hint: questionResponse?.hint,
                     required: questionResponse?.required,
                     requiredDuration: questionResponse?.requiredDuration,
-                    choiceCollection: questionResponse?.choiceCollection?.id,
+                    choiceCollection: questionResponse?.choiceCollectionId,
                     priorityLevel: questionResponse?.priorityLevel,
                     dataCollectionMethod: questionResponse?.dataCollectionMethod,
                     enumeratorSkill: questionResponse?.enumeratorSkill,
                     constraint: questionResponse?.constraint,
                 });
-                const choiceCollection = questionResponse?.choiceCollection;
-                const choiceCollectionOptions = isDefined(choiceCollection)
-                    ? [choiceCollection]
-                    : [];
-                setChoiceCollectionOption(choiceCollectionOptions);
             },
         },
     );
@@ -343,13 +337,6 @@ function RankQuestionForm(props: Props) {
 
     return (
         <form className={styles.question}>
-            <RankQuestionPreview
-                className={styles.preview}
-                label={formValue.label}
-                hint={formValue.hint}
-                projectId={projectId}
-                choiceCollectionId={formValue.choiceCollection}
-            />
             <div className={styles.editSection}>
                 <Tabs
                     value={activeQuestionTab}
@@ -366,8 +353,8 @@ function RankQuestionForm(props: Props) {
                             name="general"
                         >
                             {checkTabErrors(formError, 'general')
-                                ? 'General Information*'
-                                : 'General Information'}
+                                ? 'Question Settings*'
+                                : 'Question Settings'}
                         </Tab>
                         <Tab
                             activeClassName={styles.active}
@@ -409,7 +396,7 @@ function RankQuestionForm(props: Props) {
                         />
                         <TextArea
                             name="constraint"
-                            label="Constraint"
+                            label="Conditionality"
                             value={formValue?.constraint}
                             error={fieldError?.constraint}
                             onChange={setFieldValue}
@@ -418,8 +405,7 @@ function RankQuestionForm(props: Props) {
                             name="choiceCollection"
                             value={formValue.choiceCollection}
                             label="Options"
-                            options={choiceCollectionOption}
-                            onOptionsChange={setChoiceCollectionOption}
+                            options={choiceCollections}
                             onChange={setFieldValue}
                             projectId={projectId}
                             questionnaireId={questionnaireId}
@@ -434,6 +420,12 @@ function RankQuestionForm(props: Props) {
                             onChange={setFieldValue}
                             disabled
                         />
+                        <Checkbox
+                            name="required"
+                            label="Make question mandatory"
+                            onChange={setFieldValue}
+                            value={formValue.required}
+                        />
                     </TabPanel>
                     <TabPanel
                         className={styles.fields}
@@ -443,12 +435,6 @@ function RankQuestionForm(props: Props) {
                             onChange={setFieldValue}
                             value={formValue}
                             error={fieldError}
-                        />
-                        <Checkbox
-                            name="required"
-                            label="Make question mandatory"
-                            onChange={setFieldValue}
-                            value={formValue.required}
                         />
                     </TabPanel>
                 </Tabs>

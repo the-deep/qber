@@ -1,15 +1,21 @@
 .options {
     display: flex;
     flex-direction: column;
-    gap: var(--dui-spacing-medium);
+    gap: var(--dui-spacing-large);
 
     .option-detail {
         display: flex;
-        justify-content: space-between;
+        gap: var(--dui-spacing-medium);
+    }
+    .input {
+        flex-grow: 1;
     }
 
     .modal-content {
+        display: flex;
+        flex-direction: column;
         background-color: transparent;
+        gap: var(--dui-spacing-large);
 
         .options-list {
             display: flex;

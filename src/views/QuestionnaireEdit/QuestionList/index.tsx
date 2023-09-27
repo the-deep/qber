@@ -13,6 +13,9 @@ import {
     TocItem,
     getChildren,
 } from '#utils/common';
+import {
+    ChoiceCollectionType,
+} from '#types/common';
 
 import LeafNode from './LeafNode';
 
@@ -30,6 +33,7 @@ interface QuestionRendererProps {
     addQuestionPaneShown: boolean;
     selectedGroups: string[];
     setSelectedLeafGroupId: React.Dispatch<React.SetStateAction<string | undefined>>;
+    choiceCollections: ChoiceCollectionType[] | undefined;
 }
 
 function QuestionListRenderer(props: QuestionRendererProps) {
@@ -45,6 +49,7 @@ function QuestionListRenderer(props: QuestionRendererProps) {
         handleQuestionAdd,
         addQuestionPaneShown,
         setSelectedLeafGroupId,
+        choiceCollections,
     } = props;
 
     return (
@@ -89,6 +94,7 @@ function QuestionListRenderer(props: QuestionRendererProps) {
                         setSelectedQuestionType={setSelectedQuestionType}
                         setActiveQuestionId={setActiveQuestionId}
                         setSelectedLeafGroupId={setSelectedLeafGroupId}
+                        choiceCollections={choiceCollections}
                     />
                 )
                 : (
@@ -105,6 +111,7 @@ function QuestionListRenderer(props: QuestionRendererProps) {
                         handleQuestionAdd={handleQuestionAdd}
                         addQuestionPaneShown={addQuestionPaneShown}
                         setSelectedLeafGroupId={setSelectedLeafGroupId}
+                        choiceCollections={choiceCollections}
                     />
                 )}
         </ExpandableContainer>
@@ -126,6 +133,7 @@ interface Props{
     selectedGroups: string[];
     setSelectedLeafGroupId: React.Dispatch<React.SetStateAction<string | undefined>>;
     className?: string;
+    choiceCollections: ChoiceCollectionType[] | undefined;
 }
 
 function QuestionList(props: Props) {
@@ -142,6 +150,7 @@ function QuestionList(props: Props) {
         handleQuestionAdd,
         addQuestionPaneShown,
         setSelectedLeafGroupId,
+        choiceCollections,
     } = props;
 
     const questionListRendererParams = useCallback((_: string, datum: TocItem) => ({
@@ -156,6 +165,7 @@ function QuestionList(props: Props) {
         handleQuestionAdd,
         addQuestionPaneShown,
         setSelectedLeafGroupId,
+        choiceCollections,
     }), [
         projectId,
         questionnaireId,
@@ -167,6 +177,7 @@ function QuestionList(props: Props) {
         addQuestionPaneShown,
         handleQuestionAdd,
         setSelectedLeafGroupId,
+        choiceCollections,
     ]);
 
     const finalNodes = useMemo(() => (
@@ -206,6 +217,7 @@ function QuestionList(props: Props) {
                 addQuestionPaneShown={addQuestionPaneShown}
                 selectedGroups={selectedGroups}
                 setSelectedLeafGroupId={setSelectedLeafGroupId}
+                choiceCollections={choiceCollections}
             />
         );
     }
