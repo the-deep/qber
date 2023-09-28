@@ -30,12 +30,16 @@ x-server: &base_server_setup
     CELERY_REDIS_URL: ${CELERY_REDIS_URL:-redis://redis:6379/1}
     DJANGO_CACHE_REDIS_URL: ${DJANGO_CACHE_REDIS_URL:-redis://redis:6379/2}
     TEST_DJANGO_CACHE_REDIS_URL: ${TEST_DJANGO_CACHE_REDIS_URL:-redis://redis:6379/12}
+    # FS Config
+    DJANGO_STATIC_ROOT: '/app-assets/static'
+    DJANGO_MEDIA_ROOT: '/app-assets/media'
   env_file:
     # Provide additional environment variables using .env file
     - .env
   volumes:
     - ./backend/:/code
-    - media:/media
+    - server-media:/app-assets/media
+    - server-static:/app-assets/static
     - ipython_data_local:/root/.ipython/profile_default   # persist ipython data, including ipython history
   depends_on:
       - db
@@ -125,7 +129,8 @@ services:
 
 
 volumes:
-  media:
+  server-media:
+  server-static:
   postgres-data15:
   redis-data:
   ipython_data_local:
