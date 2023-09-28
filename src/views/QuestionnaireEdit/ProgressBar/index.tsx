@@ -26,7 +26,7 @@ function ProgressBar(props: Props) {
         <div className={styles.progressBar}>
             <div className={styles.label}>
                 <TextOutput
-                    value="0 min"
+                    value={`${value} min`}
                     description="Estimated time"
                     spacing="loose"
                 />

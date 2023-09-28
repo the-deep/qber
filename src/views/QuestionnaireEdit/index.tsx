@@ -92,6 +92,7 @@ import FileQuestionForm from './FileQuestionForm';
 import ImageQuestionForm from './ImageQuestionForm';
 import SelectOneQuestionForm from './SelectOneQuestionForm';
 import SelectMultipleQuestionForm from './SelectMultipleQuestionForm';
+import ProgressBar from './ProgressBar';
 
 import QuestionList from './QuestionList';
 import {
@@ -129,6 +130,7 @@ const QUESTIONNAIRE = gql`
                         ...ChoiceCollections
                     }
                     requiredDuration
+                    totalRequiredDuration
                     totalQuestions {
                         visible
                     }
@@ -511,10 +513,9 @@ export function Component() {
         questionnaireResponse,
     ]);
 
-    const questionnaireTitle = questionnaireResponse?.private.projectScope?.questionnaire?.title;
     const projectTitle = questionnaireResponse?.private.projectScope?.project.title;
-    const questionsCount = questionnaireResponse?.private.projectScope
-        ?.questionnaire?.totalQuestions.visible;
+    const questionnaireData = questionnaireResponse?.private?.projectScope
+        ?.questionnaire;
 
     const choiceCollections = questionnaireResponse?.private?.projectScope
         ?.questionnaire?.choiceCollections;
@@ -811,16 +812,23 @@ export function Component() {
                         <TextOutput
                             value={projectTitle}
                             valueContainerClassName={styles.title}
-                            description={questionnaireTitle}
+                            description={questionnaireData?.title}
                             descriptionContainerClassName={styles.description}
                             spacing="none"
                             block
                         />
                         <TextOutput
-                            value={questionsCount}
+                            value={questionnaireData?.totalQuestions.visible}
                             description="Questions"
                             spacing="compact"
                         />
+                        {isDefined(questionnaireData)
+                            && isDefined(questionnaireData?.requiredDuration) && (
+                            <ProgressBar
+                                total={questionnaireData?.requiredDuration}
+                                value={questionnaireData?.totalRequiredDuration ?? 0}
+                            />
+                        )}
                     </div>
                 )}
             />

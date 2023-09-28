@@ -11,7 +11,11 @@ import { gql, useQuery } from '@apollo/client';
 import {
     unique,
     _cs,
+    isDefined,
+    sum,
+    getColorOnBgColor,
     listToGroupList,
+    listToMap,
 } from '@togglecorp/fujs';
 import {
     ListView,
@@ -26,10 +30,18 @@ import {
     AboutFrameworkQuery,
     AboutFrameworkQueryVariables,
 } from '#generated/types';
+import {
+    getColorScaleFunction,
+} from '#utils/color';
 
 import QuestionsPreview from './QuestionsPreview';
 import IntroText from './IntroText';
 import styles from './index.module.css';
+
+const colors = [
+    '#ffffff',
+    '#dad4f1',
+];
 
 const ABOUT_FRAMEWORK = gql`
     query AboutFramework {
@@ -51,6 +63,8 @@ const ABOUT_FRAMEWORK = gql`
                     order
                     type
                     typeDisplay
+                    hideInFramework
+                    totalQuestions
                 }
                 choiceCollections {
                     choices {
@@ -77,12 +91,16 @@ interface PillarsProps {
     pillars: QuestionGroup[];
     setRightPaneShown: React.Dispatch<React.SetStateAction<boolean>>;
     setSelectedLeafGroupIds: React.Dispatch<React.SetStateAction<string[]>>;
+    leafGroupCountMap: Record<string, number> | undefined;
+    getColorForValue: (val: number) => string;
 }
 
 function Pillars(props: PillarsProps) {
     const {
         pillars,
         setRightPaneShown,
+        getColorForValue,
+        leafGroupCountMap,
         setSelectedLeafGroupIds,
     } = props;
 
@@ -94,12 +112,22 @@ function Pillars(props: PillarsProps) {
         setRightPaneShown,
     ]);
 
-    const pillarsRendererParams = useCallback((_: string, datum: QuestionGroup) => ({
-        name: datum.id,
-        className: _cs(styles.leaf, styles.button),
-        children: datum.category2Display,
-        onClick: handleSubPillarClick,
-    }), [
+    const pillarsRendererParams = useCallback((_: string, datum: QuestionGroup) => {
+        const bgColor = getColorForValue(leafGroupCountMap?.[datum.id] ?? 0);
+
+        return ({
+            name: datum.id,
+            style: {
+                backgroundColor: bgColor,
+                color: getColorOnBgColor(bgColor, '#5a3070', '#ffffff'),
+            },
+            className: _cs(styles.leaf, styles.button),
+            children: datum.category2Display,
+            onClick: handleSubPillarClick,
+        });
+    }, [
+        leafGroupCountMap,
+        getColorForValue,
         handleSubPillarClick,
     ]);
 
@@ -147,6 +175,7 @@ interface SubDimensionProps {
     subDimensionsCount: number;
     setSelectedLeafGroupIds: React.Dispatch<React.SetStateAction<string[]>>;
     leafNodes: QuestionGroup[];
+    leafGroupCountMap: Record<string, number> | undefined;
 }
 
 function SubDimension(props: SubDimensionProps) {
@@ -158,6 +187,7 @@ function SubDimension(props: SubDimensionProps) {
         subDimension,
         subDimensionIndex,
         leafNodes,
+        leafGroupCountMap,
     } = props;
 
     const handleCategoryClick = useCallback((sectorId: string) => {
@@ -186,19 +216,31 @@ function SubDimension(props: SubDimensionProps) {
             <td className={styles.cellHeader}>
                 {subDimension.category2Display}
             </td>
-            {sectors?.map((sector) => (sector.category3 ? (
-                <td
-                    className={styles.cell}
-                    key={sector.category3}
-                >
-                    <Button
-                        name={sector.category3}
-                        className={_cs(styles.leaf, styles.button)}
-                        spacing="loose"
-                        onClick={handleCategoryClick}
-                    />
-                </td>
-            ) : undefined))}
+            {sectors?.map((sector) => {
+                if (!sector.category3) {
+                    return null;
+                }
+                const totalQuestionsCount = sum(leafNodes
+                    .filter((item) => item.category3 === sector.category3)
+                    .map((item) => leafGroupCountMap?.[item.id])
+                    .filter(isDefined));
+
+                return (
+                    <td
+                        className={styles.cell}
+                        key={sector.category3}
+                    >
+                        <Button
+                            name={sector.category3}
+                            className={_cs(styles.leaf, styles.button)}
+                            spacing="loose"
+                            onClick={handleCategoryClick}
+                            disabled={totalQuestionsCount === 0}
+                            title={totalQuestionsCount === 0 ? 'No questions found' : String(totalQuestionsCount)}
+                        />
+                    </td>
+                );
+            })}
         </tr>
     );
 }
@@ -213,7 +255,36 @@ export function Component() {
 
     const [selectedLeafGroupIds, setSelectedLeafGroupIds] = useState<string[]>([]);
     const bankId = frameworkResponse?.private?.activeQuestionBank?.id;
-    const framework = frameworkResponse?.private?.activeQuestionBank?.leafGroups;
+    const unfilteredFramework = frameworkResponse?.private?.activeQuestionBank?.leafGroups;
+
+    const framework = useMemo(() => (
+        unfilteredFramework?.filter((leaf) => !leaf.hideInFramework)
+    ), [
+        unfilteredFramework,
+    ]);
+
+    const leafGroupCountMap = useMemo(() => (
+        listToMap(
+            framework,
+            (item) => item.id,
+            (item) => item.totalQuestions,
+        )
+    ), [framework]);
+
+    const maxQuestionsCount = useMemo(() => (
+        Math.max(0, ...(framework ?? []).map((item) => item.totalQuestions))
+    ), [
+        framework,
+    ]);
+
+    const getColorForValue = useCallback((value: number) => (
+        getColorScaleFunction({
+            min: 0,
+            max: maxQuestionsCount === 0 ? 1 : maxQuestionsCount,
+        }, colors)(value)
+    ), [
+        maxQuestionsCount,
+    ]);
 
     const choiceCollections = frameworkResponse?.private?.activeQuestionBank?.choiceCollections;
 
@@ -273,6 +344,8 @@ export function Component() {
                     {pillars && (
                         <Pillars
                             pillars={pillars}
+                            leafGroupCountMap={leafGroupCountMap}
+                            getColorForValue={getColorForValue}
                             setRightPaneShown={setRightPaneShown}
                             setSelectedLeafGroupIds={setSelectedLeafGroupIds}
                         />
@@ -301,6 +374,7 @@ export function Component() {
                                                 && dimension.category2 === item.category2
                                             ),
                                         )}
+                                        leafGroupCountMap={leafGroupCountMap}
                                         subDimensionsCount={subDimensionsWithinRow.length}
                                         subDimensionIndex={index}
                                         subDimension={item}
