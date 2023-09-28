@@ -3,6 +3,7 @@ import {
     useMemo,
     useState,
 } from 'react';
+import { AiOutlineQuestionCircle } from 'react-icons/ai';
 import {
     isDefined,
     isNotDefined,
@@ -382,7 +383,16 @@ function FileQuestionForm(props: Props) {
                         />
                         <TextInput
                             name="name"
-                            label="Question name"
+                            labelContainerClassName={styles.nameLabel}
+                            label={(
+                                <>
+                                    Name
+                                    <AiOutlineQuestionCircle
+                                        className={styles.hintIcon}
+                                        title="This is the variable name that will be used for processing."
+                                    />
+                                </>
+                            )}
                             value={formValue.name}
                             error={fieldError?.name}
                             onChange={setFieldValue}

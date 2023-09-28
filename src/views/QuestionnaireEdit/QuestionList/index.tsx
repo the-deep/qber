@@ -1,11 +1,11 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { IoAdd } from 'react-icons/io5';
 import {
     _cs,
 } from '@togglecorp/fujs';
 import {
     ListView,
-    ExpandableContainer,
+    ControlledExpandableContainer,
     QuickActionButton,
 } from '@the-deep/deep-ui';
 
@@ -34,6 +34,7 @@ interface QuestionRendererProps {
     selectedGroups: string[];
     setSelectedLeafGroupId: React.Dispatch<React.SetStateAction<string | undefined>>;
     choiceCollections: ChoiceCollectionType[] | undefined;
+    subSectorsExpanded?: boolean;
 }
 
 function QuestionListRenderer(props: QuestionRendererProps) {
@@ -50,10 +51,17 @@ function QuestionListRenderer(props: QuestionRendererProps) {
         addQuestionPaneShown,
         setSelectedLeafGroupId,
         choiceCollections,
+        subSectorsExpanded,
     } = props;
 
+    const [selected, setSelected] = useState<string | undefined>();
+    const handleChange = (_: boolean, name: string) => {
+        setSelected((oldValue) => (oldValue === name ? undefined : name));
+    };
+
     return (
-        <ExpandableContainer
+        <ControlledExpandableContainer
+            name={item.leafNode ? item.id : ''}
             className={_cs(
                 styles.item,
                 item.leafNode && styles.child,
@@ -81,8 +89,9 @@ function QuestionListRenderer(props: QuestionRendererProps) {
             expansionTriggerArea="header"
             withoutBorder
             spacing="none"
-            defaultVisibility={!item.leafNode}
             disabled={!item.leafNode}
+            expanded={!item.leafNode || subSectorsExpanded || selected === item.id}
+            onExpansionChange={handleChange}
         >
             {item.leafNode
                 ? (
@@ -114,7 +123,7 @@ function QuestionListRenderer(props: QuestionRendererProps) {
                         choiceCollections={choiceCollections}
                     />
                 )}
-        </ExpandableContainer>
+        </ControlledExpandableContainer>
     );
 }
 
@@ -134,6 +143,7 @@ interface Props{
     setSelectedLeafGroupId: React.Dispatch<React.SetStateAction<string | undefined>>;
     className?: string;
     choiceCollections: ChoiceCollectionType[] | undefined;
+    subSectorsExpanded?: boolean;
 }
 
 function QuestionList(props: Props) {
@@ -151,6 +161,7 @@ function QuestionList(props: Props) {
         addQuestionPaneShown,
         setSelectedLeafGroupId,
         choiceCollections,
+        subSectorsExpanded,
     } = props;
 
     const questionListRendererParams = useCallback((_: string, datum: TocItem) => ({
@@ -166,6 +177,7 @@ function QuestionList(props: Props) {
         addQuestionPaneShown,
         setSelectedLeafGroupId,
         choiceCollections,
+        subSectorsExpanded,
     }), [
         projectId,
         questionnaireId,
@@ -178,6 +190,7 @@ function QuestionList(props: Props) {
         handleQuestionAdd,
         setSelectedLeafGroupId,
         choiceCollections,
+        subSectorsExpanded,
     ]);
 
     const finalNodes = useMemo(() => (
@@ -218,6 +231,7 @@ function QuestionList(props: Props) {
                 selectedGroups={selectedGroups}
                 setSelectedLeafGroupId={setSelectedLeafGroupId}
                 choiceCollections={choiceCollections}
+                subSectorsExpanded={subSectorsExpanded}
             />
         );
     }

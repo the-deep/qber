@@ -3,6 +3,7 @@ import {
     useMemo,
     useState,
 } from 'react';
+import { AiOutlineQuestionCircle } from 'react-icons/ai';
 import {
     isDefined,
     isNotDefined,
@@ -166,6 +167,8 @@ function IntegerQuestionForm(props: Props) {
         selectedLeafGroupId,
     } = props;
 
+    console.log('q', questionnaireId);
+
     const alert = useAlert();
 
     const [
@@ -188,6 +191,8 @@ function IntegerQuestionForm(props: Props) {
         setValue,
         setError,
     } = useForm(schema, { value: initialFormValue });
+
+    console.log('form value', questionnaireId, initialFormValue, formValue);
 
     const fieldError = getErrorObject(formError);
 
@@ -382,7 +387,16 @@ function IntegerQuestionForm(props: Props) {
                         />
                         <TextInput
                             name="name"
-                            label="Name"
+                            labelContainerClassName={styles.nameLabel}
+                            label={(
+                                <>
+                                    Name
+                                    <AiOutlineQuestionCircle
+                                        className={styles.hintIcon}
+                                        title="This is the variable name that will be used for processing."
+                                    />
+                                </>
+                            )}
                             value={formValue.name}
                             error={fieldError?.name}
                             onChange={setFieldValue}

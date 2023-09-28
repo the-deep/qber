@@ -13,6 +13,12 @@
         .description {
             font-size: var(--dui-font-size-medium);
         }
+
+        .header-info {
+            display: flex;
+            align-items: center;
+            gap: var(--dui-spacing-super-large);
+        }
     }
 
     .page-content {
@@ -52,6 +58,15 @@
 
             }
         }
+        .expand-button {
+            align-self: flex-start;
+            border-radius: unset;
+        }
+        .collapse-button {
+            &:hover {
+                color: var(--dui-color-outline);
+            }
+        }
 
         .content {
             display: flex;
@@ -63,6 +78,14 @@
                 margin: 0 var(--dui-spacing-extra-large);
                 background-color: var(--dui-color-background);
                 padding: var(--dui-spacing-large);
+
+                .buttons {
+                    display: flex;
+                    gap: var(--dui-spacing-small);
+                    >* {
+                        text-transform: unset !important;
+                    }
+                }
             }
 
             .tabs {

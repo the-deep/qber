@@ -27,6 +27,9 @@ export const QUESTIONS_FOR_LEAF_GROUP = gql`
                     order: {
                         order: ASC
                     }
+                    pagination: {
+                        limit: 50
+                    }
                 ) {
                     count
                     limit

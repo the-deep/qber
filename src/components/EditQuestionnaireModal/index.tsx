@@ -384,7 +384,7 @@ function EditQuestionnaireModal(props: Props) {
                 optionsPending={metadataOptionsPending}
             />
             <NumberInput
-                label="Maximum duration (in seconds)"
+                label="Maximum duration (in minutes)"
                 name="requiredDuration"
                 value={formValue?.requiredDuration}
                 error={error?.requiredDuration}

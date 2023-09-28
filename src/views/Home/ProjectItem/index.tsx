@@ -1,17 +1,24 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
     IoEllipsisVerticalOutline,
 } from 'react-icons/io5';
 import {
     generatePath,
 } from 'react-router-dom';
-import { _cs } from '@togglecorp/fujs';
 import {
-    TextOutput,
-    DateOutput,
-    QuickActionDropdownMenu,
+    _cs,
+    isNotDefined,
+} from '@togglecorp/fujs';
+import {
     DropdownMenuItem,
+    Header,
+    QuickActionDropdownMenu,
+    TextOutput,
 } from '@the-deep/deep-ui';
+import {
+    gql,
+    useQuery,
+} from '@apollo/client';
 
 import { wrappedRoutes } from '#app/routes';
 import {
@@ -19,6 +26,28 @@ import {
 } from '#generated/types';
 
 import styles from './index.module.css';
+
+const PROJECT_INFO = gql`
+    query ProjectInfo(
+        $projectId: ID!,
+    ) {
+        private {
+            id
+            projectScope(pk: $projectId) {
+                id
+                project {
+                    id
+                    members {
+                        count
+                    }
+                }
+                questionnaires {
+                    count
+                }
+            }
+        }
+    }
+`;
 
 type ProjectType = NonNullable<NonNullable<NonNullable<ProjectsQuery['private']>['projects']>['items']>[number];
 
@@ -36,6 +65,30 @@ function ProjectItem(props: Props) {
         projectId,
         activeProject,
     } = props;
+
+    const variables = useMemo(() => {
+        if (isNotDefined(projectId)) {
+            return undefined;
+        }
+        return ({
+            projectId,
+        });
+    }, [
+        projectId,
+    ]);
+
+    const {
+        data: projectInfoResponse,
+    } = useQuery(
+        PROJECT_INFO,
+        {
+            skip: isNotDefined(variables),
+            variables,
+        },
+    );
+
+    const questionnairesCount = projectInfoResponse?.private?.projectScope?.questionnaires.count;
+    const membersCount = projectInfoResponse?.private?.projectScope?.project.members.count;
 
     const link = generatePath(wrappedRoutes.projectEdit.absolutePath, { projectId });
 
@@ -59,18 +112,34 @@ function ProjectItem(props: Props) {
                 onClick={handleProjectItemClick}
                 role="presentation"
             >
-                <TextOutput
-                    value={projectItem.title}
-                    description={(
+                <Header
+                    headingSize="extraSmall"
+                    heading={projectItem.title}
+                    actions={(
                         <div className={styles.description}>
-                            Created on
-                            &thinsp;
-                            <DateOutput value={projectItem.createdAt} />
+                            <TextOutput
+                                className={styles.stats}
+                                value={questionnairesCount}
+                                description={questionnairesCount > 1 ? 'Questionnaires' : 'Questionnaire'}
+                                valueType="number"
+                            />
+                            <TextOutput
+                                className={styles.stats}
+                                value={membersCount}
+                                description={membersCount > 1 ? 'Users' : 'User'}
+                                valueType="number"
+                            />
                         </div>
                     )}
-                    block
-                    spacing="compact"
                 />
+                <div className={styles.description}>
+                    <TextOutput
+                        className={styles.stats}
+                        label="Created on"
+                        value={projectItem.createdAt}
+                        valueType="date"
+                    />
+                </div>
             </div>
             <QuickActionDropdownMenu
                 className={styles.menu}

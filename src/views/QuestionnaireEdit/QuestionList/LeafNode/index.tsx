@@ -8,6 +8,7 @@ import {
     useMutation,
 } from '@apollo/client';
 import {
+    compareNumber,
     isNotDefined,
 } from '@togglecorp/fujs';
 import {
@@ -101,7 +102,9 @@ function LeafNode(props: Props) {
             variables: questionsVariables,
             onCompleted: (response) => {
                 const questions = response?.private?.projectScope?.questions?.items;
-                setOrderedQuestions(questions);
+                const sortedQuestions = [...(questions ?? [])];
+                sortedQuestions.sort((a, b) => compareNumber(a.order, b.order));
+                setOrderedQuestions(sortedQuestions);
             },
         },
     );
@@ -163,6 +166,7 @@ function LeafNode(props: Props) {
                 order: index + 1,
             }),
         );
+        setOrderedQuestions(val);
 
         triggerQuestionsOrderUpdate({
             variables: {
@@ -172,7 +176,6 @@ function LeafNode(props: Props) {
                 data: orderedQuestionsToSend,
             },
         });
-        setOrderedQuestions(val);
     }, [
         projectId,
         questionnaireId,
