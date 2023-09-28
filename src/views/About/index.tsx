@@ -312,6 +312,14 @@ export function Component() {
                             </Fragment>
                         ))}
                     </table>
+                    <div>
+                        This project was supported by the Centers for Disease Control and Prevention
+                        of the U.S. Department of Health and Human Services (HHS) as part of a
+                        financial assistance award totaling $315,427 with 100 percent funded by
+                        CDC/HHS. The contents are those of the author(s) and do not necessarily
+                        represent the official views of, nor an endorsement by CDC/HHS or the U.S.
+                        Government.
+                    </div>
                 </div>
                 {rightPaneShown && bankId && (
                     <Container

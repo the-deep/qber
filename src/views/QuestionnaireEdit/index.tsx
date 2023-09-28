@@ -15,6 +15,8 @@ import {
     IoEyeSharp,
     IoRadioButtonOn,
     IoSwapVertical,
+    IoChevronBackOutline,
+    IoChevronForwardOutline,
 } from 'react-icons/io5';
 import {
     MdOutline123,
@@ -39,15 +41,16 @@ import {
 import { getOperationName } from 'apollo-link';
 import {
     AlertContext,
-    Container,
+    Button,
+    CollapsibleContainer,
     Header,
     ListView,
     QuickActionButton,
     Tab,
     Tabs,
     TextOutput,
-    useModalState,
     useAlert,
+    useModalState,
 } from '@the-deep/deep-ui';
 import { removeNull } from '@togglecorp/toggle-form';
 
@@ -124,6 +127,10 @@ const QUESTIONNAIRE = gql`
                     }
                     choiceCollections {
                         ...ChoiceCollections
+                    }
+                    requiredDuration
+                    totalQuestions {
+                        visible
                     }
                 }
             }
@@ -399,6 +406,11 @@ export function Component() {
     ] = useState<string | undefined>();
 
     const [
+        subSectorsExpanded,
+        setSubSectorsExpanded,
+    ] = useState(false);
+
+    const [
         activeQuestionId,
         setActiveQuestionId,
     ] = useState<string | undefined>();
@@ -426,6 +438,12 @@ export function Component() {
         setSelectedQuestionType(undefined);
     }, [
         hideAddQuestionPane,
+    ]);
+
+    const handleSubSectorsExpansion = useCallback(() => {
+        setSubSectorsExpanded((prev: boolean) => !prev);
+    }, [
+        setSubSectorsExpanded,
     ]);
 
     const questionnaireVariables = useMemo(() => {
@@ -495,6 +513,8 @@ export function Component() {
 
     const questionnaireTitle = questionnaireResponse?.private.projectScope?.questionnaire?.title;
     const projectTitle = questionnaireResponse?.private.projectScope?.project.title;
+    const questionsCount = questionnaireResponse?.private.projectScope
+        ?.questionnaire?.totalQuestions.visible;
 
     const choiceCollections = questionnaireResponse?.private?.projectScope
         ?.questionnaire?.choiceCollections;
@@ -787,22 +807,41 @@ export function Component() {
                 className={styles.subNavbar}
                 onCloseLink="/"
                 header={(
-                    <TextOutput
-                        value={projectTitle}
-                        valueContainerClassName={styles.title}
-                        description={questionnaireTitle}
-                        descriptionContainerClassName={styles.description}
-                        spacing="none"
-                        block
-                    />
+                    <div className={styles.headerInfo}>
+                        <TextOutput
+                            value={projectTitle}
+                            valueContainerClassName={styles.title}
+                            description={questionnaireTitle}
+                            descriptionContainerClassName={styles.description}
+                            spacing="none"
+                            block
+                        />
+                        <TextOutput
+                            value={questionsCount}
+                            description="Questions"
+                            spacing="compact"
+                        />
+                    </div>
                 )}
             />
             <div className={styles.pageContent}>
-                <Container
+                <CollapsibleContainer
                     className={styles.leftPane}
                     heading="Adapt Questionnaire structure and content"
                     headingSize="extraSmall"
                     contentClassName={styles.leftContent}
+                    expandButtonClassName={styles.expandButton}
+                    expandButtonContent={(
+                        <IoChevronForwardOutline
+                            title="Show Questionnaire Structure"
+                        />
+                    )}
+                    collapseButtonClassName={styles.collapseButton}
+                    collapseButtonContent={(
+                        <IoChevronBackOutline
+                            title="Hide Questionnaire Structure"
+                        />
+                    )}
                 >
                     <TocList
                         orderedOptions={orderedOptions}
@@ -810,19 +849,31 @@ export function Component() {
                         onSelectedGroupsChange={handleQuestionGroupSelect}
                         selectedGroups={selectedGroups}
                     />
-                </Container>
+                </CollapsibleContainer>
                 <div className={styles.content}>
                     <Header
                         className={styles.header}
                         headingSize="extraSmall"
                         heading="My Questionnaire"
                         actions={(
-                            <QuickActionButton
-                                name={undefined}
-                                onClick={handleQuestionnairePreview}
-                            >
-                                <IoEyeSharp />
-                            </QuickActionButton>
+                            <div className={styles.buttons}>
+                                <Button
+                                    name={undefined}
+                                    onClick={handleSubSectorsExpansion}
+                                    variant="tertiary"
+                                    spacing="compact"
+                                >
+                                    {subSectorsExpanded
+                                        ? 'Collapse all'
+                                        : 'Expand all'}
+                                </Button>
+                                <QuickActionButton
+                                    name={undefined}
+                                    onClick={handleQuestionnairePreview}
+                                >
+                                    <IoEyeSharp />
+                                </QuickActionButton>
+                            </div>
                         )}
                     />
                     <Tabs
@@ -855,6 +906,7 @@ export function Component() {
                             addQuestionPaneShown={addQuestionPaneShown}
                             setSelectedLeafGroupId={setActiveLeafGroupId}
                             choiceCollections={choiceCollections}
+                            subSectorsExpanded={subSectorsExpanded}
                         />
                     </Tabs>
                 </div>

@@ -11,12 +11,23 @@
     }
 
     .clickable {
+        display: flex;
+        flex-direction: column;
         flex-grow: 1;
         cursor: pointer;
         padding: var(--dui-spacing-medium);
+        gap: var(--dui-spacing-medium);
 
         .description {
             display: flex;
+            flex-wrap: wrap;
+            gap: var(--dui-spacing-small);
+
+        }
+        .stats {
+            >* {
+                font-size: var(--dui-font-size-small);
+            }
         }
     }
     .menu {
