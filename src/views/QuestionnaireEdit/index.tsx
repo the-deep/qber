@@ -323,14 +323,6 @@ function transformOptionsByCategory(options: QuestionGroup[]): Node[] {
     const result = options
         .map((g) => ({
             category: [
-                isDefined(g.category1) && isDefined(g.category1Display) ? {
-                    key: g.category1,
-                    label: g.category1Display,
-                } : undefined,
-                isDefined(g.category2) && isDefined(g.category2Display) ? {
-                    key: g.category2,
-                    label: g.category2Display,
-                } : undefined,
                 isDefined(g.category3) && isDefined(g.category3Display) ? {
                     key: g.category3,
                     label: g.category3Display,
@@ -338,6 +330,14 @@ function transformOptionsByCategory(options: QuestionGroup[]): Node[] {
                 isDefined(g.category4) && isDefined(g.category4Display) ? {
                     key: g.category4,
                     label: g.category4Display,
+                } : undefined,
+                isDefined(g.category1) && isDefined(g.category1Display) ? {
+                    key: g.category1,
+                    label: g.category1Display,
+                } : undefined,
+                isDefined(g.category2) && isDefined(g.category2Display) ? {
+                    key: g.category2,
+                    label: g.category2Display,
                 } : undefined,
             ].filter(isDefined),
             type: g.type,
