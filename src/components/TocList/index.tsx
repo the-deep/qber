@@ -50,7 +50,6 @@ function TocRenderer(props: TocProps) {
             onSelectedGroupsChange(val, childIds);
             return;
         }
-
         onSelectedGroupsChange(val, [item.id]);
     }, [
         item,

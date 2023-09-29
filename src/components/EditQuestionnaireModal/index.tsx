@@ -133,9 +133,15 @@ const schema: FormSchema = {
             required: true,
             requiredValidation: requiredStringCondition,
         },
-        dataCollectionMethods: {},
-        enumeratorSkills: {},
-        priorityLevels: {},
+        dataCollectionMethods: {
+            defaultValue: [],
+        },
+        enumeratorSkills: {
+            defaultValue: [],
+        },
+        priorityLevels: {
+            defaultValue: [],
+        },
         requiredDuration: {},
     }),
 };

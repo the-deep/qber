@@ -115,23 +115,21 @@ function ProjectItem(props: Props) {
                 <Header
                     headingSize="extraSmall"
                     heading={projectItem.title}
-                    actions={(
-                        <div className={styles.description}>
-                            <TextOutput
-                                className={styles.stats}
-                                value={questionnairesCount}
-                                description={questionnairesCount > 1 ? 'Questionnaires' : 'Questionnaire'}
-                                valueType="number"
-                            />
-                            <TextOutput
-                                className={styles.stats}
-                                value={membersCount}
-                                description={membersCount > 1 ? 'Users' : 'User'}
-                                valueType="number"
-                            />
-                        </div>
-                    )}
                 />
+                <div className={styles.description}>
+                    <TextOutput
+                        className={styles.stats}
+                        value={questionnairesCount}
+                        description={questionnairesCount > 1 ? 'Forms' : 'Form'}
+                        valueType="number"
+                    />
+                    <TextOutput
+                        className={styles.stats}
+                        value={membersCount}
+                        description={membersCount > 1 ? 'Users' : 'User'}
+                        valueType="number"
+                    />
+                </div>
                 <div className={styles.description}>
                     <TextOutput
                         className={styles.stats}

@@ -54,10 +54,7 @@ function QuestionListRenderer(props: QuestionRendererProps) {
         subSectorsExpanded,
     } = props;
 
-    const [selected, setSelected] = useState<string | undefined>();
-    const handleChange = (_: boolean, name: string) => {
-        setSelected((oldValue) => (oldValue === name ? undefined : name));
-    };
+    const [selected, setSelected] = useState(false);
 
     return (
         <ControlledExpandableContainer
@@ -90,8 +87,8 @@ function QuestionListRenderer(props: QuestionRendererProps) {
             withoutBorder
             spacing="none"
             disabled={!item.leafNode}
-            expanded={!item.leafNode || subSectorsExpanded || selected === item.id}
-            onExpansionChange={handleChange}
+            expanded={!item.leafNode || subSectorsExpanded || selected}
+            onExpansionChange={setSelected}
         >
             {item.leafNode
                 ? (

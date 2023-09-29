@@ -16,7 +16,7 @@
         flex-grow: 1;
         cursor: pointer;
         padding: var(--dui-spacing-medium);
-        gap: var(--dui-spacing-medium);
+        gap: var(--dui-spacing-small);
 
         .description {
             display: flex;

@@ -1,7 +1,6 @@
 .progress-bar{
     display: flex;
     flex-direction: column;
-    gap: var(--dui-spacing-small);
 
     .bar {
         position: relative;
@@ -9,6 +8,7 @@
         width: 300px;
         height: 10px;
         overflow: hidden;
+
         .total {
             position: absolute;
             background-color: var(--background-color);

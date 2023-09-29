@@ -120,7 +120,7 @@ function MetaDataInputs(props: Props) {
             />
             <NumberInput
                 className={className}
-                label="Maximum duration (in seconds)"
+                label="Maximum duration (in minutes)"
                 name="requiredDuration"
                 value={value?.requiredDuration}
                 error={error?.requiredDuration}

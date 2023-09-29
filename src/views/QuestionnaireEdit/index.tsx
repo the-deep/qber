@@ -38,7 +38,6 @@ import {
     useQuery,
     useMutation,
 } from '@apollo/client';
-import { getOperationName } from 'apollo-link';
 import {
     AlertContext,
     Button,
@@ -63,10 +62,6 @@ import {
     getChildren,
     flatten,
 } from '#utils/common';
-import {
-    QUESTIONS_FOR_LEAF_GROUP,
-} from '#views/QuestionnaireEdit/QuestionList/LeafNode/queries';
-import { apolloClient } from '#configs/apollo';
 import QuestionnairePreviewModal from '#components/QuestionnairePreviewModal';
 import {
     OrderQuestionGroupMutation,
@@ -97,48 +92,13 @@ import ProgressBar from './ProgressBar';
 import QuestionList from './QuestionList';
 import {
     LEAF_GROUPS_FRAGMENT,
-    CHOICE_COLLECTION_FRAGMENT,
+    QUESTIONNAIRE,
 } from './queries';
 import QuestionTypeItem, { QuestionType } from './QuestionTypeItem';
 
 import styles from './index.module.css';
 
 export type QuestionTabType = 'general' | 'metadata';
-
-const QUESTIONNAIRE = gql`
-    ${LEAF_GROUPS_FRAGMENT}
-    ${CHOICE_COLLECTION_FRAGMENT}
-    query Questionnaire(
-        $projectId: ID!,
-        $questionnaireId: ID!,
-    ) {
-        private {
-            id
-            projectScope(pk: $projectId) {
-                id
-                project {
-                    title
-                    id
-                }
-                questionnaire(pk: $questionnaireId) {
-                    id
-                    title
-                    leafGroups {
-                        ...LeafGroups
-                    }
-                    choiceCollections {
-                        ...ChoiceCollections
-                    }
-                    requiredDuration
-                    totalRequiredDuration
-                    totalQuestions {
-                        visible
-                    }
-                }
-            }
-        }
-    }
-`;
 
 const ORDER_QUESTION_GROUP = gql`
     ${LEAF_GROUPS_FRAGMENT}
@@ -363,14 +323,6 @@ function transformOptionsByCategory(options: QuestionGroup[]): Node[] {
     const result = options
         .map((g) => ({
             category: [
-                isDefined(g.category1) && isDefined(g.category1Display) ? {
-                    key: g.category1,
-                    label: g.category1Display,
-                } : undefined,
-                isDefined(g.category2) && isDefined(g.category2Display) ? {
-                    key: g.category2,
-                    label: g.category2Display,
-                } : undefined,
                 isDefined(g.category3) && isDefined(g.category3Display) ? {
                     key: g.category3,
                     label: g.category3Display,
@@ -378,6 +330,14 @@ function transformOptionsByCategory(options: QuestionGroup[]): Node[] {
                 isDefined(g.category4) && isDefined(g.category4Display) ? {
                     key: g.category4,
                     label: g.category4Display,
+                } : undefined,
+                isDefined(g.category1) && isDefined(g.category1Display) ? {
+                    key: g.category1,
+                    label: g.category1Display,
+                } : undefined,
+                isDefined(g.category2) && isDefined(g.category2Display) ? {
+                    key: g.category2,
+                    label: g.category2Display,
                 } : undefined,
             ].filter(isDefined),
             type: g.type,
@@ -471,6 +431,7 @@ export function Component() {
 
     const {
         data: questionnaireResponse,
+        refetch: retriggerQuestionnaireResponse,
     } = useQuery<QuestionnaireQuery, QuestionnaireQueryVariables>(
         QUESTIONNAIRE,
         {
@@ -545,6 +506,7 @@ export function Component() {
         if (isNotDefined(projectId) || isNotDefined(questionnaireId)) {
             return;
         }
+        retriggerQuestionnaireResponse();
         setOrderedOptions(newVal);
 
         function getIdFromGroups(key: string) {
@@ -579,6 +541,7 @@ export function Component() {
         projectId,
         questionnaireId,
         triggerGroupOrderChange,
+        retriggerQuestionnaireResponse,
     ]);
 
     const [exportIdToPreview, setExportIdToPreview] = useState<string | undefined>();
@@ -739,13 +702,10 @@ export function Component() {
     const handleQuestionCreateSuccess = useCallback(() => {
         hideAddQuestionPane();
         setSelectedQuestionType(undefined);
-        apolloClient.refetchQueries({
-            include: [
-                getOperationName(QUESTIONS_FOR_LEAF_GROUP),
-            ].filter(isDefined),
-        });
+        retriggerQuestionnaireResponse();
     }, [
         hideAddQuestionPane,
+        retriggerQuestionnaireResponse,
     ]);
 
     const questionTypeRendererParams = useCallback((key: string, data: QuestionType) => ({

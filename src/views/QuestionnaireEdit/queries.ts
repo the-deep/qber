@@ -74,4 +74,37 @@ export const QUESTION_INFO = gql`
     }
 `;
 
-export default QUESTION_INFO;
+export const QUESTIONNAIRE = gql`
+    ${LEAF_GROUPS_FRAGMENT}
+    ${CHOICE_COLLECTION_FRAGMENT}
+    query Questionnaire(
+        $projectId: ID!,
+        $questionnaireId: ID!,
+    ) {
+        private {
+            id
+            projectScope(pk: $projectId) {
+                id
+                project {
+                    title
+                    id
+                }
+                questionnaire(pk: $questionnaireId) {
+                    id
+                    title
+                    leafGroups {
+                        ...LeafGroups
+                    }
+                    choiceCollections {
+                        ...ChoiceCollections
+                    }
+                    requiredDuration
+                    totalRequiredDuration
+                    totalQuestions {
+                        visible
+                    }
+                }
+            }
+        }
+    }
+`;
