@@ -7,15 +7,21 @@ import {
     useQuery,
     useMutation,
 } from '@apollo/client';
+import { getOperationName } from 'apollo-link';
 import {
     compareNumber,
     isNotDefined,
+    isDefined,
 } from '@togglecorp/fujs';
 import {
     useAlert,
 } from '@the-deep/deep-ui';
 
+import { apolloClient } from '#configs/apollo';
 import SortableList from '#components/SortableList';
+import {
+    QUESTIONNAIRE,
+} from '#views/QuestionnaireEdit/queries';
 import {
     QuestionsForLeafGroupQuery,
     QuestionsForLeafGroupQueryVariables,
@@ -147,6 +153,11 @@ function LeafNode(props: Props) {
                         'Failed to update questions visibility',
                     );
                 }
+                apolloClient.refetchQueries({
+                    include: [
+                        getOperationName(QUESTIONNAIRE),
+                    ].filter(isDefined),
+                });
             },
             onError: () => {
                 alert.show(
