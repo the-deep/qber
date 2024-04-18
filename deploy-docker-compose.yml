@@ -1,3 +1,5 @@
+# TODO: Use AWS for logging
+
 x-server: &base_server_setup
   image: qber-backend:${LOCAL_BACKEND_TAG:?error}
   build:
@@ -49,7 +51,9 @@ x-server: &base_server_setup
 services:
   react:
     tty: true
-    build: .
+    build:
+      context: .
+      target: builder
     environment:
       APP_TITLE: ${APP_TITLE:-Questionnaire Builder}
       APP_STATIC_ENDPOINT: ${APP_STATIC_ENDPOINT?err}
@@ -123,25 +127,25 @@ services:
     command: bash -c "cd $${ENKETO_SRC_DIR}/ && pm2-runtime app.js -n enketo"
     restart: unless-stopped
 
-  nginx:
-    image: nginx
-    user: root
+  caddy:
+    image: caddy:2
+    restart: always
     volumes:
-      # Nginx config
-      - ./deploy/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
-      # Static files
+      # Caddy config
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Caddy config volumes
+      # -- Static files
       - client-static:/app-assests/client-static:ro
       - backend-static:/app-assests/backend-static:ro
-      # Media files
+      # -- Media files
       - backend-media:/app-assests/backend-media:ro
-    restart: unless-stopped
     environment:
-      - NGINX_BACKEND_HOST=${NGINX_BACKEND_HOST?err}
-      - NGINX_CLIENT_HOST=${NGINX_CLIENT_HOST?err}
-      - NGINX_CLIENT_ENKETO_HOST=${NGINX_CLIENT_ENKETO_HOST?err}
+      - CADDY_BACKEND_HOST=${CADDY_BACKEND_HOST?err}
+      - CADDY_CLIENT_HOST=${CADDY_CLIENT_HOST?err}
+      - CADDY_CLIENT_ENKETO_HOST=${CADDY_CLIENT_ENKETO_HOST?err}
     ports:
-      - '80:80'
-      - '443:443'
+      - 80:80
+      - 443:443
     depends_on:
       - api
       - enketo

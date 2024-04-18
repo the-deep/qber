@@ -1,0 +1,18 @@
+{
+    email qber-aws@datafriendlyspace.org
+}
+
+{$CADDY_BACKEND_HOST} {
+    reverse_proxy http://api:80
+}
+
+{$CADDY_CLIENT_ENKETO_HOST} {
+    reverse_proxy http://enketo:8005
+}
+
+{$CADDY_CLIENT_HOST} {
+    encode gzip
+    try_files {path} /index.html
+    root * /app-assests/client-static
+    file_server
+}

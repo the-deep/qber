@@ -1,4 +1,6 @@
-FROM node:18-bullseye
+# -------------------------- Dev ---------------------------------------
+
+FROM node:18-bullseye as dev
 
 RUN apt-get update -y \
     && apt-get install -y --no-install-recommends \
@@ -8,3 +10,12 @@ RUN apt-get update -y \
 WORKDIR /code
 
 RUN git config --global --add safe.directory /code
+
+
+# -------------------------- Builder ---------------------------------------
+FROM dev AS builder
+
+COPY ./package.json ./yarn.lock /code/
+RUN yarn install --frozen-lockfile && yarn cache clean
+
+COPY . /code/
