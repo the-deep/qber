@@ -16,6 +16,7 @@ RUN git config --global --add safe.directory /code
 FROM dev AS builder
 
 COPY ./package.json ./yarn.lock /code/
-RUN yarn install --frozen-lockfile && yarn cache clean
+RUN yarn install --frozen-lockfile --check-files --cache-folder .ycache && \
+    rm -rf .ycache
 
 COPY . /code/
