@@ -1,4 +1,8 @@
-# TODO: Use AWS for logging
+x-logging-options:
+  options: &logging_options
+    awslogs-region: ${AWS_LOGGING_REGION?err}
+    awslogs-group: ${AWS_LOGGING_GROUP?err}
+
 
 x-server: &base_server_setup
   image: qber-backend:${LOCAL_BACKEND_TAG:?error}
@@ -61,9 +65,10 @@ services:
     env_file:
       - .env
     command: |
-      sh -c 'yarn install && yarn generate && yarn build && rm -rf /client-build/* ; cp -r build/* /client-build/'
+      sh -c 'yarn generate && yarn build && rm -rf /client-build/* ; cp -r build/* /client-build/'
     volumes:
       - client-static:/client-build/
+    profiles: [frontend]
 
   db:
     image: postgis/postgis:15-master
@@ -74,6 +79,11 @@ services:
     restart: unless-stopped
     volumes:
       - postgres-data15:/var/lib/postgresql/data
+    logging:
+      driver: awslogs
+      options:
+        <<: *logging_options
+        awslogs-stream: "db"
 
   redis:
     image: redis:latest
@@ -85,6 +95,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    logging:
+      driver: awslogs
+      options:
+        <<: *logging_options
+        awslogs-stream: "redis"
 
   api:
     <<: *base_server_setup
@@ -92,6 +107,11 @@ services:
       <<: *base_server_environment
       APP_TYPE: web
     command: ./deploy/run_web.sh
+    logging:
+      driver: awslogs
+      options:
+        <<: *logging_options
+        awslogs-stream: "api"
 
   worker:
     <<: *base_server_setup
@@ -99,18 +119,33 @@ services:
       <<: *base_server_environment
       APP_TYPE: worker
     command: ./deploy/run_worker.sh
+    logging:
+      driver: awslogs
+      options:
+        <<: *logging_options
+        awslogs-stream: "worker"
 
   enketo_redis_main:
     image: redis:7.0
     volumes:
       - enketo_redis_main-data:/data
     restart: unless-stopped
+    logging:
+      driver: awslogs
+      options:
+        <<: *logging_options
+        awslogs-stream: "enketo-redis"
 
   enketo_redis_cache:
     image: redis:7.0
     volumes:
       - enketo_redis_cache-data:/data
     restart: unless-stopped
+    logging:
+      driver: awslogs
+      options:
+        <<: *logging_options
+        awslogs-stream: "enketo-redis-cache"
 
   enketo:
     image: ghcr.io/enketo/enketo-express:6.2.2
@@ -126,6 +161,11 @@ services:
       ENKETO_ENCRYPTION_KEY: ${ENKETO_API_KEY?err}
     command: bash -c "cd $${ENKETO_SRC_DIR}/ && pm2-runtime app.js -n enketo"
     restart: unless-stopped
+    logging:
+      driver: awslogs
+      options:
+        <<: *logging_options
+        awslogs-stream: "enketo"
 
   caddy:
     image: caddy:2
@@ -149,6 +189,11 @@ services:
     depends_on:
       - api
       - enketo
+    logging:
+      driver: awslogs
+      options:
+        <<: *logging_options
+        awslogs-stream: "caddy"
 
 
 volumes:
