@@ -1,5 +1,5 @@
 {
-    email qber-aws@datafriendlyspace.org
+    email {$CADDY_EMAIL}
 }
 
 {$CADDY_BACKEND_HOST} {

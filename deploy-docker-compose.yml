@@ -34,8 +34,6 @@ x-server: &base_server_setup
     CELERY_REDIS_URL: ${CELERY_REDIS_URL:-redis://redis:6379/1}
     DJANGO_CACHE_REDIS_URL: ${DJANGO_CACHE_REDIS_URL:-redis://redis:6379/2}
     TEST_DJANGO_CACHE_REDIS_URL: ${TEST_DJANGO_CACHE_REDIS_URL:-redis://redis:6379/12}
-    DJANGO_STATIC_ROOT: /assets/static
-    DJANGO_MEDIA_ROOT: /assets/media
     # Sentry
     SENTRY_DSN: ${DJANGO_SENTRY_DSN?err}
     SENTRY_SAMPLE_RATE: ${DJANGO_SENTRY_SAMPLE_RATE:-0.2}
@@ -43,8 +41,6 @@ x-server: &base_server_setup
     # Provide additional environment variables using .env file
     - .env
   volumes:
-    - backend-media:/assets/media
-    - backend-static:/assets/static
     - ipython_data_local:/root/.ipython/profile_default   # persist ipython data, including ipython history
   restart: unless-stopped
   depends_on:
@@ -171,18 +167,18 @@ services:
     image: caddy:2
     restart: always
     volumes:
+      # Static files
+      - client-static:/app-assests/client-static:ro
       # Caddy config
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
-      # Caddy config volumes
-      # -- Static files
-      - client-static:/app-assests/client-static:ro
-      - backend-static:/app-assests/backend-static:ro
-      # -- Media files
-      - backend-media:/app-assests/backend-media:ro
+      # Caddy data volumes
+      - caddy_data:/data
+      - caddy_config:/config
     environment:
-      - CADDY_BACKEND_HOST=${CADDY_BACKEND_HOST?err}
-      - CADDY_CLIENT_HOST=${CADDY_CLIENT_HOST?err}
-      - CADDY_CLIENT_ENKETO_HOST=${CADDY_CLIENT_ENKETO_HOST?err}
+      CADDY_EMAIL: ${SUPPORT_EMAIL?err}
+      CADDY_BACKEND_HOST: ${CADDY_BACKEND_HOST?err}
+      CADDY_CLIENT_HOST: ${CADDY_CLIENT_HOST?err}
+      CADDY_CLIENT_ENKETO_HOST: ${CADDY_CLIENT_ENKETO_HOST?err}
     ports:
       - 80:80
       - 443:443
@@ -198,10 +194,7 @@ services:
 
 volumes:
   # Static files
-  backend-static:
   client-static:
-  # Media files
-  backend-media:
   # DB
   postgres-data15:
   redis-data:
@@ -209,3 +202,6 @@ volumes:
   enketo_redis_cache-data:
   # Shell history
   ipython_data_local:
+  # Caddy
+  caddy_data:
+  caddy_config:
