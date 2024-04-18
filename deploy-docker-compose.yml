@@ -1,0 +1,162 @@
+x-server: &base_server_setup
+  image: qber-backend:${LOCAL_BACKEND_TAG:?error}
+  build:
+    context: ./backend/
+  tty: true
+  environment: &base_server_environment
+    APP_ENVIRONMENT: ${APP_ENVIRONMENT?err}
+    DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY?err}
+    # To overwrite this values. set the values in .env
+    DJANGO_DEBUG: ${DJANGO_DEBUG:-False}
+    APP_DOMAIN: ${APP_DOMAIN?err}
+    DJANGO_CORS_ORIGIN_REGEX_WHITELIST: ${DJANGO_CORS_ORIGIN_REGEX_WHITELIST?err}
+    APP_HTTP_PROTOCOL: ${APP_HTTP_PROTOCOL:-https}
+    APP_FRONTEND_HOST: ${APP_FRONTEND_HOST?err}
+    SESSION_COOKIE_DOMAIN: ${SESSION_COOKIE_DOMAIN?err}
+    CSRF_COOKIE_DOMAIN: ${CSRF_COOKIE_DOMAIN?err}
+    DJANGO_ALLOWED_HOST: ${DJANGO_ALLOWED_HOST?err}
+    DJANGO_DB_NAME: ${DJANGO_DB_NAME:-qber}
+    DJANGO_DB_USER: ${DJANGO_DB_USER:-postgres}
+    DJANGO_DB_PASSWORD: ${DJANGO_DB_PASSWORD:-postgres}
+    DJANGO_DB_PORT: ${DJANGO_DB_PORT:-5432}
+    DJANGO_DB_HOST: ${DJANGO_DB_HOST:-db}
+    # EMAIL
+    EMAIL_FROM: ${EMAIL_FROM?err}
+    # Enketo
+    ENKETO_DOMAIN: ${ENKETO_DOMAIN?err}
+    # Redis
+    CELERY_REDIS_URL: ${CELERY_REDIS_URL:-redis://redis:6379/1}
+    DJANGO_CACHE_REDIS_URL: ${DJANGO_CACHE_REDIS_URL:-redis://redis:6379/2}
+    TEST_DJANGO_CACHE_REDIS_URL: ${TEST_DJANGO_CACHE_REDIS_URL:-redis://redis:6379/12}
+    DJANGO_STATIC_ROOT: /assets/static
+    DJANGO_MEDIA_ROOT: /assets/media
+    # Sentry
+    SENTRY_DSN: ${DJANGO_SENTRY_DSN?err}
+    SENTRY_SAMPLE_RATE: ${DJANGO_SENTRY_SAMPLE_RATE:-0.2}
+  env_file:
+    # Provide additional environment variables using .env file
+    - .env
+  volumes:
+    - backend-media:/assets/media
+    - backend-static:/assets/static
+    - ipython_data_local:/root/.ipython/profile_default   # persist ipython data, including ipython history
+  restart: unless-stopped
+  depends_on:
+      - db
+      - redis
+
+
+services:
+  react:
+    tty: true
+    build: .
+    environment:
+      APP_TITLE: ${APP_TITLE:-Questionnaire Builder}
+      APP_STATIC_ENDPOINT: ${APP_STATIC_ENDPOINT?err}
+      APP_GRAPHQL_ENDPOINT: ${APP_GRAPHQL_ENDPOINT?err}
+    env_file:
+      - .env
+    command: |
+      sh -c 'yarn install && yarn generate && yarn build && rm -rf /client-build/* ; cp -r build/* /client-build/'
+    volumes:
+      - client-static:/client-build/
+
+  db:
+    image: postgis/postgis:15-master
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: qber
+    restart: unless-stopped
+    volumes:
+      - postgres-data15:/var/lib/postgresql/data
+
+  redis:
+    image: redis:latest
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    <<: *base_server_setup
+    environment:
+      <<: *base_server_environment
+      APP_TYPE: web
+    command: ./deploy/run_web.sh
+
+  worker:
+    <<: *base_server_setup
+    environment:
+      <<: *base_server_environment
+      APP_TYPE: worker
+    command: ./deploy/run_worker.sh
+
+  enketo_redis_main:
+    image: redis:7.0
+    volumes:
+      - enketo_redis_main-data:/data
+    restart: unless-stopped
+
+  enketo_redis_cache:
+    image: redis:7.0
+    volumes:
+      - enketo_redis_cache-data:/data
+    restart: unless-stopped
+
+  enketo:
+    image: ghcr.io/enketo/enketo-express:6.2.2
+    depends_on:
+      - enketo_redis_main
+      - enketo_redis_cache
+    environment:
+      ENKETO_PORT: 8005
+      SUPPORT_EMAIL: ${SUPPORT_EMAIL?err}
+      ENKETO_REDIS_MAIN_URL: redis://redis:redis@enketo_redis_main:6379
+      ENKETO_REDIS_CACHE_URL: redis://redis:redis@enketo_redis_cache:6379
+      ENKETO_API_KEY: ${ENKETO_API_KEY?err}
+      ENKETO_ENCRYPTION_KEY: ${ENKETO_API_KEY?err}
+    command: bash -c "cd $${ENKETO_SRC_DIR}/ && pm2-runtime app.js -n enketo"
+    restart: unless-stopped
+
+  nginx:
+    image: nginx
+    user: root
+    volumes:
+      # Nginx config
+      - ./deploy/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
+      # Static files
+      - client-static:/app-assests/client-static:ro
+      - backend-static:/app-assests/backend-static:ro
+      # Media files
+      - backend-media:/app-assests/backend-media:ro
+    restart: unless-stopped
+    environment:
+      - NGINX_BACKEND_HOST=${NGINX_BACKEND_HOST?err}
+      - NGINX_CLIENT_HOST=${NGINX_CLIENT_HOST?err}
+      - NGINX_CLIENT_ENKETO_HOST=${NGINX_CLIENT_ENKETO_HOST?err}
+    ports:
+      - '80:80'
+      - '443:443'
+    depends_on:
+      - api
+      - enketo
+
+
+volumes:
+  # Static files
+  backend-static:
+  client-static:
+  # Media files
+  backend-media:
+  # DB
+  postgres-data15:
+  redis-data:
+  enketo_redis_main-data:
+  enketo_redis_cache-data:
+  # Shell history
+  ipython_data_local:
