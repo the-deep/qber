@@ -58,6 +58,7 @@ services:
       APP_TITLE: ${APP_TITLE:-Questionnaire Builder}
       APP_STATIC_ENDPOINT: ${APP_STATIC_ENDPOINT?err}
       APP_GRAPHQL_ENDPOINT: ${APP_GRAPHQL_ENDPOINT?err}
+      NODE_OPTIONS: "--max_old_space_size=1024"
     env_file:
       - .env
     command: |
