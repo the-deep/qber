@@ -1,6 +1,3 @@
-version: '3.2'
-
-
 x-server: &base_server_setup
   image: ghcr.io/the-deep/qber-backend:${DOCKER_BACKEND_TAG:-latest}
   build:
@@ -49,7 +46,9 @@ x-server: &base_server_setup
 services:
   react:
     tty: true
-    build: .
+    build:
+      context: .
+      target: dev
     environment:
       APP_TITLE: ${APP_TITLE:-Questionnaire Builder}
       APP_STATIC_ENDPOINT: ${APP_STATIC_ENDPOINT:-http://localhost:8311}

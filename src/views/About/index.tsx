@@ -229,6 +229,7 @@ function SubDimension(props: SubDimensionProps) {
                     <td
                         className={styles.cell}
                         key={sector.category3}
+                        aria-label={sector.category3}
                     >
                         <Button
                             name={sector.category3}
@@ -352,8 +353,8 @@ export function Component() {
                     )}
                     <table className={styles.twoDTable}>
                         <tr>
-                            <td className={styles.header} />
-                            <td className={styles.header} />
+                            <td className={styles.header} aria-label="." />
+                            <td className={styles.header} aria-label="." />
                             {uniqueSectorList?.map((sector) => (
                                 <td
                                     className={styles.header}
